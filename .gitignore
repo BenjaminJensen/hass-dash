@@ -123,4 +123,6 @@ coverage.xml
 # Local history for editors
 .history/
 
+# temp build files
+out.bmp
 # End of file
