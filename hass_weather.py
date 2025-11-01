@@ -1,18 +1,57 @@
 from homeassistant_api import Client
 from typing import Dict, Any, Optional
-from json import dumps
-from datetime import datetime as DateTime
 import re
+from datetime import datetime as DateTimes
 
+from localize import local_dt_from_utc_str
+
+def _get_icon_for_condition(cond: Optional[str], is_night = False) -> Optional[str]:
+    """Return the icon filename for a given Home Assistant condition key.
+
+    Uses canonical HA keys and normalizes both map keys and the incoming
+    condition by removing non-alphanumeric characters and lowercasing
+    before doing an exact lookup.
+    """
+
+    icon_map = {
+        # canonical HA keys (more specific first)
+        "lightning-rainy": "weather-lightning-rainy",
+        "snowy-rainy": "weather-snowy-rainy",
+        "windy-variant": "weather-windy-variant",
+        "clear-night": "weather-night",
+        # simple canonical keys
+        "lightning": "weather-lightning",
+        "hail": "weather-hail",
+        "pouring": "weather-pouring",
+        "rainy": "weather-rainy",
+        "snowy": "weather-snowy",
+        "partlycloudy": "weather-partly-cloudy",
+        "cloudy": "weather-cloudy",
+        "fog": "weather-fog",
+        "sunny": "weather-sunny",
+        "windy": "weather-windy",
+        "exceptional": "weather-cloudy-alert",
+    }
+
+    def _norm_alnum(s: str) -> str:
+        return re.sub(r'[^a-z0-9]+', '', (s or '').lower())
+
+    normalized_icon_map = { _norm_alnum(k): v for k, v in icon_map.items() }
+    icon = normalized_icon_map.get(_norm_alnum(cond or ''))
+    if icon == "weather-partly-cloudy" and is_night:
+        icon = "weather-night-partly-cloudy"
+
+    return icon
 
 class WeatherItem:
-    def __init__(self, data: Dict[str, Any]):
+    def __init__(self, data: Dict[str, Any], is_night: bool = False) -> None:
         self.data = data
         self.temperature: Optional[float] = None
         self.humidity: Optional[float] = None
         self.time: Optional[DateTime] = None
         self.condition: Optional[str] = None
         self.condition_icon: Optional[str] = None
+        self.is_night = is_night
         self.parse_data()
 
     def parse_data(self):
@@ -40,40 +79,7 @@ class WeatherItem:
                 return None
 
                 # Encapsulate mapping and normalization in an inner helper for clarity.
-        def _get_icon_for_condition(cond: Optional[str]) -> Optional[str]:
-            """Return the icon filename for a given Home Assistant condition key.
-
-            Uses canonical HA keys and normalizes both map keys and the incoming
-            condition by removing non-alphanumeric characters and lowercasing
-            before doing an exact lookup.
-            """
-
-            icon_map = {
-                # canonical HA keys (more specific first)
-                "lightning-rainy": "weather-lightning-rainy.png",
-                "snowy-rainy": "weather-snowy-rainy.png",
-                "windy-variant": "weather-windy-variant.png",
-                "clear-night": "weather-night.png",
-                # simple canonical keys
-                "lightning": "weather-lightning.png",
-                "hail": "weather-hail.png",
-                "pouring": "weather-pouring.png",
-                "rainy": "weather-rainy.png",
-                "snowy": "weather-snowy.png",
-                "partlycloudy": "weather-partly-cloudy.png",
-                "cloudy": "weather-cloudy.png",
-                "fog": "weather-fog.png",
-                "sunny": "weather-sunny.png",
-                "windy": "weather-windy.png",
-                "exceptional": "weather-cloudy-alert.png",
-            }
-
-            def _norm_alnum(s: str) -> str:
-                return re.sub(r'[^a-z0-9]+', '', (s or '').lower())
-
-            normalized_icon_map = { _norm_alnum(k): v for k, v in icon_map.items() }
-            return normalized_icon_map.get(_norm_alnum(cond or ''))
-
+       
         d = self.data or {}
 
         # temperature / humidity
@@ -84,8 +90,8 @@ class WeatherItem:
         dt = d.get("datetime") or d.get("time") or d.get("dt")
         if isinstance(dt, str):
             try:
-                # parse ISO 8601 string, DateTime.fromisoformat supports offset like +00:00
-                self.time = DateTime.fromisoformat(dt)
+                self.time = local_dt_from_utc_str(dt)  # Convert to local timezone
+                print(f"Parsed datetime string '{dt}' to {self.time}")
             except Exception:
                 self.time = None
         else:
@@ -96,7 +102,7 @@ class WeatherItem:
         self.condition = str(cond) if cond is not None else None
 
         # Lookup icon using the helper
-        self.condition_icon = _get_icon_for_condition(self.condition)
+        self.condition_icon = _get_icon_for_condition(self.condition, self.is_night)
 
         # additional telemetry (optional)
         self.precipitation_probability = to_float(d.get("precipitation_probability"))
@@ -175,8 +181,9 @@ class HassWeather:
     }
     """
 
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, is_night: bool = False) -> None:
         self.client = client
+        self.is_night = is_night
 
         # runtime values
         self.temperature: Optional[float] = None
@@ -206,10 +213,11 @@ class HassWeather:
             forecast_list = fc[1]['weather.home']['forecast'] # type: ignore
             if not isinstance(forecast_list, list):
                 raise RuntimeError("Forecast data is not a list")
+            self.forecast = []
             for item_data in forecast_list:
-                weather_item = WeatherItem(item_data) # type: ignore
-                print(weather_item)
-            #print(dumps(self.forecast, indent=4))
+                weather_item = WeatherItem(item_data, self.is_night) # type: ignore  
+                #print(f"Parsed forecast item: {weather_item}")              
+                self.forecast.append(weather_item)
 
     def update_weather(self) -> None:
         """Fetch weather entity attributes and populate fields."""
@@ -227,12 +235,19 @@ class HassWeather:
             self.temperature = self.convert_to_float(temp_val)
             hum_val = state.attributes.get("humidity")
             self.humidity = self.convert_to_float(hum_val)
-            
+            self.condition_icon = _get_icon_for_condition(state.state, self.is_night)
             self.update_forecast()
 
     def update(self) -> None:
         """Perform all updates (weather entity first, then optional sensor)."""
         self.update_weather()
+
+    def get_forecast(self) -> Optional[list]:
+        """Return the forecast data."""
+        if self.forecast is None:
+            return None
+        else:
+            return self.forecast[1::2][:5]
 
     def __repr__(self) -> str:
         parts = []
