@@ -1,11 +1,14 @@
 from PIL import Image, ImageFont, ImageDraw, ImageOps
 from pathlib import Path
 from datetime import datetime
+import os
 
 
-#font = ImageFont.load("arial.pil")
-font = ImageFont.truetype("arialbd.ttf", 18)
-font_big = ImageFont.truetype("arialbd.ttf", 54)
+if os.name == 'nt':    font_path = "C:/Windows/Fonts/arialbd.ttf"
+else:    font_path = "/usr/share/fonts/truetype/dejavu/Dejavu/DejaVuSans-Bold.ttf"
+
+font = ImageFont.truetype(font_path, 18)
+font_big = ImageFont.truetype(font_path, 54)
 
 forecasts = [
     {
