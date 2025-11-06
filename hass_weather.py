@@ -91,7 +91,7 @@ class WeatherItem:
         if isinstance(dt, str):
             try:
                 self.time = local_dt_from_utc_str(dt)  # Convert to local timezone
-                print(f"Parsed datetime string '{dt}' to {self.time}")
+                #print(f"Parsed datetime string '{dt}' to {self.time}")
             except Exception:
                 self.time = None
         else:
