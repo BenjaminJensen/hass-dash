@@ -4,8 +4,11 @@ from datetime import datetime
 import os
 
 
-if os.name == 'nt':    font_path = "C:/Windows/Fonts/arialbd.ttf"
-else:    font_path = "/usr/share/fonts/truetype/dejavu/Dejavu/DejaVuSans-Bold.ttf"
+if os.name == 'nt':
+    font_path = "C:/Windows/Fonts/arialbd.ttf"
+else:
+    font = 'liberation/LiberationSans-Bold.ttf'
+    font_path = f"/usr/share/fonts/truetype/{font}"
 
 font = ImageFont.truetype(font_path, 18)
 font_big = ImageFont.truetype(font_path, 54)

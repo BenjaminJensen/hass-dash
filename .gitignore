@@ -124,6 +124,5 @@ coverage.xml
 .history/
 
 # temp build files
-out.bmp
-out2.bmp
+*.bmp
 # End of file
