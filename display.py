@@ -96,6 +96,44 @@ def draw_weather(im: ImageDraw.ImageDraw, weather: dict) -> None:
     temperature = f'{weather.temperature}°C'
     im.text((200, 40), temperature, font=font_big)
 
+def draw_sun(im: ImageDraw.ImageDraw, sun:dict) -> None:
+    # Draw sunrise icon
+
+    # Draw sunrise time
+    sunrise_time = sun.rising
+    try:
+        if isinstance(sunrise_time, datetime):
+            dt = sunrise_time
+        else:
+            raise ValueError("dawn is not a datetime object")
+        time_str = dt.strftime('%H:%M')
+
+    except Exception:
+        # Fallback: use the raw value if parsing fails
+        print(f"Failed to parse sunrise time: {sunrise_time}")
+        time_str = str(sunrise_time)
+
+    im.text((105, 405), f'{time_str}', font=font)
+
+    # Draw sunset icon
+    icon_path = Path(f"./assets/weather-icons/weather-sunset-down-100x100.bmp")
+    
+
+    # Draw sunset time
+    sunset_time = sun.setting
+    try:
+        if isinstance(sunset_time, datetime):
+            dt = sunset_time
+        else:
+            raise ValueError("dusk is not a datetime object")
+        time_str = dt.strftime('%H:%M')
+    except Exception:
+        # Fallback: use the raw value if parsing fails
+        print(f"Failed to parse sunset time: {sunset_time}")
+        time_str = str(sunset_time)
+
+    im.text((270, 405), f'{time_str}', font=font)
+
 def do_stuff():
     with Image.open("assets/hass-dash-house.bmp") as im:
         draw = ImageDraw.Draw(im)

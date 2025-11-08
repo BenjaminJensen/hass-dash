@@ -26,13 +26,15 @@ class HassSun:
                 raise RuntimeError("Sun entity not found")
             state = sun.get_state()  # Because requests are cached we reduce bandwidth usage :D
             self.data = state.attributes
+            self.dawn = local_dt_from_utc_str(self.data.get('next_dawn'))
+            self.dusk = local_dt_from_utc_str(self.data.get('next_dusk'))
+            self.rising = local_dt_from_utc_str(self.data.get('next_rising'))
+            self.setting = local_dt_from_utc_str(self.data.get('next_setting'))
 
     def is_night(self) -> bool:
-        dawn = self.data.get('next_dawn')
+        
         #dawn_dt = dt.fromisoformat(dawn) if dawn else None
-        dawn_dt = local_dt_from_utc_str(dawn) if dawn else None
-        dusk = self.data.get('next_dusk')
-        #dusk_dt = dt.fromisoformat(dusk) if dusk else None
-        dusk_dt = local_dt_from_utc_str(dusk) if dusk else None
+        dawn_dt = self.dawn if self.dawn else None
+        dusk_dt = self.dusk if self.dusk else None
 
         return dawn_dt is not None and dusk_dt is not None and dawn_dt <= dusk_dt
