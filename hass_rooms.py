@@ -5,6 +5,23 @@ import os
 import yaml
 from dataclasses import dataclass
 from typing import Optional
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Position:
+    x: int
+    y: int
+
+@dataclass
+class EntityRef:
+    entity_id: str
+    name: str
+    position: Position
+    value: Optional[float] = None
 '''
 @dataclass
 class HassRoom:
@@ -38,43 +55,68 @@ class HassRoom:
     def __init__(self, config: Dict[str, Any], client: Client):
         self.client = client
         self.config = config or {}
-        self.temperature: Optional[float] = None
-        self.humidity: Optional[float] = None
         self.parse_config()
 
+    @property
+    def temperature(self) -> Optional[float]:
+        t = self._climate
+        if t:
+            return t.value
+        return None
+    
+    @property
+    def humidity(self) -> Optional[float]:
+        h = self._humidity
+        if h:
+            return h.value
+        return None
+    
+    def parse_entity_ref(self, name) -> EntityRef | None:
+        if name in self.config:
+            entity_cfg = self.config[name]
+            pos = Position(
+                x=entity_cfg.get('position', {}).get('x', 0), 
+                y=entity_cfg.get('position', {}).get('y', 0))
+            return EntityRef(entity_cfg['entity_id'], name, pos)
+        return None
+    
     def parse_config(self):
         if 'name' in self.config:
             self.name = self.config['name']
         else:
             self.name = "Unnamed Room"
-        if 'temperature_id' in self.config:
-            self.temperature_id = self.config['temperature_id']
-        if 'humidity_id' in self.config:
-            self.humidity_id = self.config['humidity_id']
-        if 'climate_id' in self.config:
-            self.climate_id = self.config['climate_id']
+
+        # Parse optional entity references
+        self._humidity = self.parse_entity_ref('humidity')
+        self._climate = self.parse_entity_ref('climate')
 
     def update_climate(self):
         with self.client:
-            if hasattr(self, 'climate_id'):
-                climate_entity = self.client.get_entity(entity_id=f"climate.{self.climate_id}")
+            if self._climate:
+                e = f'climate.{self._climate.entity_id}'
+                climate_entity = self.client.get_entity(entity_id=e)
                 if climate_entity:
                     state = climate_entity.get_state()
                     attributes = state.attributes
                     #print(dumps(attributes, indent=4))
-                    self.temperature = attributes.get('current_temperature')
+                    self._climate.value = attributes.get('current_temperature')
 
     def update_humidity(self):
         with self.client:
-            if hasattr(self, 'humidity_id'):
-                humidity_entity = self.client.get_entity(entity_id=f"sensor.{self.humidity_id}")
+            if self._humidity:
+                e = f'sensor.{self._humidity.entity_id}'
+                humidity_entity = self.client.get_entity(entity_id=e)
                 if humidity_entity:
                     state = humidity_entity.get_state()
-                    attributes = state.attributes
                     #print(dumps(attributes, indent=4))
-                    self.humidity = state.state
+                    try:
+                        self._humidity.value = float(state.state)
+                    except:
+                        logger.warning(f"Could not convert humidity state to float: {state.state} of room {self.name}")
+                        self._humidity.value = None
 
     def update(self):
+        logging.info(f"Updating room: {self.name}")
         self.update_climate()
         self.update_humidity()
 
@@ -139,8 +181,13 @@ class HassRooms:
 
 
 def main() -> None:
-    hass_rooms = HassRooms(None)
+    from hass import Client, get_hass_client
+    logging.basicConfig(level=logging.INFO)
+
+    client = get_hass_client()
+    hass_rooms = HassRooms(client)
     rooms = hass_rooms.read_rooms()
+    hass_rooms.update_rooms()
     for idx, room in enumerate(rooms):
         room_name = room.name
         temperature = f'{room.temperature}°C'
