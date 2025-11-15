@@ -38,6 +38,8 @@ class HassRoom:
     def __init__(self, config: Dict[str, Any], client: Client):
         self.client = client
         self.config = config or {}
+        self.temperature: Optional[float] = None
+        self.humidity: Optional[float] = None
         self.parse_config()
 
     def parse_config(self):
@@ -91,8 +93,8 @@ class HassRooms:
         self.rooms: List[HassRoom] = []
 
     def update_rooms(self):
-        with self.client:
-            pass
+        for r in self.rooms:
+            r.update()
 
     def read_rooms(self, path: str = "rooms.yml") -> List[HassRoom]:
         """Read and parse a rooms YAML file.
@@ -126,16 +128,24 @@ class HassRooms:
             
             for room_cfg in rooms:
                 room = HassRoom(config=room_cfg, client=self.client)
-                room.update()
                 self.rooms.append(room)
 
             return self.rooms
-        print(f"Type: {type(data)}")
+        
         if isinstance(data, list):
             return data
 
         raise ValueError("Unexpected YAML structure in rooms.yml")
 
 
+def main() -> None:
+    hass_rooms = HassRooms(None)
+    rooms = hass_rooms.read_rooms()
+    for idx, room in enumerate(rooms):
+        room_name = room.name
+        temperature = f'{room.temperature}°C'
+        humidity = f'{room.humidity}%'
+        print(f"Room {idx}: {room_name}, Temp: {temperature}, Humidity: {humidity}")
 
-
+if __name__ == "__main__":
+    main()
