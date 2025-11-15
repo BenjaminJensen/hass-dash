@@ -18,6 +18,8 @@ def sun_display(draw: ImageDraw.ImageDraw, client: Client) -> None:
     hass_sun.update()
     draw_sun(draw, hass_sun)
 
+    return hass_sun
+
 def room_display(draw: ImageDraw.ImageDraw, client: Client) -> None:
     hass_rooms = HassRooms(client)
     rooms = hass_rooms.read_rooms()
@@ -34,9 +36,13 @@ def main() -> None:
 
     with Image.open("assets/hass-dash-house.bmp") as im:
         draw = ImageDraw.Draw(im)
+        
+        hass_sun = sun_display(draw, client)
 
-        sun_display(draw, client)
+        weather_display(draw, client, hass_sun)
+        
         room_display(draw, client)
+
         im.save("out2.bmp", "BMP")
 
 if __name__ == "__main__":
