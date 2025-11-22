@@ -4,7 +4,7 @@ from hass_weather import HassWeather, WeatherItem
 from hass_rooms import HassRooms
 from hass import Client, get_hass_client
 from hass_sun import HassSun
-from display import draw_forecast, draw_weather, draw_sun, draw_rooms
+from display import draw_forecast, draw_weather, draw_sun, draw_rooms, draw_update_time
 
 import logging
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ def room_display(draw: ImageDraw.ImageDraw, client: Client) -> None:
         print(f"Room {idx}: {room_name}, Temp: {temperature}, Humidity: {humidity}")
     ''' 
 
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
@@ -53,7 +54,9 @@ def main() -> None:
         
         room_display(draw, client)
 
-        im.save("out2.bmp", "BMP")
+        draw_update_time(draw)
+
+        im.save("out2.bmp", "BMP") 
 
 if __name__ == "__main__":
     main()

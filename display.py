@@ -5,13 +5,17 @@ import os
 
 
 if os.name == 'nt':
-    font_path = "C:/Windows/Fonts/arialbd.ttf"
+    font_path_db = "C:/Windows/Fonts/arialbd.ttf"
+    font_path = "C:/Windows/Fonts/arial.ttf"
 else:
-    font = 'liberation/LiberationSans-Bold.ttf'
+    font_db = 'liberation/LiberationSans-Bold.ttf'
+    font = 'liberation/LiberationSans-Regular.ttf'
+    font_path_db = f"/usr/share/fonts/truetype/{font_db}"
     font_path = f"/usr/share/fonts/truetype/{font}"
 
-font = ImageFont.truetype(font_path, 18)
-font_big = ImageFont.truetype(font_path, 54)
+font = ImageFont.truetype(font_path_db, 18)
+font_big = ImageFont.truetype(font_path_db, 54)
+font_small = ImageFont.truetype(font_path, 14)
 
 forecasts = [
     {
@@ -143,6 +147,11 @@ def draw_rooms(im: ImageDraw.ImageDraw, rooms: list) -> None:
         pos = room.humidity_pos
         im.text(pos, humidity, font=font)
         
+
+def draw_update_time(im: ImageDraw.ImageDraw) -> None:
+    now = datetime.now()
+    time_str = now.strftime('%Y-%m-%d %H:%M:%S')
+    im.text((10, 460), f'Updated: {time_str}', font=font_small)
 
 def do_stuff():
     with Image.open("assets/hass-dash-house.bmp") as im:
