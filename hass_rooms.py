@@ -6,9 +6,10 @@ import yaml
 from dataclasses import dataclass
 from typing import Optional
 import logging
+from typing import Tuple
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('hass_rooms')
 
 
 @dataclass
@@ -65,12 +66,25 @@ class HassRoom:
         return None
     
     @property
+    def temperature_pos(self) -> Optional[Tuple[int, int]]:
+        t = self._climate
+        if t:
+            return t.position.x, t.position.y
+        return None
+    
+    @property
     def humidity(self) -> Optional[float]:
         h = self._humidity
         if h:
             return h.value
         return None
     
+    @property
+    def humidity_pos(self) -> Optional[Tuple[int, int]]:
+        h = self._humidity
+        if h:
+            return h.position.x, h.position.y
+        return None
     def parse_entity_ref(self, name) -> EntityRef | None:
         if name in self.config:
             entity_cfg = self.config[name]

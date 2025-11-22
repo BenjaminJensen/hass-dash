@@ -11,124 +11,124 @@ rooms:
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_5"
       position:
-        x: 100
-        y: 150
+        x: 580
+        y: 20
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_5"
       position:
-        x: 120
-        y: 170
+        x: 580
+        y: 40
 
   - entity_id: 1
     name: "Soveværelse"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_1"
       position:
-        x: 100
-        y: 150
+        x: 510
+        y: 20
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_1"
       position:
-        x: 120
-        y: 170
+        x: 510
+        y: 40
 
   - entity_id: 2
     name: "Stue"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_2"
       position:
-        x: 100
-        y: 150
+        x: 510
+        y: 105
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_2"
       position:
-        x: 120
-        y: 170
+        x: 510
+        y: 125
 
   - entity_id: 6
     name: "Køkken"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_6"
       position:
-        x: 100
-        y: 150
+        x: 640
+        y: 105
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_6"
       position:
-        x: 120
-        y: 170
+        x: 640
+        y: 125
   - entity_id: 8
     name: "Lille Bad"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_7"
       position:
-        x: 100
-        y: 150
+        x: 735
+        y: 170
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_8"
       position:
-        x: 120
-        y: 170
+        x: 735
+        y: 190
 
   - entity_id: 4
     name: "Sune"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_4"
       position:
-        x: 100
-        y: 150
+        x: 735
+        y: 225
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_4"
       position:
-        x: 120
-        y: 170
+        x: 735
+        y: 245
   - entity_id: 9
     name: "Sophie"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_8"
       position:
-        x: 100
-        y: 150
+        x: 630
+        y: 230
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_9"
       position:
-        x: 120
-        y: 170
+        x: 630
+        y: 250
 
   - entity_id: 3
     name: "Marius"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_3"
       position:
-        x: 100
-        y: 150
+        x: 735
+        y: 300
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_3"
       position:
-        x: 120
-        y: 170
+        x: 737
+        y: 320
   - entity_id: 10 (11)
     name: "Gang"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_9"
       position:
-        x: 100
-        y: 150
+        x: 630
+        y: 295
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_9"
       position:
-        x: 120
-        y: 170
+        x: 630
+        y: 315
 
   - entity_id: 12 (13)
     name: "Garage"
     climate: 
       entity_id: "0x5cc7c1fffede1ef5_10"
       position:
-        x: 100
-        y: 150
+        x: 680
+        y: 390
     humidity: 
       entity_id: "0x5cc7c1fffede1ef5_humidity_10"
       position:
-        x: 120
-        y: 170
+        x: 680
+        y: 410

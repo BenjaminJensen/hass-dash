@@ -134,6 +134,16 @@ def draw_sun(im: ImageDraw.ImageDraw, sun:dict) -> None:
 
     im.text((270, 405), f'{time_str}', font=font)
 
+def draw_rooms(im: ImageDraw.ImageDraw, rooms: list) -> None:
+    for idx, room in enumerate(rooms):
+        temperature = f'{room.temperature}°C'
+        pos = room.temperature_pos
+        im.text(pos, temperature, font=font)
+        humidity = f'{room.humidity}%'
+        pos = room.humidity_pos
+        im.text(pos, humidity, font=font)
+        
+
 def do_stuff():
     with Image.open("assets/hass-dash-house.bmp") as im:
         draw = ImageDraw.Draw(im)
