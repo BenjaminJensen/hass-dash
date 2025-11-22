@@ -210,10 +210,9 @@ class EPD:
         # The black bytes need to be inverted back from what getbuffer did
         for i in range(len(imageblack)):
             imageblack[i] ^= 0xFF
-            self.send_data2(imageblack)
+        self.send_data2(imageblack)
 
-        if imagered:
-            self.send_command(0x13)
+        self.send_command(0x13)
         self.send_data2(imagered)
         
         self.send_command(0x12)
