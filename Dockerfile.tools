@@ -26,6 +26,10 @@ Path('/tmp/requirements.utf8.txt').write_text(text, encoding='utf-8', newline='\
 PY
 
 RUN pip install --upgrade pip \
-    && pip install -r /tmp/requirements.utf8.txt
+    && pip install -r /tmp/requirements.utf8.txt \
+    && pip install \
+        pytest \
+        pytest-cov \
+        ruff
 
 CMD ["bash"]
