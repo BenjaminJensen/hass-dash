@@ -52,7 +52,7 @@ def humi_stuff(client: Client) -> None:
 
 def rooms(client: Client) -> None:
     hass_rooms = HassRooms(client)
-    rooms = hass_rooms.read_rooms("rooms.yml")
+    rooms = hass_rooms.read_rooms()
     print("Rooms loaded from rooms.yml:")
     print(rooms)
 

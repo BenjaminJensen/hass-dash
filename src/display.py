@@ -3,6 +3,8 @@ from pathlib import Path
 from datetime import datetime
 import os
 
+_ASSETS = Path(__file__).parent.parent / "assets"
+
 
 if os.name == 'nt':
     font_path_db = "C:/Windows/Fonts/arialbd.ttf"
@@ -56,7 +58,7 @@ def draw_forecast(im: ImageDraw.ImageDraw, forecast: list) -> None:
         # idx is the iteration index (0-based)
         # Draw forecast icon
         icon_name = fc.condition_icon
-        icon_path = Path(f"./assets/weather-icons/{icon_name}-50x50.bmp")
+        icon_path = _ASSETS / f"weather-icons/{icon_name}-50x50.bmp"
         
         try:
             with Image.open(icon_path) as icon_im:
@@ -87,7 +89,7 @@ def draw_forecast(im: ImageDraw.ImageDraw, forecast: list) -> None:
 def draw_weather(im: ImageDraw.ImageDraw, weather: dict) -> None:
         # Draw forecast icon
     icon_name = weather.condition_icon
-    icon_path = Path(f"./assets/weather-icons/{icon_name}-100x100.bmp")
+    icon_path = _ASSETS / f"weather-icons/{icon_name}-100x100.bmp"
     
     try:
         with Image.open(icon_path) as icon_im:
@@ -120,7 +122,7 @@ def draw_sun(im: ImageDraw.ImageDraw, sun:dict) -> None:
     im.text((105, 405), f'{time_str}', font=font)
 
     # Draw sunset icon
-    icon_path = Path(f"./assets/weather-icons/weather-sunset-down-100x100.bmp")
+    icon_path = _ASSETS / "weather-icons/weather-sunset-down-100x100.bmp"
     
 
     # Draw sunset time
@@ -154,7 +156,7 @@ def draw_update_time(im: ImageDraw.ImageDraw) -> None:
     im.text((10, 460), f'Updated: {time_str}', font=font_small)
 
 def do_stuff():
-    with Image.open("assets/hass-dash-house.bmp") as im:
+    with Image.open(_ASSETS / "hass-dash-house.bmp") as im:
         draw = ImageDraw.Draw(im)
         draw_forecast(draw, forecasts)
         draw_weather(draw, {'temperature': 22.0, 'condition_icon': 'weather-windy-variant'})

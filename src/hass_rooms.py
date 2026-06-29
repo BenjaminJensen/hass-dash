@@ -1,6 +1,7 @@
 from homeassistant_api import Client
 from json import dumps
 from typing import List, Dict, Any
+from pathlib import Path
 import os
 import yaml
 from dataclasses import dataclass
@@ -152,7 +153,7 @@ class HassRooms:
         for r in self.rooms:
             r.update()
 
-    def read_rooms(self, path: str = "rooms.yml") -> List[HassRoom]:
+    def read_rooms(self, path: str = str(Path(__file__).parent.parent / "rooms.yml")) -> List[HassRoom]:
         """Read and parse a rooms YAML file.
 
         Args:

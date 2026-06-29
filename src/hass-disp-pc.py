@@ -1,4 +1,7 @@
+from pathlib import Path
 from PIL import Image, ImageDraw
+
+_ASSETS = Path(__file__).parent.parent / "assets"
 
 from hass_weather import HassWeather, WeatherItem
 from hass_rooms import HassRooms
@@ -45,7 +48,7 @@ def main() -> None:
     client = get_hass_client()
 
 
-    with Image.open("assets/hass-dash-house.bmp") as im:
+    with Image.open(_ASSETS / "hass-dash-house.bmp") as im:
         draw = ImageDraw.Draw(im)
         
         hass_sun = sun_display(draw, client)

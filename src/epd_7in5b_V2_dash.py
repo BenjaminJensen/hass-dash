@@ -1,7 +1,10 @@
 import logging
 import epd7in5b_V2
 import time
+from pathlib import Path
 from PIL import Image,ImageDraw
+
+_ASSETS = Path(__file__).parent.parent / "assets"
 
 # New imports
 from hass_weather import HassWeather
@@ -22,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 def create_image_for_display() -> Image.Image:
     client = get_hass_client()
 
-    im = Image.open("assets/hass-dash-house.bmp")
+    im = Image.open(_ASSETS / "hass-dash-house.bmp")
     draw = ImageDraw.Draw(im)
     
     hass_sun = HassSun(client)
