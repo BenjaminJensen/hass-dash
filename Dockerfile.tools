@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /workspace
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /tmp/requirements.txt
+
+# Normalize requirements encoding so pip can consume it reliably.
+RUN python - <<'PY'
+from pathlib import Path
+
+raw = Path('/tmp/requirements.txt').read_bytes()
+if raw.startswith((b'\xff\xfe', b'\xfe\xff')):
+    text = raw.decode('utf-16')
+else:
+    text = raw.decode('utf-8')
+
+Path('/tmp/requirements.utf8.txt').write_text(text, encoding='utf-8', newline='\n')
+PY
+
+RUN pip install --upgrade pip \
+    && pip install -r /tmp/requirements.utf8.txt
+
+CMD ["bash"]

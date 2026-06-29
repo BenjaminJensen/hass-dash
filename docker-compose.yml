@@ -1,0 +1,9 @@
+services:
+  tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.tools
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    entrypoint: ["/bin/bash", "-lc"]
