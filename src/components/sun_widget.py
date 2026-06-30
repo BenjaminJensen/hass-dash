@@ -50,19 +50,13 @@ class SunWidget(Widget):
 
     def render(self) -> None:
         """Render sun widget."""
-        draw = self.renderer.get_draw()
-
-        from PIL import ImageFont
-
         try:
-            font = ImageFont.load_default()
-
             sunrise_str = self.sunrise.strftime("%H:%M") if self.sunrise else "N/A"
             sunset_str = self.sunset.strftime("%H:%M") if self.sunset else "N/A"
 
-            draw.text((10, 70), f"Sunrise: {sunrise_str}", font=font, fill=0)
-            draw.text((10, 85), f"Sunset: {sunset_str}", font=font, fill=0)
-            draw.text((10, 100), f"Night: {'Yes' if self.is_night else 'No'}", font=font, fill=0)
+            self.renderer.draw_text((10, 70), f"Sunrise: {sunrise_str}", style="normal", fill=0)
+            self.renderer.draw_text((10, 85), f"Sunset: {sunset_str}", style="normal", fill=0)
+            self.renderer.draw_text((10, 100), f"Night: {'Yes' if self.is_night else 'No'}", style="normal", fill=0)
         except Exception as e:
             print(f"Error rendering sun widget: {e}")
 

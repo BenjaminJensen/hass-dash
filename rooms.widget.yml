@@ -1,0 +1,130 @@
+rooms:
+  stort_bad:
+    name: "Stort Bad"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_5"
+      position:
+        x: 580
+        y: 20
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_5"
+      position:
+        x: 580
+        y: 40
+
+  sovevaerelse:
+    name: "Soveværelse"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_1"
+      position:
+        x: 510
+        y: 20
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_1"
+      position:
+        x: 510
+        y: 40
+
+  stue:
+    name: "Stue"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_2"
+      position:
+        x: 510
+        y: 105
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_2"
+      position:
+        x: 510
+        y: 125
+
+  kokken:
+    name: "Køkken"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_6"
+      position:
+        x: 640
+        y: 105
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_6"
+      position:
+        x: 640
+        y: 125
+
+  lille_bad:
+    name: "Lille Bad"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_7"
+      position:
+        x: 735
+        y: 170
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_8"
+      position:
+        x: 735
+        y: 190
+
+  sune:
+    name: "Sune"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_4"
+      position:
+        x: 735
+        y: 225
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_4"
+      position:
+        x: 735
+        y: 245
+
+  sophie:
+    name: "Sophie"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_8"
+      position:
+        x: 630
+        y: 230
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_9"
+      position:
+        x: 630
+        y: 250
+
+  marius:
+    name: "Marius"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_3"
+      position:
+        x: 735
+        y: 300
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_3"
+      position:
+        x: 737
+        y: 320
+
+  gang:
+    name: "Gang"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_9"
+      position:
+        x: 630
+        y: 295
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_9"
+      position:
+        x: 630
+        y: 315
+
+  garage:
+    name: "Garage"
+    climate:
+      entity_id: "climate.0x5cc7c1fffede1ef5_10"
+      position:
+        x: 680
+        y: 390
+    humidity:
+      entity_id: "sensor.0x5cc7c1fffede1ef5_humidity_10"
+      position:
+        x: 680
+        y: 410

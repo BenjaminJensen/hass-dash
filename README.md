@@ -18,6 +18,14 @@ docker compose build tools
 docker compose run --rm tools pytest tests/ -v
 ```
 
+Run a specific test class or test function:
+```bash
+docker compose run --rm tools "pytest tests/test_widgets.py::TestRoomsWidget -v"
+docker compose run --rm tools "pytest tests/test_widgets.py::TestRoomsWidget::test_rooms_render -v"
+```
+
+Note: because the `tools` service uses `bash -lc` as entrypoint, pass the full pytest command in quotes when using node selectors (`::`).
+
 Run with coverage:
 ```bash
 docker compose run --rm tools pytest tests/ --cov=src --cov-report=html

@@ -49,12 +49,8 @@ class WeatherWidget(Widget):
 
     def render(self) -> None:
         """Render weather widget."""
-        draw = self.renderer.get_draw()
-
         if not self.current_weather:
             return
-
-        from PIL import ImageFont
 
         # Simple rendering for now - can be enhanced
         temp = self.current_weather.get("temperature", "N/A")
@@ -62,10 +58,9 @@ class WeatherWidget(Widget):
         humidity = self.current_weather.get("humidity", "N/A")
 
         try:
-            font = ImageFont.load_default()
-            draw.text((10, 10), f"Weather: {temp}°C", font=font, fill=0)
-            draw.text((10, 25), f"Condition: {condition}", font=font, fill=0)
-            draw.text((10, 40), f"Humidity: {humidity}%", font=font, fill=0)
+            self.renderer.draw_text((10, 10), f"Weather: {temp}°C", style="normal", fill=0)
+            self.renderer.draw_text((10, 25), f"Condition: {condition}", style="normal", fill=0)
+            self.renderer.draw_text((10, 40), f"Humidity: {humidity}%", style="normal", fill=0)
         except Exception as e:
             print(f"Error rendering weather widget: {e}")
 

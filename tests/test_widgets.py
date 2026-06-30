@@ -1,5 +1,6 @@
 """Tests for dashboard widgets."""
 import pytest
+from pathlib import Path
 
 from core.hass_mock import MockHASSClient
 from rendering.renderer import PILRenderer
@@ -12,7 +13,34 @@ from dashboard import Dashboard
 @pytest.fixture
 def mock_hass():
     """Fixture: Mock HASS client with test data."""
-    return MockHASSClient()
+    client = MockHASSClient()
+
+    room_entities = {
+        "climate.0x5cc7c1fffede1ef5_5": ("heat", {"current_temperature": 23.5}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_5": ("55", {}),
+        "climate.0x5cc7c1fffede1ef5_1": ("heat", {"current_temperature": 21.8}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_1": ("42", {}),
+        "climate.0x5cc7c1fffede1ef5_2": ("heat", {"current_temperature": 22.1}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_2": ("44", {}),
+        "climate.0x5cc7c1fffede1ef5_6": ("heat", {"current_temperature": 24.0}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_6": ("38", {}),
+        "climate.0x5cc7c1fffede1ef5_7": ("heat", {"current_temperature": 23.0}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_8": ("50", {}),
+        "climate.0x5cc7c1fffede1ef5_4": ("heat", {"current_temperature": 21.0}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_4": ("41", {}),
+        "climate.0x5cc7c1fffede1ef5_8": ("heat", {"current_temperature": 20.5}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_9": ("43", {}),
+        "climate.0x5cc7c1fffede1ef5_3": ("heat", {"current_temperature": 21.2}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_3": ("40", {}),
+        "climate.0x5cc7c1fffede1ef5_9": ("heat", {"current_temperature": 19.8}),
+        "sensor.0x5cc7c1fffede1ef5_humidity_10": ("52", {}),
+        "climate.0x5cc7c1fffede1ef5_10": ("heat", {"current_temperature": 18.0}),
+    }
+
+    for entity_id, (state, attributes) in room_entities.items():
+        client.set_entity(entity_id, state, attributes)
+
+    return client
 
 
 @pytest.fixture
@@ -134,6 +162,26 @@ class TestRoomsWidget:
         widget = RoomsWidget(mock_hass, pil_renderer)
         widget.update()
         widget.render()
+        pil_renderer.render()
 
         # Should not raise exception
         assert isinstance(widget.rooms, list)
+        assert len(widget.rooms) == 10
+        assert widget.rooms[0].name == "Stort Bad"
+        assert widget.rooms[0].temperature == 23.5
+        assert widget.rooms[0].humidity == 55.0
+        assert Path("test_output.bmp").exists()
+
+
+class TestPILRenderer:
+    """Tests for PIL renderer behavior."""
+
+    def test_clear_restores_background(self, pil_renderer):
+        """Clear should restore the original image baseline."""
+        baseline = pil_renderer.get_image().tobytes()
+
+        pil_renderer.draw_text((20, 20), "changed")
+        assert pil_renderer.get_image().tobytes() != baseline
+
+        pil_renderer.clear()
+        assert pil_renderer.get_image().tobytes() == baseline

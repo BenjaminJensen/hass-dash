@@ -31,6 +31,8 @@ class Dashboard:
 
     def render(self) -> None:
         """Render all widgets to the output."""
+        self.renderer.clear()
+
         for widget in self.widgets:
             widget.render()
 
