@@ -33,10 +33,12 @@ class WeatherWidget(Widget):
         # Get current weather
         weather_entity = self.hass_client.get_entity("weather.home")
         if weather_entity:
+            condition = weather_entity.attributes.get("condition", "")
             self.current_weather = {
                 "temperature": weather_entity.attributes.get("temperature"),
                 "humidity": weather_entity.attributes.get("humidity"),
-                "condition": weather_entity.attributes.get("condition"),
+                "condition": condition,
+                "condition_icon": f"weather-{condition}" if condition else "",
             }
 
         # Get forecast
@@ -52,17 +54,13 @@ class WeatherWidget(Widget):
         if not self.current_weather:
             return
 
-        # Simple rendering for now - can be enhanced
         temp = self.current_weather.get("temperature", "N/A")
-        condition = self.current_weather.get("condition", "")
-        humidity = self.current_weather.get("humidity", "N/A")
+        condition_icon = self.current_weather.get("condition_icon", "")
 
-        try:
-            self.renderer.draw_text((10, 10), f"Weather: {temp}°C", style="normal", fill=0)
-            self.renderer.draw_text((10, 25), f"Condition: {condition}", style="normal", fill=0)
-            self.renderer.draw_text((10, 40), f"Humidity: {humidity}%", style="normal", fill=0)
-        except Exception as e:
-            print(f"Error rendering weather widget: {e}")
+        if condition_icon:
+            self.renderer.draw_icon((80, 20), condition_icon, 100)
+
+        self.renderer.draw_text((200, 40), f"{temp}°C", style="big", fill=0)
 
     def get_temperature(self) -> Optional[float]:
         """Get current temperature."""

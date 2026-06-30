@@ -1,6 +1,7 @@
 """Abstract interface for rendering to different outputs."""
 from abc import ABC, abstractmethod
 import os
+from pathlib import Path
 from typing import Any, Optional, Tuple
 
 from PIL import ImageDraw, ImageFont
@@ -58,6 +59,20 @@ class Renderer(ABC):
         """Clear the display."""
         pass
 
+    @abstractmethod
+    def draw_icon(self, position: Tuple[int, int], name: str, size: int = 100) -> None:
+        """Draw a weather icon at a position.
+
+        Args:
+            position: Top-left corner as (x, y)
+            name: Icon name, e.g. "weather-cloudy"
+            size: Icon size in pixels (square); used to locate the BMP file
+
+        Raises:
+            FileNotFoundError: If the icon BMP file does not exist
+        """
+        pass
+
 
 class PILRenderer(Renderer):
     """Renderer that outputs to PIL Image (for testing/debugging)."""
@@ -75,8 +90,6 @@ class PILRenderer(Renderer):
             output_path: Optional path to save output BMP file
             background_path: Optional path to background BMP file
         """
-        from PIL import Image
-
         self.size = size
         self.output_path = output_path or "output.bmp"
         default_background = os.path.join(
@@ -85,7 +98,6 @@ class PILRenderer(Renderer):
         self.background_path = background_path or default_background
         self._font_sizes = {"small": 14, "normal": 18, "big": 54}
         self._font_cache: dict[str, Any] = {}
-        self._default_font = ImageFont.load_default()
         self._font_bold_path, self._font_regular_path = self._resolve_font_paths()
         self._background_image = self._load_background_image()
         self.image = self._create_base_image()
@@ -113,15 +125,18 @@ class PILRenderer(Renderer):
 
         return Image.new("1", self.size, color=255)
 
-    def _resolve_font_paths(self) -> Tuple[Optional[str], Optional[str]]:
-        """Resolve OS-specific bold and regular TTF font paths."""
-        if os.name == "nt":
-            return "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf"
+    def _resolve_font_paths(self) -> Tuple[str, str]:
+        """Resolve bold and regular TTF paths from repository assets."""
+        fonts_dir = Path(__file__).parent.parent.parent / "assets" / "fonts" / "Liberation"
+        bold_path = fonts_dir / "LiberationSans-Bold.ttf"
+        regular_path = fonts_dir / "LiberationSans-Regular.ttf"
 
-        return (
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-        )
+        missing = [str(path) for path in (bold_path, regular_path) if not path.is_file()]
+        if missing:
+            missing_str = ", ".join(missing)
+            raise FileNotFoundError(f"Required font file(s) not found: {missing_str}")
+
+        return str(bold_path), str(regular_path)
 
     def _get_font(self, style: str) -> Any:
         """Get a cached PIL font object for the requested style."""
@@ -134,12 +149,12 @@ class PILRenderer(Renderer):
         size = self._font_sizes[style_name]
         font_path = self._font_regular_path if style_name == "small" else self._font_bold_path
 
-        font = self._default_font
-        if font_path:
-            try:
-                font = ImageFont.truetype(font_path, size)
-            except OSError:
-                font = self._default_font
+        try:
+            font = ImageFont.truetype(font_path, size)
+        except OSError as exc:
+            raise RuntimeError(
+                f"Failed to load font '{font_path}' for style '{style_name}' at size {size}"
+            ) from exc
 
         self._font_cache[style_name] = font
         return font
@@ -172,6 +187,20 @@ class PILRenderer(Renderer):
         """Clear the display."""
         self.image = self._create_base_image()
         self.draw = ImageDraw.Draw(self.image)
+
+    def draw_icon(self, position: Tuple[int, int], name: str, size: int = 100) -> None:
+        """Draw a weather icon from assets at the given position."""
+        from PIL import Image, ImageOps
+
+        assets_dir = Path(__file__).parent.parent.parent / "assets" / "weather-icons"
+        icon_path = assets_dir / f"{name}-{size}x{size}.bmp"
+
+        if not icon_path.exists():
+            raise FileNotFoundError(f"Icon file not found: {icon_path}")
+
+        with Image.open(icon_path) as icon_im:
+            inverted = ImageOps.invert(icon_im)
+            self.draw.bitmap(position, inverted)
 
     def get_image(self):
         """Get the underlying PIL Image (for inspection in tests)."""

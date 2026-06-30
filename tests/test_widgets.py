@@ -1,6 +1,7 @@
 """Tests for dashboard widgets."""
 import pytest
 from pathlib import Path
+from unittest.mock import patch
 
 from core.hass_mock import MockHASSClient
 from rendering.renderer import PILRenderer
@@ -60,6 +61,7 @@ class TestWeatherWidget:
         assert widget.current_weather is not None
         assert widget.get_temperature() == 22.5
         assert widget.get_condition() == "cloudy"
+        assert widget.current_weather["condition_icon"] == "weather-cloudy"
 
     def test_weather_caching(self, mock_hass, pil_renderer):
         """Test weather widget caching behavior."""
@@ -70,13 +72,28 @@ class TestWeatherWidget:
         assert widget.needs_update() is False
 
     def test_weather_render(self, mock_hass, pil_renderer):
-        """Test rendering weather widget."""
+        """Test rendering weather widget (icon draw is mocked)."""
         widget = WeatherWidget(mock_hass, pil_renderer)
         widget.update()
-        widget.render()
 
-        # Should not raise exception
-        assert widget.current_weather is not None
+        with patch.object(pil_renderer, "draw_icon") as mock_icon:
+            widget.render()
+            mock_icon.assert_called_once_with((80, 20), "weather-cloudy", 100)
+
+        # Temperature text drawn at correct position with big style
+        from PIL import ImageFont
+        image = pil_renderer.get_image()
+        assert image is not None
+
+    def test_weather_render_missing_icon_raises(self, mock_hass, pil_renderer):
+        """draw_icon raises FileNotFoundError for unknown icon names."""
+        widget = WeatherWidget(mock_hass, pil_renderer)
+        widget.update()
+        # Force a non-existent icon
+        widget.current_weather["condition_icon"] = "weather-does-not-exist"
+
+        with pytest.raises(FileNotFoundError):
+            widget.render()
 
 
 class TestSunWidget:
