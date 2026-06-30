@@ -15,6 +15,7 @@ This policy applies to the entire repository unless a deeper AGENTS.md file expl
 
 ## Validation Requirements
 
+- **Always run Ruff and the relevant tests immediately after every code change, without waiting to be asked.**
 - Always run Ruff after making a change.
 - Always run the relevant tests after making a change.
 - If a change affects rendering, inspect `test_output.bmp` and verify the rendered output is correct.
