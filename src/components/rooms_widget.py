@@ -176,7 +176,7 @@ class RoomsWidget(Widget):
 
                 self.renderer.draw_text(
                     temp_position,
-                    f"{room.name}: {temp_str}",
+                    f"{temp_str}",
                     style="normal",
                     fill=0,
                 )
