@@ -54,9 +54,8 @@ class SunWidget(Widget):
             sunrise_str = self.sunrise.strftime("%H:%M") if self.sunrise else "N/A"
             sunset_str = self.sunset.strftime("%H:%M") if self.sunset else "N/A"
 
-            self.renderer.draw_text((10, 70), f"Sunrise: {sunrise_str}", style="normal", fill=0)
-            self.renderer.draw_text((10, 85), f"Sunset: {sunset_str}", style="normal", fill=0)
-            self.renderer.draw_text((10, 100), f"Night: {'Yes' if self.is_night else 'No'}", style="normal", fill=0)
+            self.renderer.draw_text((105, 405), sunrise_str, style="normal", fill=0)
+            self.renderer.draw_text((270, 405), sunset_str, style="normal", fill=0)
         except Exception as e:
             print(f"Error rendering sun widget: {e}")
 

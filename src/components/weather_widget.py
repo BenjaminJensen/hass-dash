@@ -1,8 +1,9 @@
 """Weather widget component."""
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from components.widget import Widget
 from core.hass_client import HASSClient
 from rendering.renderer import Renderer
+from components.weather_icons import get_icon_for_condition
 
 
 class WeatherWidget(Widget):
@@ -26,7 +27,6 @@ class WeatherWidget(Widget):
         super().__init__(hass_client, renderer, cache_ttl=cache_ttl)
         self.device_id = device_id
         self.current_weather: Optional[Dict[str, Any]] = None
-        self.forecast: List[Dict[str, Any]] = []
 
     def _fetch_data(self) -> None:
         """Fetch weather data from HASS."""
@@ -38,16 +38,8 @@ class WeatherWidget(Widget):
                 "temperature": weather_entity.attributes.get("temperature"),
                 "humidity": weather_entity.attributes.get("humidity"),
                 "condition": condition,
-                "condition_icon": f"weather-{condition}" if condition else "",
+                "condition_icon": get_icon_for_condition(str(condition)) or "",
             }
-
-        # Get forecast
-        if self.device_id:
-            forecast_data = self.hass_client.get_forecast(
-                device_id=self.device_id,
-                forecast_type="hourly"
-            )
-            self.forecast = forecast_data or []
 
     def render(self) -> None:
         """Render weather widget."""

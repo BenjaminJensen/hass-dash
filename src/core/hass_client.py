@@ -55,6 +55,36 @@ class RealHASSClient(HASSClient):
         self.token = token
         self._client = HassApiClient(url, token)
 
+    def _extract_forecast_list(self, forecasts: Any) -> list:
+        """Normalize different API response shapes into a list of forecast dicts."""
+        if isinstance(forecasts, list):
+            if forecasts and all(isinstance(item, dict) and "datetime" in item for item in forecasts):
+                return forecasts
+
+            for item in forecasts:
+                extracted = self._extract_forecast_list(item)
+                if extracted:
+                    return extracted
+
+        if isinstance(forecasts, tuple):
+            for item in forecasts:
+                extracted = self._extract_forecast_list(item)
+                if extracted:
+                    return extracted
+
+        if isinstance(forecasts, dict):
+            direct = forecasts.get("forecast")
+            if isinstance(direct, list):
+                return direct
+
+            for value in forecasts.values():
+                if isinstance(value, dict):
+                    nested = value.get("forecast")
+                    if isinstance(nested, list):
+                        return nested
+
+        return []
+
     def get_entity(self, entity_id: str) -> Optional[Entity]:
         """Get entity from Home Assistant."""
         try:
@@ -80,7 +110,7 @@ class RealHASSClient(HASSClient):
                 if weather is None:
                     return []
                 forecasts = weather.get_forecasts(device_id=device_id, type=forecast_type)
-                return forecasts or []
+                return self._extract_forecast_list(forecasts)
         except Exception as e:
             print(f"Error fetching forecast: {e}")
             return []

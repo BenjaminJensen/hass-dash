@@ -6,6 +6,7 @@ from unittest.mock import patch
 from core.hass_mock import MockHASSClient
 from rendering.renderer import PILRenderer
 from components.weather_widget import WeatherWidget
+from components.weather_forecast_widget import WeatherForecastWidget
 from components.sun_widget import SunWidget
 from components.rooms_widget import RoomsWidget
 from dashboard import Dashboard
@@ -81,7 +82,6 @@ class TestWeatherWidget:
             mock_icon.assert_called_once_with((80, 20), "weather-cloudy", 100)
 
         # Temperature text drawn at correct position with big style
-        from PIL import ImageFont
         image = pil_renderer.get_image()
         assert image is not None
 
@@ -94,6 +94,91 @@ class TestWeatherWidget:
 
         with pytest.raises(FileNotFoundError):
             widget.render()
+
+
+class TestWeatherForecastWidget:
+    """Tests for weather forecast widget."""
+
+    def test_fetch_and_sample_forecast(self, mock_hass, pil_renderer):
+        """Widget should normalize, sample, and always return five entries."""
+        mock_hass.set_forecast(
+            [
+                {"datetime": "2025-11-01T16:00:00+00:00", "temperature": 12.0, "condition": "sunny"},
+                {
+                    "datetime": "2025-11-01T17:00:00+00:00",
+                    "temperature": 11.5,
+                    "condition": "partlycloudy",
+                },
+                {"datetime": "2025-11-01T18:00:00+00:00", "temperature": 11.0, "condition": "rainy"},
+                {"datetime": "2025-11-01T19:00:00+00:00", "temperature": 10.5, "condition": "cloudy"},
+                {"datetime": "2025-11-01T20:00:00+00:00", "temperature": 10.0, "condition": "snowy"},
+                {"datetime": "2025-11-01T21:00:00+00:00", "temperature": 9.5, "condition": "windy"},
+            ]
+        )
+
+        widget = WeatherForecastWidget(
+            mock_hass,
+            pil_renderer,
+            device_id="test-device",
+            step=2,
+            is_night=True,
+        )
+        widget.update()
+
+        sampled = widget.get_items()
+        assert len(sampled) == 5
+        assert sampled[0].condition == "partlycloudy"
+        assert sampled[0].condition_icon == "weather-night-partly-cloudy"
+        assert sampled[1].condition == "cloudy"
+        assert sampled[2].condition == "windy"
+        assert sampled[3].condition is None
+        assert sampled[4].condition is None
+
+    def test_render_forecast(self, mock_hass, pil_renderer):
+        """Render should draw five forecast icons using legacy spacing."""
+        mock_hass.set_forecast(
+            [
+                {"datetime": "2025-11-01T16:00:00+00:00", "temperature": 12.0, "condition": "sunny"},
+                {"datetime": "2025-11-01T17:00:00+00:00", "temperature": 11.5, "condition": "cloudy"},
+                {"datetime": "2025-11-01T18:00:00+00:00", "temperature": 11.0, "condition": "rainy"},
+                {
+                    "datetime": "2025-11-01T19:00:00+00:00",
+                    "temperature": 10.5,
+                    "condition": "lightning-rainy",
+                },
+                {"datetime": "2025-11-01T20:00:00+00:00", "temperature": 10.0, "condition": "snowy"},
+                {"datetime": "2025-11-01T21:00:00+00:00", "temperature": 9.5, "condition": "windy"},
+                {"datetime": "2025-11-01T22:00:00+00:00", "temperature": 9.0, "condition": "fog"},
+                {
+                    "datetime": "2025-11-01T23:00:00+00:00",
+                    "temperature": 8.5,
+                    "condition": "windy-variant",
+                },
+                {"datetime": "2025-11-02T00:00:00+00:00", "temperature": 8.0, "condition": "clear-night"},
+                {
+                    "datetime": "2025-11-02T01:00:00+00:00",
+                    "temperature": 7.5,
+                    "condition": "partlycloudy",
+                },
+            ]
+        )
+
+        widget = WeatherForecastWidget(
+            mock_hass,
+            pil_renderer,
+            device_id="test-device",
+            step=2,
+        )
+        widget.update()
+
+        with patch.object(pil_renderer, "draw_icon") as mock_icon:
+            widget.render()
+            assert mock_icon.call_count == 5
+            mock_icon.assert_any_call((50, 157), "weather-cloudy", 50)
+            mock_icon.assert_any_call((123, 157), "weather-lightning-rainy", 50)
+            mock_icon.assert_any_call((196, 157), "weather-windy", 50)
+            mock_icon.assert_any_call((269, 157), "weather-windy-variant", 50)
+            mock_icon.assert_any_call((342, 157), "weather-partly-cloudy", 50)
 
 
 class TestSunWidget:
@@ -154,14 +239,48 @@ class TestDashboard:
 
     def test_dashboard_full_run(self, mock_hass, pil_renderer):
         """Test full dashboard run: update and render."""
+        mock_hass.set_forecast(
+            [
+                {"datetime": "2025-11-01T16:00:00+00:00", "temperature": 12.0, "condition": "sunny"},
+                {"datetime": "2025-11-01T17:00:00+00:00", "temperature": 11.5, "condition": "cloudy"},
+                {"datetime": "2025-11-01T18:00:00+00:00", "temperature": 11.0, "condition": "rainy"},
+                {
+                    "datetime": "2025-11-01T19:00:00+00:00",
+                    "temperature": 10.5,
+                    "condition": "lightning-rainy",
+                },
+                {"datetime": "2025-11-01T20:00:00+00:00", "temperature": 10.0, "condition": "snowy"},
+                {"datetime": "2025-11-01T21:00:00+00:00", "temperature": 9.5, "condition": "windy"},
+                {"datetime": "2025-11-01T22:00:00+00:00", "temperature": 9.0, "condition": "fog"},
+                {
+                    "datetime": "2025-11-01T23:00:00+00:00",
+                    "temperature": 8.5,
+                    "condition": "windy-variant",
+                },
+                {"datetime": "2025-11-02T00:00:00+00:00", "temperature": 8.0, "condition": "clear-night"},
+                {
+                    "datetime": "2025-11-02T01:00:00+00:00",
+                    "temperature": 7.5,
+                    "condition": "partlycloudy",
+                },
+            ]
+        )
+
         dashboard = Dashboard(pil_renderer)
         dashboard.add_widget(WeatherWidget(mock_hass, pil_renderer))
+        dashboard.add_widget(WeatherForecastWidget(mock_hass, pil_renderer, device_id="test-device"))
         dashboard.add_widget(SunWidget(mock_hass, pil_renderer))
+        dashboard.add_widget(RoomsWidget(mock_hass, pil_renderer))
 
-        dashboard.run()
+        with patch.object(pil_renderer, "draw_icon", wraps=pil_renderer.draw_icon) as mock_icon:
+            dashboard.run()
+
+            # WeatherWidget renders one 100x100 icon, forecast renders five 50x50 icons.
+            forecast_calls = [call for call in mock_icon.call_args_list if call.args[2] == 50]
+            assert len(forecast_calls) == 5
 
         # Should complete without errors
-        assert len(dashboard.widgets) == 2
+        assert len(dashboard.widgets) == 4
 
 
 class TestRoomsWidget:
