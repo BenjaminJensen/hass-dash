@@ -6,7 +6,7 @@
 # *----------------
 # * | This version:   V1.2
 # * | Date        :   2022-10-29
-# * | Info        :   
+# * | Info        :
 # ******************************************************************************
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documnetation files (the "Software"), to deal
@@ -29,12 +29,8 @@
 
 import os
 import logging
-import sys
 import time
-import subprocess
-
-from ctypes import *
-
+import ctypes
 import gpiozero
 import spidev
 
@@ -132,7 +128,7 @@ class RaspberryPi:
                 else:
                     so_filename = os.path.join(find_dir, 'DEV_Config_32.so')
                 if os.path.exists(so_filename):
-                    self.DEV_SPI = CDLL(so_filename)
+                    self.DEV_SPI = ctypes.CDLL(so_filename)
                     break
             if self.DEV_SPI is None:
                 RuntimeError('Cannot find DEV_Config.so')

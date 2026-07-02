@@ -122,7 +122,7 @@ def draw_sun(im: ImageDraw.ImageDraw, sun:dict) -> None:
     im.text((105, 405), f'{time_str}', font=font)
 
     # Draw sunset icon
-    icon_path = _ASSETS / "weather-icons/weather-sunset-down-100x100.bmp"
+    #icon_path = _ASSETS / "weather-icons/weather-sunset-down-100x100.bmp"
     
 
     # Draw sunset time
@@ -169,3 +169,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    

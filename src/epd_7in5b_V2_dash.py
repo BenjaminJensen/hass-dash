@@ -12,9 +12,9 @@ from hass_rooms import HassRooms
 from hass import get_hass_client
 from hass_sun import HassSun
 from display import (
-    draw_forecast, 
-    draw_weather, 
-    draw_sun, 
+    draw_forecast,
+    draw_weather,
+    draw_sun,
     draw_rooms,
     draw_update_time)
 
@@ -64,7 +64,7 @@ def main() -> None:
         logging.info(f"epd.Clear() took {elapsed_clear:.2f} seconds")
 
         start_clear = time.time()
-        Other = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame  
+        Other = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
         elapsed_clear = (time.time() - start_clear)
         logging.info(f"Drawing in buffer took {elapsed_clear:.2f} seconds")
         
@@ -86,7 +86,7 @@ def main() -> None:
     except IOError as e:
         logging.info(e)
         
-    except KeyboardInterrupt:    
+    except KeyboardInterrupt:
         logging.info("ctrl + c:")
         epd7in5b_V2.epdconfig.module_exit(cleanup=True)
         exit()

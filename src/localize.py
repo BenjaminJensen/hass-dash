@@ -38,7 +38,7 @@ def local_dt_from_utc_str(utc_str, timezone_str=DEFAULT_LOCAL_TZ):
 def main():
 
     time_str = '2025-11-03T06:00:00+00:00'
-    resu_str = '2025-11-03 06:00:00+00:00'
+    #resu_str = '2025-11-03 06:00:00+00:00'
 
     #print(pytz.all_timezones)  # Print all available timezones
     #return

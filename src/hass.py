@@ -62,7 +62,7 @@ def weather(client: Client) -> None:
     print("Weather data:")
     print(hass_weather)
     print("Forecast data:")
-    forecast = hass_weather.get_forecast()  
+    forecast = hass_weather.get_forecast()
     print(forecast)
 
 

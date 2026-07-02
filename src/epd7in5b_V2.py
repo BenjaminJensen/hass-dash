@@ -51,11 +51,11 @@ class EPD:
     # Hardware reset
     def reset(self):
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200) 
+        epdconfig.delay_ms(200)
         epdconfig.digital_write(self.reset_pin, 0)
         epdconfig.delay_ms(4)
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200)   
+        epdconfig.delay_ms(200)
 
     def send_command(self, command):
         epdconfig.digital_write(self.dc_pin, 0)
@@ -100,8 +100,8 @@ class EPD:
 
         self.send_command(0x06)
         self.send_data(0x17)
-        self.send_data(0x17) 
-        self.send_data(0x28)	
+        self.send_data(0x17)
+        self.send_data(0x28)
         self.send_data(0x17)
 
         self.send_command(0x04)
@@ -111,7 +111,7 @@ class EPD:
         self.send_command(0X00)
         self.send_data(0x0F)
 
-        self.send_command(0x61)		
+        self.send_command(0x61)
         self.send_data(0x03)
         self.send_data(0x20)
         self.send_data(0x01)
@@ -145,9 +145,9 @@ class EPD:
 
         self.send_command(0x06)
         self.send_data(0x27)
-        self.send_data(0x27) 
-        self.send_data(0x18)		
-        self.send_data(0x17)		
+        self.send_data(0x27)
+        self.send_data(0x18)
+        self.send_data(0x17)
 
         self.send_command(0xE0)
         self.send_data(0x02)
@@ -252,7 +252,7 @@ class EPD:
                 
         Width = (Xend - Xstart) // 8
         Height = Yend - Ystart
-	
+
         # self.send_command(0x50)
         # self.send_data(0xA9)
         # self.send_data(0x07)
@@ -260,15 +260,15 @@ class EPD:
         self.send_command(0x91)		#This command makes the display enter partial mode
         self.send_command(0x90)		#resolution setting
         self.send_data (Xstart//256)
-        self.send_data (Xstart%256)   #x-start    
+        self.send_data (Xstart%256)   #x-start
 
-        self.send_data ((Xend-1)//256)		
-        self.send_data ((Xend-1)%256)  #x-end	
+        self.send_data ((Xend-1)//256)
+        self.send_data ((Xend-1)%256)  #x-end
 
-        self.send_data (Ystart//256)  #
-        self.send_data (Ystart%256)   #y-start    
+        self.send_data (Ystart//256)
+        self.send_data (Ystart%256)   #y-start
 
-        self.send_data ((Yend-1)//256)		
+        self.send_data ((Yend-1)//256)
         self.send_data ((Yend-1)%256)  #y-end
         self.send_data (0x01)
 
@@ -285,7 +285,7 @@ class EPD:
         self.send_command(0x12)
         epdconfig.delay_ms(100)
         self.ReadBusy()
-        
+
     def Clear(self):
         buf = [0x00] * (int(self.width/8) * self.height)
         buf2 = [0xff] * (int(self.width/8) * self.height)
