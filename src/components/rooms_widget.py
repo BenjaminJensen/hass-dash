@@ -1,4 +1,5 @@
 """Rooms widget component."""
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -37,10 +38,10 @@ class RoomsWidget(Widget):
         hass_client: HASSClient,
         renderer: Renderer,
         config_path: Optional[str] = None,
-        cache_ttl: int = 60
+        cache_ttl: int = 60,
     ):
         """Initialize rooms widget.
-        
+
         Args:
             hass_client: HASS client instance
             renderer: Rendering backend

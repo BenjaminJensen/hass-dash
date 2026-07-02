@@ -5,6 +5,7 @@ from json import dumps
 from hass_rooms import HassRooms
 from hass_weather import HassWeather
 
+
 def get_hass_client() -> Client:
     load_dotenv()  # Loads .env file from current directory
     HASS_TOKEN = os.getenv("HASS_TOKEN")
@@ -17,9 +18,9 @@ def get_hass_client() -> Client:
 
     return Client(HASS_URL, HASS_TOKEN)
 
+
 def get_stuff(client: Client) -> None:
     """Simple demo runner for Home Assistant client actions."""
-    
 
     with client:
         sun = client.get_entity(entity_id="sun.sun")
@@ -38,11 +39,12 @@ def get_stuff(client: Client) -> None:
         w = client.get_domain("weather")
         if w is None:
             raise RuntimeError("Weather domain not found")
-        fc = w.get_forecasts(device_id="c8e8bb619ae918a8ed095ab1889f5a07", type="hourly") # type: ignore
+        fc = w.get_forecasts(device_id="c8e8bb619ae918a8ed095ab1889f5a07", type="hourly")  # type: ignore
         print(dumps(fc, indent=4))
 
+
 def humi_stuff(client: Client) -> None:
-    e_id="0x5cc7c1fffede1ef5_humidity_1"
+    e_id = "0x5cc7c1fffede1ef5_humidity_1"
     h = client.get_entity(entity_id=f"sensor.{e_id}")
     if h is None:
         raise RuntimeError(f"Humidity sensor {e_id} not found")
@@ -50,11 +52,13 @@ def humi_stuff(client: Client) -> None:
     print(dumps(state.attributes, indent=4))
     print(state.state)
 
+
 def rooms(client: Client) -> None:
     hass_rooms = HassRooms(client)
     rooms = hass_rooms.read_rooms()
     print("Rooms loaded from rooms.yml:")
     print(rooms)
+
 
 def weather(client: Client) -> None:
     hass_weather = HassWeather(client)
@@ -68,12 +72,12 @@ def weather(client: Client) -> None:
 
 def main() -> None:
     client = get_hass_client()
-    #rooms()
+    # rooms()
 
     get_stuff(client)
     return
     weather(client)
-    
+
 
 if __name__ == "__main__":
     main()

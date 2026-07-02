@@ -1,4 +1,5 @@
 """Base widget class for dashboard components."""
+
 from abc import ABC, abstractmethod
 from typing import Optional
 from datetime import datetime
@@ -8,7 +9,7 @@ from rendering.renderer import Renderer
 
 class Widget(ABC):
     """Abstract base class for dashboard components.
-    
+
     Each widget:
     - Owns its data fetching from HASS
     - Caches data with optional TTL
@@ -16,13 +17,10 @@ class Widget(ABC):
     """
 
     def __init__(
-        self,
-        hass_client: HASSClient,
-        renderer: Renderer,
-        cache_ttl: Optional[int] = None
+        self, hass_client: HASSClient, renderer: Renderer, cache_ttl: Optional[int] = None
     ):
         """Initialize widget.
-        
+
         Args:
             hass_client: Home Assistant client instance
             renderer: Rendering backend (PIL, hardware, etc.)

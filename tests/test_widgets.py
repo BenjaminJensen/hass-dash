@@ -1,4 +1,5 @@
 """Tests for dashboard widgets."""
+
 import pytest
 from pathlib import Path
 from unittest.mock import patch
@@ -103,15 +104,31 @@ class TestWeatherForecastWidget:
         """Widget should normalize, sample, and always return five entries."""
         mock_hass.set_forecast(
             [
-                {"datetime": "2025-11-01T16:00:00+00:00", "temperature": 12.0, "condition": "sunny"},
+                {
+                    "datetime": "2025-11-01T16:00:00+00:00",
+                    "temperature": 12.0,
+                    "condition": "sunny",
+                },
                 {
                     "datetime": "2025-11-01T17:00:00+00:00",
                     "temperature": 11.5,
                     "condition": "partlycloudy",
                 },
-                {"datetime": "2025-11-01T18:00:00+00:00", "temperature": 11.0, "condition": "rainy"},
-                {"datetime": "2025-11-01T19:00:00+00:00", "temperature": 10.5, "condition": "cloudy"},
-                {"datetime": "2025-11-01T20:00:00+00:00", "temperature": 10.0, "condition": "snowy"},
+                {
+                    "datetime": "2025-11-01T18:00:00+00:00",
+                    "temperature": 11.0,
+                    "condition": "rainy",
+                },
+                {
+                    "datetime": "2025-11-01T19:00:00+00:00",
+                    "temperature": 10.5,
+                    "condition": "cloudy",
+                },
+                {
+                    "datetime": "2025-11-01T20:00:00+00:00",
+                    "temperature": 10.0,
+                    "condition": "snowy",
+                },
                 {"datetime": "2025-11-01T21:00:00+00:00", "temperature": 9.5, "condition": "windy"},
             ]
         )
@@ -138,15 +155,31 @@ class TestWeatherForecastWidget:
         """Render should draw five forecast icons using legacy spacing."""
         mock_hass.set_forecast(
             [
-                {"datetime": "2025-11-01T16:00:00+00:00", "temperature": 12.0, "condition": "sunny"},
-                {"datetime": "2025-11-01T17:00:00+00:00", "temperature": 11.5, "condition": "cloudy"},
-                {"datetime": "2025-11-01T18:00:00+00:00", "temperature": 11.0, "condition": "rainy"},
+                {
+                    "datetime": "2025-11-01T16:00:00+00:00",
+                    "temperature": 12.0,
+                    "condition": "sunny",
+                },
+                {
+                    "datetime": "2025-11-01T17:00:00+00:00",
+                    "temperature": 11.5,
+                    "condition": "cloudy",
+                },
+                {
+                    "datetime": "2025-11-01T18:00:00+00:00",
+                    "temperature": 11.0,
+                    "condition": "rainy",
+                },
                 {
                     "datetime": "2025-11-01T19:00:00+00:00",
                     "temperature": 10.5,
                     "condition": "lightning-rainy",
                 },
-                {"datetime": "2025-11-01T20:00:00+00:00", "temperature": 10.0, "condition": "snowy"},
+                {
+                    "datetime": "2025-11-01T20:00:00+00:00",
+                    "temperature": 10.0,
+                    "condition": "snowy",
+                },
                 {"datetime": "2025-11-01T21:00:00+00:00", "temperature": 9.5, "condition": "windy"},
                 {"datetime": "2025-11-01T22:00:00+00:00", "temperature": 9.0, "condition": "fog"},
                 {
@@ -154,7 +187,11 @@ class TestWeatherForecastWidget:
                     "temperature": 8.5,
                     "condition": "windy-variant",
                 },
-                {"datetime": "2025-11-02T00:00:00+00:00", "temperature": 8.0, "condition": "clear-night"},
+                {
+                    "datetime": "2025-11-02T00:00:00+00:00",
+                    "temperature": 8.0,
+                    "condition": "clear-night",
+                },
                 {
                     "datetime": "2025-11-02T01:00:00+00:00",
                     "temperature": 7.5,
@@ -241,15 +278,31 @@ class TestDashboard:
         """Test full dashboard run: update and render."""
         mock_hass.set_forecast(
             [
-                {"datetime": "2025-11-01T16:00:00+00:00", "temperature": 12.0, "condition": "sunny"},
-                {"datetime": "2025-11-01T17:00:00+00:00", "temperature": 11.5, "condition": "cloudy"},
-                {"datetime": "2025-11-01T18:00:00+00:00", "temperature": 11.0, "condition": "rainy"},
+                {
+                    "datetime": "2025-11-01T16:00:00+00:00",
+                    "temperature": 12.0,
+                    "condition": "sunny",
+                },
+                {
+                    "datetime": "2025-11-01T17:00:00+00:00",
+                    "temperature": 11.5,
+                    "condition": "cloudy",
+                },
+                {
+                    "datetime": "2025-11-01T18:00:00+00:00",
+                    "temperature": 11.0,
+                    "condition": "rainy",
+                },
                 {
                     "datetime": "2025-11-01T19:00:00+00:00",
                     "temperature": 10.5,
                     "condition": "lightning-rainy",
                 },
-                {"datetime": "2025-11-01T20:00:00+00:00", "temperature": 10.0, "condition": "snowy"},
+                {
+                    "datetime": "2025-11-01T20:00:00+00:00",
+                    "temperature": 10.0,
+                    "condition": "snowy",
+                },
                 {"datetime": "2025-11-01T21:00:00+00:00", "temperature": 9.5, "condition": "windy"},
                 {"datetime": "2025-11-01T22:00:00+00:00", "temperature": 9.0, "condition": "fog"},
                 {
@@ -257,7 +310,11 @@ class TestDashboard:
                     "temperature": 8.5,
                     "condition": "windy-variant",
                 },
-                {"datetime": "2025-11-02T00:00:00+00:00", "temperature": 8.0, "condition": "clear-night"},
+                {
+                    "datetime": "2025-11-02T00:00:00+00:00",
+                    "temperature": 8.0,
+                    "condition": "clear-night",
+                },
                 {
                     "datetime": "2025-11-02T01:00:00+00:00",
                     "temperature": 7.5,
@@ -268,7 +325,9 @@ class TestDashboard:
 
         dashboard = Dashboard(pil_renderer)
         dashboard.add_widget(WeatherWidget(mock_hass, pil_renderer))
-        dashboard.add_widget(WeatherForecastWidget(mock_hass, pil_renderer, device_id="test-device"))
+        dashboard.add_widget(
+            WeatherForecastWidget(mock_hass, pil_renderer, device_id="test-device")
+        )
         dashboard.add_widget(SunWidget(mock_hass, pil_renderer))
         dashboard.add_widget(RoomsWidget(mock_hass, pil_renderer))
 

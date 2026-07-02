@@ -1,4 +1,5 @@
 """Abstract interface for Home Assistant client."""
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from dataclasses import dataclass
@@ -7,6 +8,7 @@ from dataclasses import dataclass
 @dataclass
 class Entity:
     """Represents a Home Assistant entity."""
+
     entity_id: str
     state: str
     attributes: Dict[str, Any]
@@ -14,17 +16,17 @@ class Entity:
 
 class HASSClient(ABC):
     """Abstract base class for Home Assistant client.
-    
+
     This interface allows for real HASS connections and mock implementations.
     """
 
     @abstractmethod
     def get_entity(self, entity_id: str) -> Optional[Entity]:
         """Get an entity by ID.
-        
+
         Args:
             entity_id: The entity ID (e.g., 'sensor.temperature')
-            
+
         Returns:
             Entity object or None if not found
         """
@@ -33,11 +35,11 @@ class HASSClient(ABC):
     @abstractmethod
     def get_forecast(self, device_id: str, forecast_type: str = "hourly") -> list:
         """Get weather forecast data.
-        
+
         Args:
             device_id: The weather device ID
             forecast_type: "hourly" or "daily"
-            
+
         Returns:
             List of forecast dictionaries
         """
@@ -58,7 +60,9 @@ class RealHASSClient(HASSClient):
     def _extract_forecast_list(self, forecasts: Any) -> list:
         """Normalize different API response shapes into a list of forecast dicts."""
         if isinstance(forecasts, list):
-            if forecasts and all(isinstance(item, dict) and "datetime" in item for item in forecasts):
+            if forecasts and all(
+                isinstance(item, dict) and "datetime" in item for item in forecasts
+            ):
                 return forecasts
 
             for item in forecasts:
@@ -94,9 +98,7 @@ class RealHASSClient(HASSClient):
                     return None
                 state = entity.get_state()
                 return Entity(
-                    entity_id=entity_id,
-                    state=state.state,
-                    attributes=state.attributes or {}
+                    entity_id=entity_id, state=state.state, attributes=state.attributes or {}
                 )
         except Exception as e:
             print(f"Error fetching entity {entity_id}: {e}")

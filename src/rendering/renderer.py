@@ -1,4 +1,5 @@
 """Abstract interface for rendering to different outputs."""
+
 from abc import ABC, abstractmethod
 import os
 from pathlib import Path
@@ -9,14 +10,14 @@ from PIL import ImageDraw, ImageFont
 
 class Renderer(ABC):
     """Abstract base class for rendering to different outputs.
-    
+
     Allows rendering to PIL Image (for testing/debugging) or hardware display.
     """
 
     @abstractmethod
     def get_draw(self) -> ImageDraw.ImageDraw:
         """Get the drawing context.
-        
+
         Returns:
             PIL ImageDraw object for drawing operations
         """
@@ -48,7 +49,7 @@ class Renderer(ABC):
     @abstractmethod
     def get_size(self) -> Tuple[int, int]:
         """Get the display size in pixels.
-        
+
         Returns:
             Tuple of (width, height)
         """
@@ -84,7 +85,7 @@ class PILRenderer(Renderer):
         background_path: Optional[str] = None,
     ):
         """Initialize PIL renderer.
-        
+
         Args:
             size: Display size as (width, height)
             output_path: Optional path to save output BMP file

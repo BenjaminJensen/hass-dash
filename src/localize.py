@@ -1,7 +1,8 @@
 from datetime import datetime as dt
 import pytz
 
-DEFAULT_LOCAL_TZ = 'Europe/Copenhagen'
+DEFAULT_LOCAL_TZ = "Europe/Copenhagen"
+
 
 def localize_datetime(naive_dt, timezone_str=DEFAULT_LOCAL_TZ):
     """
@@ -18,6 +19,7 @@ def localize_datetime(naive_dt, timezone_str=DEFAULT_LOCAL_TZ):
     localized_dt = timezone.localize(naive_dt)
     return localized_dt
 
+
 def local_dt_from_utc_str(utc_str, timezone_str=DEFAULT_LOCAL_TZ):
     """
     Converts a UTC datetime string to a timezone-aware datetime object.
@@ -29,24 +31,25 @@ def local_dt_from_utc_str(utc_str, timezone_str=DEFAULT_LOCAL_TZ):
     Returns:
     datetime: A timezone-aware datetime object in the specified timezone.
     """
-    #utc_dt = dt.strptime(utc_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
+    # utc_dt = dt.strptime(utc_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
     utc_dt = dt.fromisoformat(utc_str)
     target_timezone = pytz.timezone(timezone_str)
     localized_dt = utc_dt.astimezone(target_timezone)
     return localized_dt
 
+
 def main():
 
-    time_str = '2025-11-03T06:00:00+00:00'
-    #resu_str = '2025-11-03 06:00:00+00:00'
+    time_str = "2025-11-03T06:00:00+00:00"
+    # resu_str = '2025-11-03 06:00:00+00:00'
 
-    #print(pytz.all_timezones)  # Print all available timezones
-    #return
+    # print(pytz.all_timezones)  # Print all available timezones
+    # return
     # Example usage
 
-    
     localized_dt = local_dt_from_utc_str(time_str)
     print("Localized datetime:", localized_dt)
+
 
 if __name__ == "__main__":
     main()

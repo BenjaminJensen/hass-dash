@@ -1,4 +1,5 @@
 """Dashboard components."""
+
 from components.widget import Widget
 from components.weather_widget import WeatherWidget
 from components.weather_forecast_widget import WeatherForecastWidget, WeatherForecastItem

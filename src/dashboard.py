@@ -1,4 +1,5 @@
 """Main orchestrator for the dashboard."""
+
 from typing import List
 from rendering.renderer import Renderer
 from components.widget import Widget
@@ -9,7 +10,7 @@ class Dashboard:
 
     def __init__(self, renderer: Renderer):
         """Initialize dashboard.
-        
+
         Args:
             renderer: Rendering backend (PIL, hardware, etc.)
         """
@@ -18,7 +19,7 @@ class Dashboard:
 
     def add_widget(self, widget: Widget) -> None:
         """Add a widget to the dashboard.
-        
+
         Args:
             widget: Widget instance to add
         """

@@ -1,4 +1,5 @@
 """Weather widget component."""
+
 from typing import Dict, Any, Optional
 from components.widget import Widget
 from core.hass_client import HASSClient
@@ -10,14 +11,10 @@ class WeatherWidget(Widget):
     """Self-contained weather widget that fetches and renders weather data."""
 
     def __init__(
-        self,
-        hass_client: HASSClient,
-        renderer: Renderer,
-        device_id: str = "",
-        cache_ttl: int = 300
+        self, hass_client: HASSClient, renderer: Renderer, device_id: str = "", cache_ttl: int = 300
     ):
         """Initialize weather widget.
-        
+
         Args:
             hass_client: HASS client instance
             renderer: Rendering backend

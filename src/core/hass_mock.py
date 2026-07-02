@@ -1,4 +1,5 @@
 """Mock Home Assistant client for testing."""
+
 from typing import Any, Dict, Optional
 from core.hass_client import HASSClient, Entity
 
@@ -29,7 +30,7 @@ class MockHASSClient(HASSClient):
                 "azimuth": 283.52,
                 "rising": False,
                 "friendly_name": "Sun",
-            }
+            },
         )
 
         # Weather entity
@@ -41,16 +42,12 @@ class MockHASSClient(HASSClient):
                 "humidity": 60,
                 "condition": "cloudy",
                 "friendly_name": "Home",
-            }
+            },
         )
 
     def set_entity(self, entity_id: str, state: str, attributes: Dict[str, Any]) -> None:
         """Set mock entity data."""
-        self.entities[entity_id] = Entity(
-            entity_id=entity_id,
-            state=state,
-            attributes=attributes
-        )
+        self.entities[entity_id] = Entity(entity_id=entity_id, state=state, attributes=attributes)
 
     def set_forecast(self, forecast_data: list) -> None:
         """Set mock forecast data."""

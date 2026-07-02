@@ -1,4 +1,5 @@
 """Sun widget component."""
+
 from typing import Optional
 from datetime import datetime
 from components.widget import Widget
@@ -11,7 +12,7 @@ class SunWidget(Widget):
 
     def __init__(self, hass_client: HASSClient, renderer: Renderer, cache_ttl: int = 300):
         """Initialize sun widget.
-        
+
         Args:
             hass_client: HASS client instance
             renderer: Rendering backend

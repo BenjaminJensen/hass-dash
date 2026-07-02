@@ -1,4 +1,5 @@
 """Shared weather condition -> icon mapping helpers."""
+
 from typing import Optional
 import re
 
