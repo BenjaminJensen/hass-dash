@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build tools image
+        run: docker compose build tools
+
+      - name: Ruff lint
+        run: docker compose run --rm --entrypoint ruff tools check src/ tests/
+
+      - name: Ruff format check
+        run: docker compose run --rm --entrypoint ruff tools format --check src/ tests/
+
+      - name: Run tests
+        run: docker compose run --rm tools pytest tests/ -v
