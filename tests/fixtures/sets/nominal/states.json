@@ -1,0 +1,329 @@
+{
+  "climate.0x5cc7c1fffede1ef5_1": {
+    "attributes": {
+      "current_humidity": 41.0,
+      "current_temperature": 19.8,
+      "friendly_name": "Soveværelse termostat",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 19.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_1",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_10": {
+    "attributes": {
+      "current_humidity": 63.0,
+      "current_temperature": 11.4,
+      "friendly_name": "Garage termostat",
+      "hvac_action": "off",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 10.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_10",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "off"
+  },
+  "climate.0x5cc7c1fffede1ef5_2": {
+    "attributes": {
+      "current_humidity": 44.0,
+      "current_temperature": 23.1,
+      "friendly_name": "Stue termostat",
+      "hvac_action": "heating",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 22.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_2",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_3": {
+    "attributes": {
+      "current_humidity": 43.0,
+      "current_temperature": 16.2,
+      "friendly_name": "Marius termostat",
+      "hvac_action": "heating",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 20.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_3",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_4": {
+    "attributes": {
+      "current_humidity": 45.0,
+      "current_temperature": 20.7,
+      "friendly_name": "Sune termostat",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 20.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_4",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_5": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 24.6,
+      "friendly_name": "Stort bad termostat",
+      "hvac_action": "heating",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 23.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_5",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_6": {
+    "attributes": {
+      "current_humidity": 47.0,
+      "current_temperature": 22.4,
+      "friendly_name": "Køkken termostat",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 21.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_6",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_7": {
+    "attributes": {
+      "current_humidity": 58.0,
+      "current_temperature": 22.9,
+      "friendly_name": "Lille bad termostat",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 22.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_7",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_8": {
+    "attributes": {
+      "current_humidity": 46.0,
+      "current_temperature": 21.3,
+      "friendly_name": "Sophie termostat",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 20.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_8",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_9": {
+    "attributes": {
+      "current_humidity": 45.0,
+      "current_temperature": 21.9,
+      "friendly_name": "Gang termostat",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "off",
+        "heat",
+        "auto"
+      ],
+      "temperature": 21.0,
+      "unit_of_measurement": "°C"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_9",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_1": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Soveværelse fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_1",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "41.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_10": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Garage fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_10",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "63.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_2": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Stue fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_2",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "44.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_3": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Marius fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_3",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "43.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_4": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Sune fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_4",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "45.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_5": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Stort bad fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_5",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "72.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_6": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Køkken fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_6",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "47.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_7": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Lille bad fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_7",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "58.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_8": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Sophie fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_8",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "46.0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_9": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gang fugtighed",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_9",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "45.0"
+  },
+  "sun.sun": {
+    "attributes": {
+      "azimuth": 213.9,
+      "elevation": 22.63,
+      "friendly_name": "Sun",
+      "next_dawn": "2026-09-20T04:44:03.000000+00:00",
+      "next_dusk": "2026-09-19T17:47:15.000000+00:00",
+      "next_midnight": "2026-09-19T22:16:04.000000+00:00",
+      "next_noon": "2026-09-20T10:16:21.000000+00:00",
+      "next_rising": "2026-09-20T05:20:31.000000+00:00",
+      "next_setting": "2026-09-19T17:11:09.000000+00:00"
+    },
+    "entity_id": "sun.sun",
+    "last_changed": "2026-09-19T03:22:47.000000+00:00",
+    "state": "above_horizon"
+  },
+  "weather.home": {
+    "attributes": {
+      "apparent_temperature": 15.0,
+      "attribution": "Synthetic fixture",
+      "friendly_name": "Home",
+      "humidity": 81,
+      "precipitation_unit": "mm",
+      "pressure": 1006.4,
+      "pressure_unit": "hPa",
+      "supported_features": 3,
+      "temperature": 17.0,
+      "temperature_unit": "°C",
+      "visibility_unit": "km",
+      "wind_bearing": 247.0,
+      "wind_speed": 6.7,
+      "wind_speed_unit": "m/s"
+    },
+    "entity_id": "weather.home",
+    "last_changed": "2026-09-19T12:00:00.000000+00:00",
+    "state": "rainy"
+  }
+}

@@ -1,0 +1,13 @@
+[
+  "a string where a forecast entry was expected",
+  {
+    "condition": null,
+    "datetime": "yesterday",
+    "precipitation": "en del",
+    "temperature": "unavailable",
+    "templow": null
+  },
+  {
+    "datetime": "2026-09-21T00:00:00+00:00"
+  }
+]

@@ -1,0 +1,143 @@
+{
+  "climate.0x5cc7c1fffede1ef5_1": {
+    "attributes": {
+      "current_humidity": null,
+      "current_temperature": null,
+      "friendly_name": "Soveværelse termostat",
+      "hvac_action": "idle",
+      "temperature": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_1",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_10": {
+    "attributes": {
+      "current_temperature": true,
+      "friendly_name": "Garage termostat",
+      "hvac_action": "preheating",
+      "temperature": 10.0
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_10",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_2": {
+    "attributes": {
+      "current_humidity": 44.0,
+      "current_temperature": "21.5",
+      "friendly_name": "Stue termostat",
+      "hvac_action": "heating",
+      "temperature": "20.0"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_2",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_3": {
+    "attributes": null,
+    "entity_id": "climate.0x5cc7c1fffede1ef5_3",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "unavailable"
+  },
+  "climate.0x5cc7c1fffede1ef5_4": {
+    "attributes": {
+      "current_temperature": "kold",
+      "friendly_name": "Sune termostat"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_4",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "off"
+  },
+  "climate.0x5cc7c1fffede1ef5_5": {
+    "attributes": {
+      "current_humidity": "unavailable",
+      "current_temperature": "unknown",
+      "friendly_name": "Stort bad termostat",
+      "hvac_action": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_5",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "unknown"
+  },
+  "climate.0x5cc7c1fffede1ef5_6": {
+    "attributes": {
+      "current_temperature": {"value": 22.4},
+      "friendly_name": "Køkken termostat",
+      "hvac_action": 7
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_6",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_8": {
+    "attributes": {
+      "current_temperature": 21.3,
+      "friendly_name": "Sophie termostat",
+      "hvac_action": "heating"
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_8",
+    "last_changed": "2026-09-19T12:02:11.000000+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_9": "this used to be an entity",
+  "sensor.0x5cc7c1fffede1ef5_humidity_1": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Soveværelse fugtighed",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_1",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_2": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Stue fugtighed",
+      "unit_of_measurement": "%"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_2",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "44,0"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_4": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Sune fugtighed"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_4",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": ""
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_5": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Stort bad fugtighed"
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_5",
+    "last_changed": "2026-09-19T12:04:52.000000+00:00",
+    "state": "72 %"
+  },
+  "sun.sun": {
+    "attributes": {
+      "elevation": 22.63,
+      "friendly_name": "Sun",
+      "next_rising": "not a timestamp",
+      "next_setting": null
+    },
+    "entity_id": "sun.sun",
+    "last_changed": "2026-09-19T03:22:47.000000+00:00",
+    "state": "above_horizon"
+  },
+  "weather.home": {
+    "attributes": {
+      "friendly_name": "Home",
+      "humidity": "unavailable",
+      "temperature": null
+    },
+    "entity_id": "weather.home",
+    "last_changed": "2026-09-19T12:00:00.000000+00:00",
+    "state": "unavailable"
+  }
+}

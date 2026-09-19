@@ -1,0 +1,72 @@
+[
+  {
+    "condition": "rainy",
+    "datetime": "2026-09-19T00:00:00+00:00",
+    "precipitation": 2.4,
+    "precipitation_probability": 72,
+    "temperature": 18.0,
+    "templow": 9.0,
+    "wind_bearing": 240.0,
+    "wind_speed": 5.0
+  },
+  {
+    "condition": "cloudy",
+    "datetime": "2026-09-20T00:00:00+00:00",
+    "precipitation": 0.0,
+    "precipitation_probability": 0,
+    "temperature": 16.0,
+    "templow": 8.0,
+    "wind_bearing": 240.0,
+    "wind_speed": 5.0
+  },
+  {
+    "condition": "partlycloudy",
+    "datetime": "2026-09-21T00:00:00+00:00",
+    "precipitation": 0.0,
+    "precipitation_probability": 0,
+    "temperature": 15.0,
+    "templow": 7.0,
+    "wind_bearing": 240.0,
+    "wind_speed": 5.0
+  },
+  {
+    "condition": "rainy",
+    "datetime": "2026-09-22T00:00:00+00:00",
+    "precipitation": 1.1,
+    "precipitation_probability": 33,
+    "temperature": 17.0,
+    "templow": 9.0,
+    "wind_bearing": 240.0,
+    "wind_speed": 5.0
+  },
+  {
+    "condition": "sunny",
+    "datetime": "2026-09-23T00:00:00+00:00",
+    "precipitation": 0.0,
+    "precipitation_probability": 0,
+    "temperature": 19.0,
+    "templow": 11.0,
+    "wind_bearing": 240.0,
+    "wind_speed": 5.0
+  },
+  {
+    "condition": "sunny",
+    "datetime": "2026-09-24T00:00:00+00:00",
+    "precipitation": 0.0,
+    "precipitation_probability": 0,
+    "temperature": 20.0,
+    "templow": 12.0,
+    "wind_bearing": 240.0,
+    "wind_speed": 5.0
+  },
+  {
+    "condition": "rainy",
+    "datetime": "2026-09-25T00:00:00+00:00",
+    "precipitation": 3.2,
+    "precipitation_probability": 95,
+    "temperature": 18.0,
+    "templow": 10.0,
+    "wind_bearing": 240.0,
+    "wind_speed": 5.0
+  }
+]

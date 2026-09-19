@@ -52,16 +52,16 @@ slice 2.2.
 
 ## Milestones
 
-**Progress:** M0 (`24927d4`), M1 (`a542a03`) and M2 are done, on branch
-`rewrite/intent-architecture`. M3 is next, and slice 2.2 is waiting on one
-command being run against the live instance.
+**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2 and M3 are done, on branch
+`rewrite/intent-architecture`. M4 is next, and slice 2.2 is still waiting on
+one command being run against the live instance.
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
 | M0 ✅ | Hygiene and ground clearing | S | — | Dead files gone, repo commands true |
 | M1 ✅ | Domain core | M | M0 | Pure model + derivations, honestly tested |
 | M2 ✅ | Config and captured ground truth | M | M1 | `house.yml` + recorded HA fixtures |
-| M3 | Sources | M | M2 | HA behind a port, hostile inputs survived |
+| M3 ✅ | Sources | M | M2 | HA behind a port, hostile inputs survived |
 | M4 | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
 | M5 | Complete the screen | L | M4 | Every region of §3 rendered |
 | M6 | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
@@ -313,6 +313,45 @@ done.
 
 ## Log
 
+**M3** — `src/sources/`: a port, a fixture source, the REST adapter, and the
+boundary test. +109 tests. Four decisions worth remembering:
+
+*The two sources share one mapping.* `mapping.py` does every coercion and both
+`fixture.py` and `homeassistant.py` feed it. Separate translations would mean
+the fixture tests a mapping the wall never runs, which is the specific way a
+fixture suite goes green while the real thing breaks.
+
+*Per-entity failure and whole-source failure are different things.* A dead
+sensor yields `None` and a line in `source_errors`; an unreachable instance
+raises `SourceUnavailable` and the caller keeps its last good frame. Building a
+snapshot full of confident placeholders out of a dead network would be a lie,
+and M7's fallback needs the two told apart.
+
+*`unavailable` is not an error and `"kold"` is.* A Zigbee sensor that has not
+checked in is having an ordinary Tuesday and reporting it would fill the log
+every night. A value that is *present but unparseable* is a shape change, which
+is the class of surprise this layer exists to absorb, so it gets a line naming
+the entity and the value. A missing entity gets one too: it means a rename, and
+it shows a placeholder forever until a human fixes the config.
+
+*The boundary test reads the AST, not the text.* `domain/models.py` says in
+prose that it holds no Home Assistant vocabulary, and `homeassistant.py`
+explains why it refuses to depend on `homeassistant_api`. A grep-based version
+would fail on both. Naming the thing you refuse to depend on is not depending on
+it. The legacy widget layer is exempted by an explicit file list rather than a
+pattern, so M10's deletions make the list shrink instead of quietly widening.
+
+Verified by deliberately leaking `hvac_action` into `domain/derive.py` and
+watching the test name the file and the identifier, because a boundary test that
+cannot fail is worse than no boundary test.
+
+**The fixture sets are two, and only one of them is honest.**
+`tests/fixtures/sets/hostile/` is thirteen entities broken thirteen different
+ways and is the M3 exit condition. `tests/fixtures/sets/nominal/` is
+**synthetic** — invented, because slice 2.2 has still not been run. Its shapes
+follow the documented payloads and its values are guesses. When the real capture
+lands it is the truth and anything in `nominal/` that disagrees is wrong.
+
 **M2** — `house.yml`, `src/config/`, and `tools/capture_snapshot.py`. +141 tests
 in the suite. Four decisions worth remembering:
 
@@ -367,7 +406,12 @@ settles four of the five open questions in `INTENT.md` §11 and unblocks the
 weather half of M5. Until it has been run, three humidity entity ids and the
 whole `ude` row in `house.yml` are marked UNCONFIRMED and are a guess.
 
-Then M3 — sources. `port.py` and `fixture.py` can be built against the recorded
-payloads; `homeassistant.py` maps `EntityRef`s to readings and is the only
-module allowed to know what an entity is. M4 is equally available and does not
-depend on M3.
+M3 was built without it, against a synthetic fixture set, because the sources
+layer needed hostile input far more than it needed real input — and the hostile
+shapes were never going to come off a live instance anyway. That trade has one
+open edge: `tests/fixtures/sets/nominal/` asserts attribute names this project
+has never actually seen on the wire. `TestRecordedCapture` in
+`tests/test_sources_fixture.py` **skips** today and starts checking every
+configured entity against the instance the moment the capture exists.
+
+Then M4 — the walking skeleton, which does not depend on anything still open.
