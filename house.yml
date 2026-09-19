@@ -9,11 +9,15 @@
 #
 # TODO(comfort): every band below is a placeholder chosen by the developer, not
 # a number from the family. Red means "act", so until these are real, the red on
-# this screen is guesswork. See PLAN.md slice 2.3.
+# this screen is guesswork - and the 2026-09-19 capture showed it is worse than
+# guesswork: against these numbers EIGHT of the eleven rooms draw red, because
+# the house sits at 64-75 % RH and 23-25 degrees. Red everywhere is red nowhere
+# (INTENT.md section 2). See PLAN.md slice 2.3.
 #
-# TODO(entities): three humidity sensors are marked UNCONFIRMED below. Run
-# `python3 tools/capture_snapshot.py` against the live instance to settle them;
-# it audits this file and says which ids do not exist. See INTENT.md section 11.
+# Entity ids confirmed against the live instance on 2026-09-19 by
+# `tools/capture_snapshot.py`: all 24 resolve. Re-run it after renaming
+# anything in Home Assistant; tests/test_sources_fixture.py then fails here
+# rather than on the wall.
 
 weather:
   entity_id: weather.home
@@ -62,8 +66,7 @@ rooms:
   - key: lille_bad
     name: Lille bad
     climate: climate.0x5cc7c1fffede1ef5_7
-    # UNCONFIRMED: was _humidity_8, which breaks the pairing every other room
-    # follows. Either this or the climate id is wrong.
+    # Confirmed: "Lille Bad Danfoss". The old _humidity_8 was the wrong room.
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_7
     comfort:
       min_temperature: 20.0
@@ -82,7 +85,8 @@ rooms:
   - key: sophie
     name: Sophie
     climate: climate.0x5cc7c1fffede1ef5_8
-    # UNCONFIRMED: was _humidity_9, the same sensor gang reads.
+    # Confirmed: _humidity_8 pairs with climate _8. The old _humidity_9 was
+    # gang's sensor - this is the section 11 bug, now fixed.
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_8
     comfort:
       min_temperature: 17.0
@@ -101,8 +105,7 @@ rooms:
   - key: gang
     name: Gang
     climate: climate.0x5cc7c1fffede1ef5_9
-    # UNCONFIRMED: shared _humidity_9 with sophie, so one of the two rooms has
-    # been showing the other's air.
+    # Confirmed: _humidity_9 is gang's alone now that sophie reads _humidity_8.
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_9
 
   - key: garage
@@ -117,8 +120,10 @@ rooms:
   - key: ude
     name: Ude
     is_outdoor: true
-    # UNCONFIRMED: no outdoor sensor is known, so this reads the weather
-    # provider. If a physical sensor exists, point these at it instead.
+    # Reads the weather provider on purpose. A physical outdoor sensor does
+    # exist - sensor.ude_sensor_ude_* - and it is broken: 23,2 degrees against
+    # the forecast's 17,7, and a humidity pinned at exactly 100,0 since
+    # 2026-09-09. Point these at it if it is ever repaired.
     temperature:
       entity_id: weather.home
       attribute: temperature

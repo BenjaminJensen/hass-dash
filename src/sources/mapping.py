@@ -57,12 +57,26 @@ HVAC_ACTIONS = {
 
 POWER_STATES = {"on": PowerState.ON, "off": PowerState.OFF}
 
-#: Where a room's readings come from when the configuration names a climate
+#: Where a room's temperature comes from when the configuration names a climate
 #: entity but no separate sensor. A thermostat already knows the temperature of
-#: the room it is in, so most rooms need no `temperature:` key at all.
+#: the room it is in, so most rooms need no `temperature:` key at all - and in
+#: this house, none of them do.
 CLIMATE_TEMPERATURE = "current_temperature"
-CLIMATE_HUMIDITY = "current_humidity"
 CLIMATE_SETPOINT = "temperature"
+
+#: There is deliberately no humidity fallback. See `_climate()`.
+
+#: Wind arrives in whatever unit the weather integration prefers - this house's
+#: reports km/h - while `format_da.wind_speed()` renders m/s, which is what a
+#: Danish forecast is read in. Normalising here is the source layer's job:
+#: above this line a number is a number in the domain's unit.
+WIND_TO_MS = {
+    "m/s": 1.0,
+    "km/h": 1 / 3.6,
+    "mph": 0.44704,
+    "kn": 0.514444,
+    "ft/s": 0.3048,
+}
 
 
 class Problems:
@@ -208,7 +222,20 @@ class Reader:
 
 
 def _climate(room: RoomConfig, reader: Reader) -> Climate:
-    """One room's readings, preferring a dedicated sensor over the thermostat."""
+    """One room's readings.
+
+    Temperature falls back to the thermostat, because `current_temperature`
+    really is the temperature of the room the thermostat is in - the captured
+    instance shows ten distinct values across ten entities.
+
+    **Humidity deliberately does not fall back.** On this house's controller
+    every one of the ten climate entities reports `current_humidity: 72.0` -
+    the same number, a house-wide average broadcast on every channel - while
+    the per-room sensors read 64 to 75. Falling back would silently show one
+    room's air in another room's row, which is precisely the bug INTENT.md
+    section 11 exists to kill. A room whose humidity sensor goes quiet shows a
+    placeholder, and a placeholder is honest.
+    """
     temperature = reader.number(room.temperature, f"{room.key}/temperature")
     if temperature is None:
         temperature = reader.attribute_number(
@@ -216,8 +243,6 @@ def _climate(room: RoomConfig, reader: Reader) -> Climate:
         )
 
     humidity = reader.number(room.humidity, f"{room.key}/humidity")
-    if humidity is None:
-        humidity = reader.attribute_number(room.climate, CLIMATE_HUMIDITY, f"{room.key}/humidity")
 
     setpoint = reader.attribute_number(room.climate, CLIMATE_SETPOINT, f"{room.key}/setpoint")
 
@@ -302,10 +327,24 @@ def _weather(config: HouseConfig, reader: Reader, daily: list) -> Weather:
         temperature_low=as_float(today.get("templow")),
         humidity=attribute("humidity"),
         pressure=attribute("pressure"),
-        wind_speed=attribute("wind_speed"),
+        wind_speed=_wind_ms(attribute("wind_speed"), attributes.get("wind_speed_unit")),
         wind_bearing=as_float(attributes.get("wind_bearing")),
         precipitation=as_float(today.get("precipitation")),
     )
+
+
+def _wind_ms(value: float | None, unit: Any) -> float | None:
+    """Wind speed in metres per second, whatever the integration reported it in.
+
+    An unrecognised unit yields None rather than a number that might be a
+    factor of 3.6 out. "23" is a stiff breeze in km/h and a storm in m/s, and
+    the screen is read at three metres by someone deciding on a coat.
+    """
+    if value is None:
+        return None
+
+    factor = WIND_TO_MS.get(as_text(unit) or "m/s")
+    return None if factor is None else value * factor
 
 
 def _hourly(forecast: Any) -> tuple[HourlyPoint, ...]:

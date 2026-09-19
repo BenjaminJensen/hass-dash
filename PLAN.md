@@ -47,8 +47,9 @@ touch GPIO or SPI. Partial refresh is deferred to M9 on purpose — see the note
 there; it may turn out not to be worth building.
 
 **Blocked on a human, not on code:** the comfort bands (`INTENT.md` §11) need
-real numbers from the family. Everything else in §11 is answered empirically by
-slice 2.2.
+real numbers from the family. Slice 2.2 has now answered everything else — and
+made the bands *more* urgent, not less: with the placeholder numbers, eight of
+the eleven rooms render red. See the M2.2 log entry.
 
 ## Milestones
 
@@ -60,7 +61,7 @@ one command being run against the live instance.
 | --- | --- | --- | --- | --- |
 | M0 ✅ | Hygiene and ground clearing | S | — | Dead files gone, repo commands true |
 | M1 ✅ | Domain core | M | M0 | Pure model + derivations, honestly tested |
-| M2 ✅ | Config and captured ground truth | M | M1 | `house.yml` + recorded HA fixtures |
+| M2 ✅ | Config and captured ground truth (2.3 open) | M | M1 | `house.yml` + recorded HA fixtures |
 | M3 ✅ | Sources | M | M2 | HA behind a port, hostile inputs survived |
 | M4 | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
 | M5 | Complete the screen | L | M4 | Every region of §3 rendered |
@@ -312,6 +313,49 @@ Anything touching rendering also gets its BMP looked at before it is called
 done.
 
 ## Log
+
+**2.2 — the capture, run 2026-09-19 against the live instance.** All 24
+configured entities exist; the three `UNCONFIRMED` humidity ids and the `ude`
+row were all guessed correctly, and those markers can come out of `house.yml`.
+Six findings the wire settled, four of which change later milestones:
+
+*Every climate entity reports the same humidity.* All ten report
+`current_humidity: 72.0` — one house-wide average broadcast on every channel —
+while the per-room sensors read 64 to 75. The source layer's humidity fallback
+to the thermostat was therefore **removed**: it would have put the house average
+in a room's row and called it that room's air, which is the `sophie` / `gang`
+bug wearing a different hat. Temperature still falls back, because
+`current_temperature` genuinely differs per room (23,0 to 25,2) and is the only
+temperature source — no room names a temperature sensor.
+
+*Wind arrives in km/h.* `format_da.wind_speed()` renders m/s, so 23 km/h would
+have been drawn as `23,0 m/s` — a storm rather than a stiff breeze, on a screen
+whose job is deciding a coat. The source now normalises via `wind_speed_unit`,
+and an unrecognised unit yields `None` rather than a number a factor of 3,6 out.
+
+*`apparent_temperature` does not exist on this instance.* §3's "Føles som 15°"
+has no source. `dew_point`, `cloud_coverage`, `uv_index` and `wind_gust_speed`
+*are* present. Either the slot gets computed from temperature, wind and
+humidity, or §3 loses it. **A decision for M5, and one for you.**
+
+*The daily forecast returns six days, not seven.* §3's seven-day strip can only
+be a six-day strip from this provider.
+
+*The hourly forecast starts at the current hour* and runs 48 h forward. §3 asks
+for "today's curve from 00 to 24"; the first half of today is simply not in the
+payload. The curve is a *next-24-hours* curve, or it needs history from the
+recorder API.
+
+*There is an outdoor sensor, and it is broken.*
+`sensor.ude_sensor_ude_temperature` reads 23,2° against the forecast's 17,7°,
+and `…_ude_humidity` has been pinned at exactly 100,0 since 2026-09-09. The
+`ude` row correctly stays on the weather provider.
+
+**And the finding that blocks nothing but matters most:** with the placeholder
+comfort bands, **eight of the eleven rooms draw red** — the house sits at 64-75
+% RH against a 60 % ceiling, and at 23-25 °C against a 24 °C ceiling. Red used
+everywhere is red used nowhere (§2). Slice 2.3 is now the difference between a
+dashboard that shouts once and one that shouts always.
 
 **M3** — `src/sources/`: a port, a fixture source, the REST adapter, and the
 boundary test. +109 tests. Four decisions worth remembering:

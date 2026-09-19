@@ -155,14 +155,13 @@ class TestProblems:
 
 class TestRoomReadings:
     def test_reads_a_thermostat_when_no_sensor_is_configured(self):
-        """Most rooms name only a climate entity; it carries the readings."""
+        """Most rooms name only a climate entity; it carries temperature and setpoint."""
         config = house(room("stue"))
         states = {
             "climate.stue": state(
                 "climate.stue",
                 "heat",
                 current_temperature=23.1,
-                current_humidity=44.0,
                 temperature=22.0,
                 hvac_action="heating",
             )
@@ -172,7 +171,6 @@ class TestRoomReadings:
         climate = snapshot.rooms[0].climate
 
         assert climate.temperature == 23.1
-        assert climate.humidity == 44.0
         assert climate.setpoint == 22.0
         assert climate.action is HeatingAction.HEATING
         assert not [error for error in snapshot.source_errors if "climate.stue" in error]
@@ -186,15 +184,39 @@ class TestRoomReadings:
 
         assert build_snapshot(config, states).rooms[0].climate.humidity == 44.0
 
-    def test_falls_back_to_the_thermostat_when_the_sensor_is_dead(self):
+    def test_temperature_falls_back_to_the_thermostat_when_the_sensor_is_dead(self):
         """A quiet sensor must not hide a reading the thermostat still has."""
+        config = house(room("stue", temperature=EntityRef(entity_id="sensor.stue_t")))
+        states = {
+            "climate.stue": state("climate.stue", "heat", current_temperature=23.1),
+            "sensor.stue_t": state("sensor.stue_t", "unavailable"),
+        }
+
+        assert build_snapshot(config, states).rooms[0].climate.temperature == 23.1
+
+    def test_humidity_never_falls_back_to_the_thermostat(self):
+        """The captured instance broadcasts one house-wide humidity everywhere.
+
+        All ten climate entities report `current_humidity: 72.0` while the
+        per-room sensors read 64 to 75. A fallback would put the house average
+        in a room's row and call it that room's air - the same class of bug as
+        `sophie` and `gang` sharing a sensor (INTENT.md section 11). A
+        placeholder is the honest answer.
+        """
         config = house(room("stue", humidity=EntityRef(entity_id="sensor.stue_rf")))
         states = {
-            "climate.stue": state("climate.stue", "heat", current_humidity=44.0),
+            "climate.stue": state("climate.stue", "heat", current_humidity=72.0),
             "sensor.stue_rf": state("sensor.stue_rf", "unavailable"),
         }
 
-        assert build_snapshot(config, states).rooms[0].climate.humidity == 44.0
+        assert build_snapshot(config, states).rooms[0].climate.humidity is None
+
+    def test_a_room_naming_no_humidity_sensor_reports_none(self):
+        """Not even when the thermostat is sitting there with a number."""
+        config = house(room("stue"))
+        states = {"climate.stue": state("climate.stue", "heat", current_humidity=72.0)}
+
+        assert build_snapshot(config, states).rooms[0].climate.humidity is None
 
     def test_reads_an_attribute_reference(self):
         """The outdoor row is backed by an attribute of the weather entity."""
@@ -462,7 +484,7 @@ class TestReportingPolicy:
 
         snapshot = build_snapshot(config, states)
         assert snapshot.rooms[0].climate.humidity is None
-        assert not [error for error in snapshot.source_errors if "sensor.stue_rf" in error]
+        assert not [e for e in snapshot.source_errors if "sensor.stue_rf" in e]
 
     @pytest.mark.parametrize("value", ["kold", "72 %", {"value": 1}, True])
     def test_an_unparseable_value_is_reported(self, value):
@@ -513,3 +535,43 @@ class TestHostileStatesPayload:
     def test_taken_at_is_carried_through(self):
         moment = datetime(2026, 9, 19, 14, 32, tzinfo=timezone.utc)
         assert build_snapshot(house(), {}, taken_at=moment).taken_at == moment
+
+
+class TestWindUnits:
+    """The wire reports km/h; `format_da.wind_speed()` renders m/s.
+
+    Normalising is the source layer's job - above it, a number is already in
+    the domain's unit. 23 is a stiff breeze in km/h and a storm in m/s, and the
+    difference decides whether someone takes a coat.
+    """
+
+    def weather(self, speed, unit):
+        states = {
+            "weather.home": state("weather.home", "cloudy", wind_speed=speed, wind_speed_unit=unit)
+        }
+        return build_snapshot(house(), states).weather
+
+    def test_km_per_hour_becomes_metres_per_second(self):
+        """The captured instance's unit: 23 km/h is 6.4 m/s, not a gale."""
+        assert self.weather(23.0, "km/h").wind_speed == pytest.approx(6.389, abs=0.001)
+
+    def test_metres_per_second_are_left_alone(self):
+        assert self.weather(6.7, "m/s").wind_speed == 6.7
+
+    @pytest.mark.parametrize(
+        "speed,unit,expected",
+        [(10.0, "mph", 4.4704), (10.0, "kn", 5.14444), (10.0, "ft/s", 3.048)],
+    )
+    def test_the_other_units_convert(self, speed, unit, expected):
+        assert self.weather(speed, unit).wind_speed == pytest.approx(expected, abs=0.0001)
+
+    def test_a_missing_unit_is_assumed_to_be_metres_per_second(self):
+        """The domain's own unit is the only safe assumption when none is given."""
+        assert self.weather(6.7, None).wind_speed == 6.7
+
+    def test_an_unrecognised_unit_yields_none_rather_than_a_wrong_number(self):
+        """A placeholder beats a number that might be a factor of 3.6 out."""
+        assert self.weather(23.0, "furlongs/fortnight").wind_speed is None
+
+    def test_no_wind_reading_stays_none(self):
+        assert self.weather(None, "km/h").wind_speed is None

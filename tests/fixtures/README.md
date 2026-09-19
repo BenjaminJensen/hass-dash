@@ -12,9 +12,10 @@ against the live instance from outside the container:
 These are committed on purpose. `sources.fixture.FixtureSource` replays them so
 the dashboard can be developed and tested against real data.
 
-**This capture has not been run yet.** Until it has, the tests that depend on it
-skip, and the three humidity entity ids and the whole `ude` row in `house.yml`
-are a guess (see `INTENT.md` section 11).
+**Captured 2026-09-19.** All 24 configured entities resolved; the three
+`UNCONFIRMED` humidity ids and the `ude` row in `house.yml` were all guessed
+correctly. `capture_report.md` holds the audit and the answers to `INTENT.md`
+section 11; `PLAN.md` records what those answers changed.
 
 `sets/` holds the recordings a live capture cannot give you: `hostile/`, which
 is every unpleasant shape at once — an absent entity, `unavailable`, `unknown`,

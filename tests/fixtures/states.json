@@ -1,0 +1,1694 @@
+{
+  "climate.0x5cc7c1fffede1ef5_1": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 23.0,
+      "friendly_name": "Gulvvarme 1",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 22.0
+    },
+    "context": {
+      "id": "01M2XB6R2JQ7TKDHX2B3EYQR8D",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_1",
+    "last_changed": "2026-09-15T17:38:51.816627+00:00",
+    "last_reported": "2026-09-19T17:25:12.914067+00:00",
+    "last_updated": "2026-09-19T17:25:12.914067+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_10": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 24.2,
+      "friendly_name": "Gulvvarme 10",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 23.0
+    },
+    "context": {
+      "id": "01M2XB6R2KWYRQQ03V4YS7NNDJ",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_10",
+    "last_changed": "2026-09-15T17:38:51.821430+00:00",
+    "last_reported": "2026-09-19T17:25:12.915107+00:00",
+    "last_updated": "2026-09-19T17:25:12.915107+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_11": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": null,
+      "friendly_name": "Gulvvarme 11",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": null
+    },
+    "context": {
+      "id": "01M2XB6R2JKK3E5CRB2227RKMV",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_11",
+    "last_changed": "2026-09-15T17:38:51.821630+00:00",
+    "last_reported": "2026-09-19T17:25:12.914984+00:00",
+    "last_updated": "2026-09-19T17:25:12.914984+00:00",
+    "state": "unknown"
+  },
+  "climate.0x5cc7c1fffede1ef5_12": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": null,
+      "friendly_name": "Gulvvarme 12",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": null
+    },
+    "context": {
+      "id": "01M2XB6R2M0MY20XK81M75JS03",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_12",
+    "last_changed": "2026-09-15T17:38:51.821855+00:00",
+    "last_reported": "2026-09-19T17:25:12.916033+00:00",
+    "last_updated": "2026-09-19T17:25:12.916033+00:00",
+    "state": "unknown"
+  },
+  "climate.0x5cc7c1fffede1ef5_13": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": null,
+      "friendly_name": "Gulvvarme 13",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": null
+    },
+    "context": {
+      "id": "01M2XB6R2KV9617H8F356QMMDR",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_13",
+    "last_changed": "2026-09-15T17:38:51.822074+00:00",
+    "last_reported": "2026-09-19T17:25:12.915803+00:00",
+    "last_updated": "2026-09-19T17:25:12.915803+00:00",
+    "state": "unknown"
+  },
+  "climate.0x5cc7c1fffede1ef5_14": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": null,
+      "friendly_name": "Gulvvarme 14",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": null
+    },
+    "context": {
+      "id": "01M2XB6R2HA766CZYQJ29DZBZC",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_14",
+    "last_changed": "2026-09-15T17:38:51.822271+00:00",
+    "last_reported": "2026-09-19T17:25:12.913762+00:00",
+    "last_updated": "2026-09-19T17:25:12.913762+00:00",
+    "state": "unknown"
+  },
+  "climate.0x5cc7c1fffede1ef5_15": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": null,
+      "friendly_name": "Gulvvarme 15",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": null
+    },
+    "context": {
+      "id": "01M2XB6R2J5YNWBRKGFK628DCA",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_15",
+    "last_changed": "2026-09-15T17:38:51.822469+00:00",
+    "last_reported": "2026-09-19T17:25:12.914609+00:00",
+    "last_updated": "2026-09-19T17:25:12.914609+00:00",
+    "state": "unknown"
+  },
+  "climate.0x5cc7c1fffede1ef5_2": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 23.3,
+      "friendly_name": "Gulvvarme 2",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 23.0
+    },
+    "context": {
+      "id": "01M2XB6R2KXTN0QYMTH0YRT7KM",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_2",
+    "last_changed": "2026-09-15T17:38:51.816899+00:00",
+    "last_reported": "2026-09-19T17:25:12.915627+00:00",
+    "last_updated": "2026-09-19T17:25:12.915627+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_3": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 23.5,
+      "friendly_name": "Marius",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 21.0
+    },
+    "context": {
+      "id": "01M2XB6R2J063NWP7CGF7S8E93",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_3",
+    "last_changed": "2026-09-15T17:38:51.817149+00:00",
+    "last_reported": "2026-09-19T17:25:12.914490+00:00",
+    "last_updated": "2026-09-19T17:25:12.914490+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_4": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 23.2,
+      "friendly_name": "Gulvvarme 4",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 22.5
+    },
+    "context": {
+      "id": "01M2XB6R2KVC6T25J5HRCFJ3CH",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_4",
+    "last_changed": "2026-09-15T17:38:51.817361+00:00",
+    "last_reported": "2026-09-19T17:25:12.915926+00:00",
+    "last_updated": "2026-09-19T17:25:12.915926+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_5": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 25.2,
+      "friendly_name": "Gulvvarme 5",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 25.0
+    },
+    "context": {
+      "id": "01M2XB6R2J3XX9763ZAJANQP5G",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_5",
+    "last_changed": "2026-09-15T17:38:51.820163+00:00",
+    "last_reported": "2026-09-19T17:25:12.914361+00:00",
+    "last_updated": "2026-09-19T17:25:12.914361+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_6": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 23.9,
+      "friendly_name": "Gulvvarme 6",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 23.5
+    },
+    "context": {
+      "id": "01M2XB6R2K3MW57FB04E6AZZRW",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_6",
+    "last_changed": "2026-09-15T17:38:51.820493+00:00",
+    "last_reported": "2026-09-19T17:25:12.915418+00:00",
+    "last_updated": "2026-09-19T17:25:12.915418+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_7": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 25.0,
+      "friendly_name": "Gulvvarme 7",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 25.0
+    },
+    "context": {
+      "id": "01M2XB7K64PKNGT5DXFNBQW5SN",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_7",
+    "last_changed": "2026-09-15T17:38:51.820760+00:00",
+    "last_reported": "2026-09-19T17:25:40.676092+00:00",
+    "last_updated": "2026-09-19T17:25:40.676092+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_8": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 23.3,
+      "friendly_name": "Gulvvarme 8",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 10.0
+    },
+    "context": {
+      "id": "01M2XB6R2K9MVDVXNPK5X6F89Y",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_8",
+    "last_changed": "2026-09-15T17:38:51.821002+00:00",
+    "last_reported": "2026-09-19T17:25:12.915225+00:00",
+    "last_updated": "2026-09-19T17:25:12.915225+00:00",
+    "state": "heat"
+  },
+  "climate.0x5cc7c1fffede1ef5_9": {
+    "attributes": {
+      "current_humidity": 72.0,
+      "current_temperature": 24.8,
+      "friendly_name": "Gulvvarme 9",
+      "hvac_action": "idle",
+      "hvac_modes": [
+        "heat"
+      ],
+      "max_temp": 35.0,
+      "min_temp": 5.0,
+      "supported_features": 385,
+      "target_temp_step": 0.5,
+      "temperature": 23.5
+    },
+    "context": {
+      "id": "01M2XB6R2J2R77D264Z72QA4RA",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "climate.0x5cc7c1fffede1ef5_9",
+    "last_changed": "2026-09-15T17:38:51.821243+00:00",
+    "last_reported": "2026-09-19T17:25:12.914727+00:00",
+    "last_updated": "2026-09-19T17:25:12.914727+00:00",
+    "state": "heat"
+  },
+  "sensor.0x00158d0001fd5ebe_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Sune Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY796GM70E6K3FRFAED0R",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0001fd5ebe_humidity",
+    "last_changed": "2026-09-08T16:34:37.990519+00:00",
+    "last_reported": "2026-09-08T16:34:37.990519+00:00",
+    "last_updated": "2026-09-08T16:34:37.990519+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d0001fd5ebe_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Sune Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY795613JJ46XV9BWT2FJ",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0001fd5ebe_temperature",
+    "last_changed": "2026-09-08T16:34:37.989300+00:00",
+    "last_reported": "2026-09-08T16:34:37.989300+00:00",
+    "last_updated": "2026-09-08T16:34:37.989300+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d0002024571_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Marius Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY7907SQB5XM4PHBFS0R3",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0002024571_humidity",
+    "last_changed": "2026-09-08T16:34:37.984251+00:00",
+    "last_reported": "2026-09-08T16:34:37.984251+00:00",
+    "last_updated": "2026-09-08T16:34:37.984251+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d0002024571_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Marius Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY78Y0APAXZ9MGTCD62E0",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0002024571_temperature",
+    "last_changed": "2026-09-08T16:34:37.982328+00:00",
+    "last_reported": "2026-09-08T16:34:37.982328+00:00",
+    "last_updated": "2026-09-08T16:34:37.982328+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00020f601a_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Køkken Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY7AMKSD67XCKJPVYDWH8",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00020f601a_humidity",
+    "last_changed": "2026-09-08T16:34:38.036510+00:00",
+    "last_reported": "2026-09-08T16:34:38.036510+00:00",
+    "last_updated": "2026-09-08T16:34:38.036510+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00020f601a_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Køkken Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY7AJMSCYMSZCT8HP8PPC",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00020f601a_temperature",
+    "last_changed": "2026-09-08T16:34:38.034604+00:00",
+    "last_reported": "2026-09-08T16:34:38.034604+00:00",
+    "last_updated": "2026-09-08T16:34:38.034604+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00020ff999_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Garage Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY78CK6FKGTEN3FK3SMZ7",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00020ff999_humidity",
+    "last_changed": "2026-09-08T16:34:37.964822+00:00",
+    "last_reported": "2026-09-08T16:34:37.964822+00:00",
+    "last_updated": "2026-09-08T16:34:37.964822+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00020ff999_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Garage Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY785E1JDNDGDXMWR0ZG0",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00020ff999_temperature",
+    "last_changed": "2026-09-08T16:34:37.957361+00:00",
+    "last_reported": "2026-09-08T16:34:37.957361+00:00",
+    "last_updated": "2026-09-08T16:34:37.957361+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00020ffbb9_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Soveværelse Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY7A586KHZBTVBQ96347K",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00020ffbb9_humidity",
+    "last_changed": "2026-09-08T16:34:38.021766+00:00",
+    "last_reported": "2026-09-08T16:34:38.021766+00:00",
+    "last_updated": "2026-09-08T16:34:38.021766+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00020ffbb9_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Soveværelse Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY7A4DFF6RMSQFQDT2G8G",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00020ffbb9_temperature",
+    "last_changed": "2026-09-08T16:34:38.020487+00:00",
+    "last_reported": "2026-09-08T16:34:38.020487+00:00",
+    "last_updated": "2026-09-08T16:34:38.020487+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00025d9386_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Sophie Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY79DE2CGYYWPZQBEZ65S",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00025d9386_humidity",
+    "last_changed": "2026-09-08T16:34:37.997072+00:00",
+    "last_reported": "2026-09-08T16:34:37.997072+00:00",
+    "last_updated": "2026-09-08T16:34:37.997072+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d00025d9386_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Sophie Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY79BK5ATH591MT1BMJGC",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d00025d9386_temperature",
+    "last_changed": "2026-09-08T16:34:37.995596+00:00",
+    "last_reported": "2026-09-08T16:34:37.995596+00:00",
+    "last_updated": "2026-09-08T16:34:37.995596+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d000272675a_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Bryggers Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY78N9JPS5GWBRYFJ8HNV",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d000272675a_humidity",
+    "last_changed": "2026-09-08T16:34:37.973730+00:00",
+    "last_reported": "2026-09-08T16:34:37.973730+00:00",
+    "last_updated": "2026-09-08T16:34:37.973730+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d000272675a_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Bryggers Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY78MCB219EGWJHZWNFGK",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d000272675a_temperature",
+    "last_changed": "2026-09-08T16:34:37.972423+00:00",
+    "last_reported": "2026-09-08T16:34:37.972423+00:00",
+    "last_updated": "2026-09-08T16:34:37.972423+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d000273d218_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Stue Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY79XR68XKHDBGW78FFKS",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d000273d218_humidity",
+    "last_changed": "2026-09-08T16:34:38.013566+00:00",
+    "last_reported": "2026-09-08T16:34:38.013566+00:00",
+    "last_updated": "2026-09-08T16:34:38.013566+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d000273d218_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Stue Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY79VNER8JYWMWR4KPX78",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d000273d218_temperature",
+    "last_changed": "2026-09-08T16:34:38.011616+00:00",
+    "last_reported": "2026-09-08T16:34:38.011616+00:00",
+    "last_updated": "2026-09-08T16:34:38.011616+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d0002e96dbf_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Lille Bad Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M20XY79N1EYNHJ780N4B317G",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0002e96dbf_humidity",
+    "last_changed": "2026-09-08T16:34:38.005209+00:00",
+    "last_reported": "2026-09-08T16:34:38.005209+00:00",
+    "last_updated": "2026-09-08T16:34:38.005209+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d0002e96dbf_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Lille Bad Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M20XY79KWM7NH3TXP331AB3R",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0002e96dbf_temperature",
+    "last_changed": "2026-09-08T16:34:38.003962+00:00",
+    "last_reported": "2026-09-08T16:34:38.003962+00:00",
+    "last_updated": "2026-09-08T16:34:38.003962+00:00",
+    "state": "unavailable"
+  },
+  "sensor.0x00158d0002fb4826_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Stort bad Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2XATCSNSSYBDAF764E58GAP",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0002fb4826_humidity",
+    "last_changed": "2026-09-19T17:18:28.149678+00:00",
+    "last_reported": "2026-09-19T17:18:28.149678+00:00",
+    "last_updated": "2026-09-19T17:18:28.149678+00:00",
+    "state": "76.56"
+  },
+  "sensor.0x00158d0002fb4826_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Stort bad Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2XATCRMSH87PV2BNMKDN8KP",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x00158d0002fb4826_temperature",
+    "last_changed": "2026-09-19T17:18:28.116821+00:00",
+    "last_reported": "2026-09-19T17:18:28.116821+00:00",
+    "last_updated": "2026-09-19T17:18:28.116821+00:00",
+    "state": "25.22"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_1": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2XB6R2JX4CWAJ1FNB5F53B6",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_1",
+    "last_changed": "2026-09-19T17:25:12.914873+00:00",
+    "last_reported": "2026-09-19T17:25:12.914873+00:00",
+    "last_updated": "2026-09-19T17:25:12.914873+00:00",
+    "state": "72"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_10": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2X9PK61RR71D9NSEZPR7R3Z",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_10",
+    "last_changed": "2026-09-19T16:58:55.041528+00:00",
+    "last_reported": "2026-09-19T16:58:55.041528+00:00",
+    "last_updated": "2026-09-19T16:58:55.041528+00:00",
+    "state": "66"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_11": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2K2CVW9R9QVE9X3EEAH4SQS",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_11",
+    "last_changed": "2026-09-15T17:38:51.913335+00:00",
+    "last_reported": "2026-09-15T17:38:51.913335+00:00",
+    "last_updated": "2026-09-15T17:38:51.913335+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_12": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2K2CVWAGQBHSCEVJYAY48Q8",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_12",
+    "last_changed": "2026-09-15T17:38:51.914449+00:00",
+    "last_reported": "2026-09-15T17:38:51.914449+00:00",
+    "last_updated": "2026-09-15T17:38:51.914449+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_13": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2K2CVWB81GG651EQA3AYY87",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_13",
+    "last_changed": "2026-09-15T17:38:51.915423+00:00",
+    "last_reported": "2026-09-15T17:38:51.915423+00:00",
+    "last_updated": "2026-09-15T17:38:51.915423+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_14": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2K2CVWCEW80QTF6VA56YHKQ",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_14",
+    "last_changed": "2026-09-15T17:38:51.916487+00:00",
+    "last_reported": "2026-09-15T17:38:51.916487+00:00",
+    "last_updated": "2026-09-15T17:38:51.916487+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_15": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2K2CVWDWTEWQM5F2A9ZKZCE",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_15",
+    "last_changed": "2026-09-15T17:38:51.917521+00:00",
+    "last_reported": "2026-09-15T17:38:51.917521+00:00",
+    "last_updated": "2026-09-15T17:38:51.917521+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_2": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2X98XPQKDST4DQ9YE8NB70S",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_2",
+    "last_changed": "2026-09-19T16:51:27.063081+00:00",
+    "last_reported": "2026-09-19T16:51:27.063081+00:00",
+    "last_updated": "2026-09-19T16:51:27.063081+00:00",
+    "state": "69"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_3": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2X92PS7DDNR8AJ7F3EWQE6Q",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_3",
+    "last_changed": "2026-09-19T16:48:03.367604+00:00",
+    "last_reported": "2026-09-19T16:48:03.367604+00:00",
+    "last_updated": "2026-09-19T16:48:03.367604+00:00",
+    "state": "69"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_4": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2X99M7E1CQ3E2VCK1Z0DTHC",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_4",
+    "last_changed": "2026-09-19T16:51:50.126361+00:00",
+    "last_reported": "2026-09-19T16:51:50.126361+00:00",
+    "last_updated": "2026-09-19T16:51:50.126361+00:00",
+    "state": "68"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_5": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Stort Bad Danfoss",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2XB62WBDS20E6EEYHAQ06J5",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_5",
+    "last_changed": "2026-09-19T17:24:51.211061+00:00",
+    "last_reported": "2026-09-19T17:24:51.211061+00:00",
+    "last_updated": "2026-09-19T17:24:51.211061+00:00",
+    "state": "75"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_6": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Køkken Danfoss",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2X2XK2XHEVAX8DB8291V2AV",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_6",
+    "last_changed": "2026-09-19T15:00:24.285809+00:00",
+    "last_reported": "2026-09-19T15:00:24.285809+00:00",
+    "last_updated": "2026-09-19T15:00:24.285809+00:00",
+    "state": "66"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_7": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Lille Bad Danfoss",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2WYWA0GHJ73YF1FBREPKDED",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_7",
+    "last_changed": "2026-09-19T13:49:47.920608+00:00",
+    "last_reported": "2026-09-19T13:49:47.920608+00:00",
+    "last_updated": "2026-09-19T13:49:47.920608+00:00",
+    "state": "64"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_8": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2XA3XJVVJEXVD5CWV95GNTM",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_8",
+    "last_changed": "2026-09-19T17:06:11.675655+00:00",
+    "last_reported": "2026-09-19T17:06:11.675655+00:00",
+    "last_updated": "2026-09-19T17:06:11.675655+00:00",
+    "state": "69"
+  },
+  "sensor.0x5cc7c1fffede1ef5_humidity_9": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Gulvvarme Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M2X8M8A7WT4M1D1J4SR4VYYH",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_humidity_9",
+    "last_changed": "2026-09-19T16:40:09.799725+00:00",
+    "last_reported": "2026-09-19T16:40:09.799725+00:00",
+    "last_updated": "2026-09-19T16:40:09.799725+00:00",
+    "state": "65"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_1": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVVE4EFE0EGDA8P27NTZ",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_1",
+    "last_changed": "2026-09-15T17:38:51.886205+00:00",
+    "last_reported": "2026-09-15T17:38:51.886205+00:00",
+    "last_updated": "2026-09-15T17:38:51.886205+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_10": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVW2AEBGNBE3AQME6JWW",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_10",
+    "last_changed": "2026-09-15T17:38:51.906775+00:00",
+    "last_reported": "2026-09-15T17:38:51.906775+00:00",
+    "last_updated": "2026-09-15T17:38:51.906775+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_11": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVW9N7VW9RRD0ADB4SYN",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_11",
+    "last_changed": "2026-09-15T17:38:51.913174+00:00",
+    "last_reported": "2026-09-15T17:38:51.913174+00:00",
+    "last_updated": "2026-09-15T17:38:51.913174+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_12": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVWA3K1JV3ZC5QGVMEPK",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_12",
+    "last_changed": "2026-09-15T17:38:51.914314+00:00",
+    "last_reported": "2026-09-15T17:38:51.914314+00:00",
+    "last_updated": "2026-09-15T17:38:51.914314+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_13": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVWBBSKQW82RX94V9QDG",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_13",
+    "last_changed": "2026-09-15T17:38:51.915271+00:00",
+    "last_reported": "2026-09-15T17:38:51.915271+00:00",
+    "last_updated": "2026-09-15T17:38:51.915271+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_14": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVWCAVERE9JMJBA12TE7",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_14",
+    "last_changed": "2026-09-15T17:38:51.916332+00:00",
+    "last_reported": "2026-09-15T17:38:51.916332+00:00",
+    "last_updated": "2026-09-15T17:38:51.916332+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_15": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVWD5VVHGX1M0T9P9356",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_15",
+    "last_changed": "2026-09-15T17:38:51.917304+00:00",
+    "last_reported": "2026-09-15T17:38:51.917304+00:00",
+    "last_updated": "2026-09-15T17:38:51.917304+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_2": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVVMX49A02W5WTMB7BPG",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_2",
+    "last_changed": "2026-09-15T17:38:51.892535+00:00",
+    "last_reported": "2026-09-15T17:38:51.892535+00:00",
+    "last_updated": "2026-09-15T17:38:51.892535+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_3": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVVNNAZ29KZ9F1PFEP1F",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_3",
+    "last_changed": "2026-09-15T17:38:51.893465+00:00",
+    "last_reported": "2026-09-15T17:38:51.893465+00:00",
+    "last_updated": "2026-09-15T17:38:51.893465+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_4": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVVPVHN5WNT05G774YGG",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_4",
+    "last_changed": "2026-09-15T17:38:51.894419+00:00",
+    "last_reported": "2026-09-15T17:38:51.894419+00:00",
+    "last_updated": "2026-09-15T17:38:51.894419+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_5": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Stort Bad Gulv",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2XAB4YC0349FSDACQWVWDQY",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_5",
+    "last_changed": "2026-09-19T17:10:08.588121+00:00",
+    "last_reported": "2026-09-19T17:10:08.588121+00:00",
+    "last_updated": "2026-09-19T17:10:08.588121+00:00",
+    "state": "25.39"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_6": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVVRFFTWDRKKKMKHG96F",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_6",
+    "last_changed": "2026-09-15T17:38:51.896396+00:00",
+    "last_reported": "2026-09-15T17:38:51.896396+00:00",
+    "last_updated": "2026-09-15T17:38:51.896396+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_7": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Lille Bad Gulv",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2XA1SBYCF0QZQF3E385ZMP9",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_7",
+    "last_changed": "2026-09-19T17:05:01.822467+00:00",
+    "last_reported": "2026-09-19T17:05:01.822467+00:00",
+    "last_updated": "2026-09-19T17:05:01.822467+00:00",
+    "state": "27.32"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_8": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVW0JTHZ8EEAM5XM16RF",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_8",
+    "last_changed": "2026-09-15T17:38:51.904354+00:00",
+    "last_reported": "2026-09-15T17:38:51.904354+00:00",
+    "last_updated": "2026-09-15T17:38:51.904354+00:00",
+    "state": "unknown"
+  },
+  "sensor.0x5cc7c1fffede1ef5_temperature_9": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Gulvvarme Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2K2CVW1D2982YS07BQ2MRWC",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.0x5cc7c1fffede1ef5_temperature_9",
+    "last_changed": "2026-09-15T17:38:51.905664+00:00",
+    "last_reported": "2026-09-15T17:38:51.905664+00:00",
+    "last_updated": "2026-09-15T17:38:51.905664+00:00",
+    "state": "unknown"
+  },
+  "sensor.abs_hum_gang": {
+    "attributes": {
+      "context": {
+        "id": "01M2JV2C0NQB25XXBPZ5V37A7V",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.77,
+      "friendly_name": "Gang Air Quality",
+      "last_changed": "2026-09-15T15:30:47.957860+00:00",
+      "last_reported": "2026-09-15T15:30:47.957860+00:00",
+      "last_updated": "2026-09-15T15:30:47.957860+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XAVWWFGKMDW7ZQMVFX6KFJ",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_gang",
+    "last_changed": "2026-09-19T17:19:17.391933+00:00",
+    "last_reported": "2026-09-19T17:19:17.391933+00:00",
+    "last_updated": "2026-09-19T17:19:17.391933+00:00",
+    "state": "14.8"
+  },
+  "sensor.abs_hum_garage": {
+    "attributes": {
+      "context": {
+        "id": "01M2JYTDTZKTQNFKSVG1KR9E4Z",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.45,
+      "friendly_name": "Garage Air Quality",
+      "last_changed": "2026-09-15T16:36:21.983021+00:00",
+      "last_reported": "2026-09-15T16:36:21.983021+00:00",
+      "last_updated": "2026-09-15T16:36:21.983021+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XA58E96D8GMZ1NG8QXNCDP",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_garage",
+    "last_changed": "2026-09-19T17:06:55.561616+00:00",
+    "last_reported": "2026-09-19T17:06:55.561616+00:00",
+    "last_updated": "2026-09-19T17:06:55.561616+00:00",
+    "state": "14.53"
+  },
+  "sensor.abs_hum_koekken": {
+    "attributes": {
+      "context": {
+        "id": "01M2K0QQVEAMYWEVR8T49BAAM5",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.16,
+      "friendly_name": "Køkken Air Quality",
+      "last_changed": "2026-09-15T17:09:51.086782+00:00",
+      "last_reported": "2026-09-15T17:09:51.086782+00:00",
+      "last_updated": "2026-09-15T17:09:51.086782+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2X7YE0CR7Q62PNPKHNFWAXA",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_koekken",
+    "last_changed": "2026-09-19T16:28:14.732106+00:00",
+    "last_reported": "2026-09-19T16:28:14.732106+00:00",
+    "last_updated": "2026-09-19T16:28:14.732106+00:00",
+    "state": "14.28"
+  },
+  "sensor.abs_hum_lille_bad": {
+    "attributes": {
+      "context": {
+        "id": "01M2NVFBK62RZVDPP5CF1R9PCV",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.72,
+      "friendly_name": "Lille bad Air Quality",
+      "last_changed": "2026-09-16T19:35:36.806879+00:00",
+      "last_reported": "2026-09-16T19:35:36.806879+00:00",
+      "last_updated": "2026-09-16T19:35:36.806879+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XB7K6E30PZJYM21W2F5WE2",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_lille_bad",
+    "last_changed": "2026-09-19T17:25:40.686837+00:00",
+    "last_reported": "2026-09-19T17:25:40.686837+00:00",
+    "last_updated": "2026-09-19T17:25:40.686837+00:00",
+    "state": "14.74"
+  },
+  "sensor.abs_hum_marius": {
+    "attributes": {
+      "context": {
+        "id": "01M2K0H1V2GVXNEFD3DSCXBXQS",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.48,
+      "friendly_name": "Marius Air Quality",
+      "last_changed": "2026-09-15T17:06:11.938699+00:00",
+      "last_reported": "2026-09-15T17:06:11.938699+00:00",
+      "last_updated": "2026-09-15T17:06:11.938699+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XAWJ5SCZPMJM2Z38466PB6",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_marius",
+    "last_changed": "2026-09-19T17:19:39.193456+00:00",
+    "last_reported": "2026-09-19T17:19:39.193456+00:00",
+    "last_updated": "2026-09-19T17:19:39.193456+00:00",
+    "state": "14.59"
+  },
+  "sensor.abs_hum_sophie": {
+    "attributes": {
+      "context": {
+        "id": "01M2JYH1F13TBPE018KNXHBZ1N",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.29,
+      "friendly_name": "Sophie Air Quality",
+      "last_changed": "2026-09-15T16:31:14.401992+00:00",
+      "last_reported": "2026-09-15T16:31:14.401992+00:00",
+      "last_updated": "2026-09-15T16:31:14.401992+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XA3XKAR6G87HJJVBNWT15A",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_sophie",
+    "last_changed": "2026-09-19T17:06:11.690986+00:00",
+    "last_reported": "2026-09-19T17:06:11.690986+00:00",
+    "last_updated": "2026-09-19T17:06:11.690986+00:00",
+    "state": "14.43"
+  },
+  "sensor.abs_hum_sovevaerelse": {
+    "attributes": {
+      "context": {
+        "id": "01M2K0G1VCGSDMJ7ZSDX15QWQ3",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.68,
+      "friendly_name": "Soveværelse Air Quality",
+      "last_changed": "2026-09-15T17:05:39.180522+00:00",
+      "last_reported": "2026-09-15T17:05:39.180522+00:00",
+      "last_updated": "2026-09-15T17:05:39.180522+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XB6R3AYDES2TGVPJTTAF0S",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_sovevaerelse",
+    "last_changed": "2026-09-19T17:25:12.939003+00:00",
+    "last_reported": "2026-09-19T17:25:12.939003+00:00",
+    "last_updated": "2026-09-19T17:25:12.939003+00:00",
+    "state": "14.8"
+  },
+  "sensor.abs_hum_stort_bad": {
+    "attributes": {
+      "context": {
+        "id": "01M2K2ANB7X64HES7B702V4VDD",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 20.45,
+      "friendly_name": "Stort Bad Air Quality",
+      "last_changed": "2026-09-15T17:37:39.687277+00:00",
+      "last_reported": "2026-09-15T17:37:39.687277+00:00",
+      "last_updated": "2026-09-15T17:37:39.687277+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XB62WV98F8BB3F3J5QP4VV",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_stort_bad",
+    "last_changed": "2026-09-19T17:24:51.227037+00:00",
+    "last_reported": "2026-09-19T17:24:51.227037+00:00",
+    "last_updated": "2026-09-19T17:24:51.227037+00:00",
+    "state": "17.46"
+  },
+  "sensor.abs_hum_stue": {
+    "attributes": {
+      "context": {
+        "id": "01M2K1H9PHXEC1JQ7GMEWQPTC1",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 17.29,
+      "friendly_name": "Stue Air Quality",
+      "last_changed": "2026-09-15T17:23:48.561930+00:00",
+      "last_reported": "2026-09-15T17:23:48.561930+00:00",
+      "last_updated": "2026-09-15T17:23:48.561930+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2XA32KVS2A60YQMECCYDF70",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_stue",
+    "last_changed": "2026-09-19T17:05:44.059960+00:00",
+    "last_reported": "2026-09-19T17:05:44.059960+00:00",
+    "last_updated": "2026-09-19T17:05:44.059960+00:00",
+    "state": "14.43"
+  },
+  "sensor.abs_hum_sune": {
+    "attributes": {
+      "context": {
+        "id": "01M2JXYFA7AD34KP74KDMS7NPZ",
+        "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+      },
+      "device_class": "humidity",
+      "dew_point": 16.97,
+      "friendly_name": "Sune Air Quality",
+      "last_changed": "2026-09-15T16:21:05.991459+00:00",
+      "last_reported": "2026-09-15T16:21:05.991459+00:00",
+      "last_updated": "2026-09-15T16:21:05.991459+00:00",
+      "unit_of_measurement": "g/m³"
+    },
+    "context": {
+      "id": "01M2X99M7R8SA8YYTQ8NBJ1NSV",
+      "parent_id": null,
+      "user_id": "211cb8a3c7b64ca88e1411644bd1d102"
+    },
+    "entity_id": "sensor.abs_hum_sune",
+    "last_changed": "2026-09-19T16:51:50.136770+00:00",
+    "last_reported": "2026-09-19T16:51:50.136770+00:00",
+    "last_updated": "2026-09-19T16:51:50.136770+00:00",
+    "state": "14.14"
+  },
+  "sensor.genvex_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Genvex Controller v.2 Genvex Humidity"
+    },
+    "context": {
+      "id": "01M2K2CVVCME2RV2MBME40B9YD",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.genvex_humidity",
+    "last_changed": "2026-09-15T17:38:51.884353+00:00",
+    "last_reported": "2026-09-15T17:38:51.884353+00:00",
+    "last_updated": "2026-09-15T17:38:51.884353+00:00",
+    "state": "unknown"
+  },
+  "sensor.genvex_pressure": {
+    "attributes": {
+      "device_class": "pressure",
+      "friendly_name": "Genvex Controller v.2 Genvex Pressure"
+    },
+    "context": {
+      "id": "01M2K2CVVCE5D8ACQCDZ18YTGJ",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.genvex_pressure",
+    "last_changed": "2026-09-15T17:38:51.884503+00:00",
+    "last_reported": "2026-09-15T17:38:51.884503+00:00",
+    "last_updated": "2026-09-15T17:38:51.884503+00:00",
+    "state": "unknown"
+  },
+  "sensor.genvex_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Genvex Controller v.2 Genvex Temperature"
+    },
+    "context": {
+      "id": "01M2K2CVVCV009FH1GVP8VXSAA",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.genvex_temperature",
+    "last_changed": "2026-09-15T17:38:51.884197+00:00",
+    "last_reported": "2026-09-15T17:38:51.884197+00:00",
+    "last_updated": "2026-09-15T17:38:51.884197+00:00",
+    "state": "unknown"
+  },
+  "sensor.ude_sensor_ude_humidity": {
+    "attributes": {
+      "device_class": "humidity",
+      "friendly_name": "Ude Sensor Ude Humidity",
+      "state_class": "measurement",
+      "unit_of_measurement": "%"
+    },
+    "context": {
+      "id": "01M22C0MCWXZG2429FBKNVGV44",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.ude_sensor_ude_humidity",
+    "last_changed": "2026-09-09T05:59:51.452388+00:00",
+    "last_reported": "2026-09-09T05:59:51.452388+00:00",
+    "last_updated": "2026-09-09T05:59:51.452388+00:00",
+    "state": "100.0"
+  },
+  "sensor.ude_sensor_ude_pressure": {
+    "attributes": {
+      "device_class": "pressure",
+      "friendly_name": "Ude Sensor Ude Pressure",
+      "state_class": "measurement",
+      "unit_of_measurement": "hPa"
+    },
+    "context": {
+      "id": "01M2XB74M5E624RY2EMS1EMDKS",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.ude_sensor_ude_pressure",
+    "last_changed": "2026-09-19T17:25:25.765281+00:00",
+    "last_reported": "2026-09-19T17:25:25.765281+00:00",
+    "last_updated": "2026-09-19T17:25:25.765281+00:00",
+    "state": "1010.38690185547"
+  },
+  "sensor.ude_sensor_ude_temperature": {
+    "attributes": {
+      "device_class": "temperature",
+      "friendly_name": "Ude Sensor Ude Temperature",
+      "state_class": "measurement",
+      "unit_of_measurement": "°C"
+    },
+    "context": {
+      "id": "01M2XB74M4K9KVDDV2ZESZSH1V",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sensor.ude_sensor_ude_temperature",
+    "last_changed": "2026-09-19T17:25:25.764804+00:00",
+    "last_reported": "2026-09-19T17:25:25.764804+00:00",
+    "last_updated": "2026-09-19T17:25:25.764804+00:00",
+    "state": "23.2337112426758"
+  },
+  "sun.sun": {
+    "attributes": {
+      "azimuth": 273.4,
+      "elevation": -0.37,
+      "friendly_name": "Sun",
+      "next_dawn": "2026-09-20T04:21:33.451814+00:00",
+      "next_dusk": "2026-09-19T18:01:29.219612+00:00",
+      "next_midnight": "2026-09-19T23:10:51+00:00",
+      "next_noon": "2026-09-20T11:11:00+00:00",
+      "next_rising": "2026-09-20T04:59:03.330583+00:00",
+      "next_setting": "2026-09-20T17:21:29.544588+00:00",
+      "rising": false
+    },
+    "context": {
+      "id": "01M2XB4PX75H0QHQHWWD0HF276",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "sun.sun",
+    "last_changed": "2026-09-19T04:55:35.672587+00:00",
+    "last_reported": "2026-09-19T17:24:06.183931+00:00",
+    "last_updated": "2026-09-19T17:24:06.183931+00:00",
+    "state": "above_horizon"
+  },
+  "weather.home": {
+    "attributes": {
+      "attribution": "Weather forecast from met.no, delivered by the Norwegian Meteorological Institute.",
+      "cloud_coverage": 99.7,
+      "dew_point": 16.7,
+      "friendly_name": "Forecast Home",
+      "humidity": 92,
+      "precipitation_unit": "mm",
+      "pressure": 1009.5,
+      "pressure_unit": "hPa",
+      "supported_features": 3,
+      "temperature": 17.7,
+      "temperature_unit": "°C",
+      "uv_index": 0.0,
+      "visibility_unit": "km",
+      "wind_bearing": 237.0,
+      "wind_gust_speed": 43.6,
+      "wind_speed": 23.0,
+      "wind_speed_unit": "km/h"
+    },
+    "context": {
+      "id": "01M2XA2XJBFPG0PSVGKYAFFZFS",
+      "parent_id": null,
+      "user_id": null
+    },
+    "entity_id": "weather.home",
+    "last_changed": "2026-09-19T14:08:38.882601+00:00",
+    "last_reported": "2026-09-19T17:05:38.891832+00:00",
+    "last_updated": "2026-09-19T17:05:38.891832+00:00",
+    "state": "cloudy"
+  }
+}
