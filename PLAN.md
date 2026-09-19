@@ -52,10 +52,13 @@ slice 2.2.
 
 ## Milestones
 
+**Progress:** M0 (`24927d4`) and M1 (`a542a03`) are done, on branch
+`rewrite/intent-architecture`. M2 is next.
+
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
-| M0 | Hygiene and ground clearing | S | — | Dead files gone, repo commands true |
-| M1 | Domain core | M | M0 | Pure model + derivations, honestly tested |
+| M0 ✅ | Hygiene and ground clearing | S | — | Dead files gone, repo commands true |
+| M1 ✅ | Domain core | M | M0 | Pure model + derivations, honestly tested |
 | M2 | Config and captured ground truth | M | M1 | `house.yml` + recorded HA fixtures |
 | M3 | Sources | M | M2 | HA behind a port, hostile inputs survived |
 | M4 | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
@@ -305,9 +308,27 @@ docker compose run --rm tools pytest tests/test_view_rooms.py -v   # unquoted; s
 Anything touching rendering also gets its BMP looked at before it is called
 done.
 
+## Log
+
+**M0** (`24927d4`) — `requirements.txt` re-encoded to UTF-8/LF, `.gitignore`
+un-ignores `assets/**/*.bmp`, four dead files deleted (−490 lines), the broken
+single-test command corrected in `AGENTS.md` and `README.md`. No behaviour
+changed, because there was no runnable behaviour to change.
+
+**M1** (`a542a03`) — the domain core, +950 lines and 72 new tests. Two
+decisions worth remembering: `SunTimes` names its fields `next_rising` /
+`next_setting` because the misleading names *were* the night-detection bug, and
+`Room` carries `is_outdoor` because the "Ude" row sorts last and leaves the
+house summary — a property of the model, not of each layout function.
+
+Also pinned there: number formatting keeps Python's own round-half-even on
+binary floats, so `1.15` renders as `1,1`. Invisible at three metres, and
+imposing decimal rounding would buy nothing but a dependency.
+
 ## The next commit
 
-M0 in one pass: re-encode `requirements.txt`, fix `.gitignore`, delete the four
-dead files, rebuild, run Ruff and the suite. It should land green, remove ~350
-lines, and change no behaviour — because there is currently no behaviour to
-change.
+M2, in two parts. The schema and loader for `house.yml` can be written now. The
+capture script (2.2) has to run against the live Home Assistant instance from
+outside the container, and it is what answers four of the five open questions
+in `INTENT.md` §11 — so the weather-facing parts of M5 stay guesswork until it
+has been run once.
