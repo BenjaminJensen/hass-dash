@@ -1,0 +1,129 @@
+# The house.
+#
+# One file: which rooms exist, what they are called, which entities back them,
+# and what counts as comfortable in each. Replaces rooms.widget.yml, which
+# mixed this up with pixel coordinates.
+#
+# Rooms appear on screen in the order they appear here. There is no `order`
+# key and no `position` key; layout is computed from a box model.
+#
+# TODO(comfort): every band below is a placeholder chosen by the developer, not
+# a number from the family. Red means "act", so until these are real, the red on
+# this screen is guesswork. See PLAN.md slice 2.3.
+#
+# TODO(entities): three humidity sensors are marked UNCONFIRMED below. Run
+# `python3 tools/capture_snapshot.py` against the live instance to settle them;
+# it audits this file and says which ids do not exist. See INTENT.md section 11.
+
+weather:
+  entity_id: weather.home
+
+sun:
+  entity_id: sun.sun
+
+defaults:
+  comfort:
+    min_temperature: 19.0
+    max_temperature: 24.0
+    max_humidity: 60.0
+
+rooms:
+  - key: stue
+    name: Stue
+    climate: climate.0x5cc7c1fffede1ef5_2
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_2
+
+  - key: kokken
+    name: Køkken
+    climate: climate.0x5cc7c1fffede1ef5_6
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_6
+
+  - key: sovevaerelse
+    name: Soveværelse
+    climate: climate.0x5cc7c1fffede1ef5_1
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_1
+    # A bedroom is meant to be cooler than a living room.
+    comfort:
+      min_temperature: 17.0
+      max_temperature: 22.0
+      max_humidity: 60.0
+
+  - key: stort_bad
+    name: Stort bad
+    climate: climate.0x5cc7c1fffede1ef5_5
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_5
+    # A bathroom is damp after a shower and that is not an alert. The ceiling
+    # is here to catch air that never dries out.
+    comfort:
+      min_temperature: 20.0
+      max_temperature: 26.0
+      max_humidity: 70.0
+
+  - key: lille_bad
+    name: Lille bad
+    climate: climate.0x5cc7c1fffede1ef5_7
+    # UNCONFIRMED: was _humidity_8, which breaks the pairing every other room
+    # follows. Either this or the climate id is wrong.
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_7
+    comfort:
+      min_temperature: 20.0
+      max_temperature: 26.0
+      max_humidity: 70.0
+
+  - key: sune
+    name: Sune
+    climate: climate.0x5cc7c1fffede1ef5_4
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_4
+    comfort:
+      min_temperature: 17.0
+      max_temperature: 22.0
+      max_humidity: 60.0
+
+  - key: sophie
+    name: Sophie
+    climate: climate.0x5cc7c1fffede1ef5_8
+    # UNCONFIRMED: was _humidity_9, the same sensor gang reads.
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_8
+    comfort:
+      min_temperature: 17.0
+      max_temperature: 22.0
+      max_humidity: 60.0
+
+  - key: marius
+    name: Marius
+    climate: climate.0x5cc7c1fffede1ef5_3
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_3
+    comfort:
+      min_temperature: 17.0
+      max_temperature: 22.0
+      max_humidity: 60.0
+
+  - key: gang
+    name: Gang
+    climate: climate.0x5cc7c1fffede1ef5_9
+    # UNCONFIRMED: shared _humidity_9 with sophie, so one of the two rooms has
+    # been showing the other's air.
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_9
+
+  - key: garage
+    name: Garage
+    climate: climate.0x5cc7c1fffede1ef5_10
+    humidity: sensor.0x5cc7c1fffede1ef5_humidity_10
+    # Cold is normal in a garage; freezing is not.
+    comfort:
+      min_temperature: 5.0
+      max_humidity: 80.0
+
+  - key: ude
+    name: Ude
+    is_outdoor: true
+    # UNCONFIRMED: no outdoor sensor is known, so this reads the weather
+    # provider. If a physical sensor exists, point these at it instead.
+    temperature:
+      entity_id: weather.home
+      attribute: temperature
+    humidity:
+      entity_id: weather.home
+      attribute: humidity
+    # The outdoors has no comfort band. It is reported, not judged.
+    comfort: {}

@@ -24,13 +24,13 @@ test-cov:
 	docker compose run --rm tools pytest tests/ --cov=src --cov-report=html
 
 lint:
-	docker compose run --rm --entrypoint ruff tools check src/ tests/
+	docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/
 
 lint-fix:
-	docker compose run --rm --entrypoint ruff tools check src/ tests/ --fix
+	docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/ --fix
 
 format:
-	docker compose run --rm --entrypoint ruff tools format src/ tests/
+	docker compose run --rm --entrypoint ruff tools format src/ tests/ tools/
 
 clean:
 	rm -f test_*.bmp test_output.bmp

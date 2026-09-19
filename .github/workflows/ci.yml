@@ -18,10 +18,10 @@ jobs:
         run: docker compose build tools
 
       - name: Ruff lint
-        run: docker compose run --rm --entrypoint ruff tools check src/ tests/
+        run: docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/
 
       - name: Ruff format check
-        run: docker compose run --rm --entrypoint ruff tools format --check src/ tests/
+        run: docker compose run --rm --entrypoint ruff tools format --check src/ tests/ tools/
 
       - name: Run tests
         run: docker compose run --rm tools pytest tests/ -v

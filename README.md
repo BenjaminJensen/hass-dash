@@ -35,17 +35,17 @@ docker compose run --rm tools pytest tests/ --cov=src --cov-report=html
 
 Check for linting issues:
 ```bash
-docker compose run --rm --entrypoint ruff tools check src/ tests/
+docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/
 ```
 
 Fix linting issues automatically:
 ```bash
-docker compose run --rm --entrypoint ruff tools check src/ tests/ --fix
+docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/ --fix
 ```
 
 Format code:
 ```bash
-docker compose run --rm --entrypoint ruff tools format src/ tests/
+docker compose run --rm --entrypoint ruff tools format src/ tests/ tools/
 ```
 
 ### Makefile Shortcuts (macOS/Linux only)
@@ -55,9 +55,9 @@ If you're on macOS or Linux (or using WSL on Windows), you can use the Makefile 
 ```bash
 make build     # docker compose build tools
 make test      # docker compose run --rm tools pytest tests/ -v
-make lint      # docker compose run --rm --entrypoint ruff tools check src/ tests/
-make lint-fix  # docker compose run --rm --entrypoint ruff tools check src/ tests/ --fix
-make format    # docker compose run --rm --entrypoint ruff tools format src/ tests/
+make lint      # docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/
+make lint-fix  # docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/ --fix
+make format    # docker compose run --rm --entrypoint ruff tools format src/ tests/ tools/
 make clean     # Remove test outputs and caches
 ```
 
@@ -74,6 +74,44 @@ pip install -r requirements.txt
 ```
 
 However, all commits and CI should use the containerized tools.
+
+## Configuration
+
+[`house.yml`](house.yml) is the single house configuration: which rooms exist,
+what they are called, which Home Assistant entities back them, and what counts
+as comfortable in each. Rooms appear on screen in the order they appear in the
+file. It carries no pixel coordinates — layout is computed from a box model, and
+the loader rejects coordinate keys by name.
+
+A bad configuration is fatal and reports every problem at once:
+
+```bash
+docker compose run --rm tools python -c "import sys; sys.path.insert(0, 'src'); from config.loader import load_house; print(len(load_house().rooms), 'rooms')"
+```
+
+## Capturing real Home Assistant data
+
+`tools/capture_snapshot.py` records one snapshot of the live instance into
+`tests/fixtures/`, and writes a report auditing `house.yml` against what
+actually exists — which entities are missing, which humidity sensor belongs to
+which room, what can back the outdoor row, and what the forecast service
+returns.
+
+It runs **outside** the container, because the container cannot reach Home
+Assistant. It only reads.
+
+```bash
+python3 tools/capture_snapshot.py
+```
+
+Credentials come from `.env` in the repository root (which is gitignored):
+
+```
+HASS_URL=http://homeassistant.local:8123
+HASS_TOKEN=<long-lived access token from your HA profile page>
+```
+
+Then read `tests/fixtures/capture_report.md`.
 
 ## Architecture Notes
 

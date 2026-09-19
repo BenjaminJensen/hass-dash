@@ -52,14 +52,15 @@ slice 2.2.
 
 ## Milestones
 
-**Progress:** M0 (`24927d4`) and M1 (`a542a03`) are done, on branch
-`rewrite/intent-architecture`. M2 is next.
+**Progress:** M0 (`24927d4`), M1 (`a542a03`) and M2 are done, on branch
+`rewrite/intent-architecture`. M3 is next, and slice 2.2 is waiting on one
+command being run against the live instance.
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
 | M0 ✅ | Hygiene and ground clearing | S | — | Dead files gone, repo commands true |
 | M1 ✅ | Domain core | M | M0 | Pure model + derivations, honestly tested |
-| M2 | Config and captured ground truth | M | M1 | `house.yml` + recorded HA fixtures |
+| M2 ✅ | Config and captured ground truth | M | M1 | `house.yml` + recorded HA fixtures |
 | M3 | Sources | M | M2 | HA behind a port, hostile inputs survived |
 | M4 | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
 | M5 | Complete the screen | L | M4 | Every region of §3 rendered |
@@ -153,9 +154,11 @@ fixtures are committed.
 - **3.3** `homeassistant.py` — the REST adapter. Maps entity ids to domain
   objects using the house config. Swallows and *reports* per-entity failure; a
   dead sensor yields `None`, never an exception.
-- **3.4** A test asserting that no module outside `sources/` references
-  `homeassistant`, `entity_id` or an attribute name. §2's "HA is a source, not a
-  foundation" is worth enforcing mechanically rather than by discipline.
+- **3.4** A test asserting that no module outside `sources/` and `config/`
+  references `homeassistant`, `entity_id` or an attribute name. §2's "HA is a
+  source, not a foundation" is worth enforcing mechanically rather than by
+  discipline. `config/` is exempt because mapping rooms to entity ids is what
+  configuration *is* (§6); nothing it exposes reaches `domain/` or above.
 
 **Done when:** every hostile fixture produces a `Snapshot` full of `None`s and
 zero tracebacks.
@@ -310,6 +313,32 @@ done.
 
 ## Log
 
+**M2** — `house.yml`, `src/config/`, and `tools/capture_snapshot.py`. +141 tests
+in the suite. Four decisions worth remembering:
+
+*Display order is file order.* There is no `order:` key, and the loader rejects
+one by name. Two places to state the same ordering is one place too many, and
+the old file had both.
+
+*Two rooms may not read the same entity.* This is now a fatal config error
+rather than a curiosity. It is the `sophie` / `gang` bug from §11: one of those
+rooms has been showing the other's air, and a schema that permits it would let
+it happen again.
+
+*A room that states a comfort band replaces the defaults outright* rather than
+merging key by key, so `comfort: {}` is how the outdoor row opts out of being
+judged. One place to read a room's real band.
+
+*The capture tool records a filtered instance, not all of it.* The fixtures are
+committed; a climate dashboard has no business keeping a copy of everyone's
+phone battery. Climate domains and temperature/humidity/pressure sensors only,
+plus anything the config names, with `--all` to override.
+
+The tool's pure half — what to keep, what to report — is unit-tested, and the
+whole thing was run end to end against a stand-in HTTP server, because the
+first real run should not be the first run. What has *not* happened is a run
+against the actual house; see "The next commit".
+
 **M0** (`24927d4`) — `requirements.txt` re-encoded to UTF-8/LF, `.gitignore`
 un-ignores `assets/**/*.bmp`, four dead files deleted (−490 lines), the broken
 single-test command corrected in `AGENTS.md` and `README.md`. No behaviour
@@ -327,8 +356,18 @@ imposing decimal rounding would buy nothing but a dependency.
 
 ## The next commit
 
-M2, in two parts. The schema and loader for `house.yml` can be written now. The
-capture script (2.2) has to run against the live Home Assistant instance from
-outside the container, and it is what answers four of the five open questions
-in `INTENT.md` §11 — so the weather-facing parts of M5 stay guesswork until it
-has been run once.
+**First, one command, by you:**
+
+```bash
+python3 tools/capture_snapshot.py     # outside the container; needs .env
+```
+
+Then read `tests/fixtures/capture_report.md` and commit the fixtures. That
+settles four of the five open questions in `INTENT.md` §11 and unblocks the
+weather half of M5. Until it has been run, three humidity entity ids and the
+whole `ude` row in `house.yml` are marked UNCONFIRMED and are a guess.
+
+Then M3 — sources. `port.py` and `fixture.py` can be built against the recorded
+payloads; `homeassistant.py` maps `EntityRef`s to readings and is the only
+module allowed to know what an entity is. M4 is equally available and does not
+depend on M3.

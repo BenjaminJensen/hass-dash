@@ -9,6 +9,7 @@ This policy applies to the entire repository unless a deeper AGENTS.md file expl
 - Use the Docker tooling container for all development validation.
 - On Windows, run `docker compose` commands directly.
 - Treat `src/` as application code and `tests/` as the primary verification surface.
+- Treat `tools/` as development scripts: linted and tested like application code, but never imported by it.
 - Keep changes small, local, and directly related to the requested task.
 - Do not assume GPIO, SPI, or e-paper hardware access works inside the container.
 - Do not introduce unrelated refactors, broad cleanup, or style-only changes.
@@ -23,8 +24,8 @@ This policy applies to the entire repository unless a deeper AGENTS.md file expl
 
 ## Command Policy
 
-- Ruff check: `docker compose run --rm --entrypoint ruff tools check src/ tests/`
-- Ruff format: `docker compose run --rm --entrypoint ruff tools format src/ tests/`
+- Ruff check: `docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/`
+- Ruff format: `docker compose run --rm --entrypoint ruff tools format src/ tests/ tools/`
 - Full tests: `docker compose run --rm tools pytest tests/ -v`
 - Single test: `docker compose run --rm tools pytest tests/test_widgets.py::TestRoomsWidget -v`
 - Do not quote the pytest command. The container has no shell entrypoint, so a quoted command is passed to `exec` as a single filename and fails.
