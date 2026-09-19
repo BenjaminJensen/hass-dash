@@ -26,7 +26,8 @@ This policy applies to the entire repository unless a deeper AGENTS.md file expl
 - Ruff check: `docker compose run --rm --entrypoint ruff tools check src/ tests/`
 - Ruff format: `docker compose run --rm --entrypoint ruff tools format src/ tests/`
 - Full tests: `docker compose run --rm tools pytest tests/ -v`
-- Single test: `docker compose run --rm tools "pytest tests/test_widgets.py::TestRoomsWidget -v"`
+- Single test: `docker compose run --rm tools pytest tests/test_widgets.py::TestRoomsWidget -v`
+- Do not quote the pytest command. The container has no shell entrypoint, so a quoted command is passed to `exec` as a single filename and fails.
 
 ## Change Policy
 

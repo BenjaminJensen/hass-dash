@@ -124,5 +124,7 @@ coverage.xml
 .history/
 
 # temp build files
+# Rendered dashboard output is transient; asset bitmaps are not.
 *.bmp
+!assets/**/*.bmp
 # End of file

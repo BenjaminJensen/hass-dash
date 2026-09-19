@@ -20,11 +20,11 @@ docker compose run --rm tools pytest tests/ -v
 
 Run a specific test class or test function:
 ```bash
-docker compose run --rm tools "pytest tests/test_widgets.py::TestRoomsWidget -v"
-docker compose run --rm tools "pytest tests/test_widgets.py::TestRoomsWidget::test_rooms_render -v"
+docker compose run --rm tools pytest tests/test_widgets.py::TestRoomsWidget -v
+docker compose run --rm tools pytest tests/test_widgets.py::TestRoomsWidget::test_rooms_render -v
 ```
 
-Note: because the `tools` service uses `bash -lc` as entrypoint, pass the full pytest command in quotes when using node selectors (`::`).
+Note: do not quote the pytest command. The `tools` service has no shell entrypoint, so a quoted command is passed to `exec` as a single filename and fails.
 
 Run with coverage:
 ```bash
