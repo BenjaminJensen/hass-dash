@@ -6,7 +6,7 @@ it gets built, with the reasoning for the order.
 [`INTENT.md`](INTENT.md) is the arbiter of *what* and *why*; this file is only
 *when* and *in what slice*. Where they disagree, `INTENT.md` wins and this file
 is stale. [`current-state.md`](current-state.md) is a snapshot of the code as it
-was before this plan and dies at M10.
+was before this plan and dies at M11.
 
 ---
 
@@ -30,7 +30,7 @@ a runnable dashboard. That is the ground this plan builds from.
 ## Strategy
 
 **Strangler, not big-bang.** The new tree grows beside the old one. Every commit
-leaves Ruff clean and the suite green. The old widget layer is deleted at M10,
+leaves Ruff clean and the suite green. The old widget layer is deleted at M11,
 when its replacement is on screen — not before, because it is the only thing
 currently holding the suite up.
 
@@ -61,6 +61,11 @@ inverted. Two things still wait on a human - slice 2.3's comfort bands, and the
 viewing distance M4 measured - and with the panel now lit, both are the only
 things between here and a wall that tells the truth.
 
+**The buildable milestone is M10**, added after the first day on the panel. M9
+waits on a decision and the two open answers wait on the family; replacing the
+vendored driver waits on nothing, and the evidence for it came from running the
+thing rather than from wanting to.
+
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
 | M0 ✅ | Hygiene and ground clearing | S | — | Dead files gone, repo commands true |
@@ -73,7 +78,8 @@ things between here and a wall that tells the truth.
 | M7 ✅ | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
 | M8 ✅ | Hardware, full refresh | M | M7 | On the wall |
 | M9 | Partial refresh | M | M8 | Decided with numbers in hand |
-| M10 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
+| M10 | Replace the vendored driver | M | M8 | The panel driven by tested code |
+| M11 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
 
 M3 and M4/M5 are independent after M2 and can be worked in either order — the
 view layer is developed against hand-built domain objects, not against a source.
@@ -95,7 +101,7 @@ Cheap, and each item blocks something later.
   `src/epd_7in5b_V2_dash.py`, `src/display.py`, `rooms.yml`. This removes the
   only Pi entry point, which is correct — it has not run since `a5fbbec` and
   `src/app.py` replaces it at M7. The widget layer, `dashboard.py` and
-  `rooms.widget.yml` stay until M10; the suite still covers them.
+  `rooms.widget.yml` stay until M11; the suite still covers them.
 - **0.4** Correct the single-test command in `AGENTS.md` and `README.md` to the
   unquoted form that actually works. *This edits the governing policy file, so
   it needs your nod rather than mine.*
@@ -299,7 +305,122 @@ M8 built the seam either way. `EPDRenderer.partial_capable` is `False` and
 already the shipped behaviour and "yes" is that flag, the second init path, and
 a real diff in `render/`. Deciding not to build it changes no code.
 
-### M10 — Retire the old, align the docs (S)
+**Do M10 first if the answer is yes.** The vendored `display_Partial()`'s
+window arithmetic is wrong in a way that was only found by reading it for M10 —
+it *floors* an unaligned right edge rather than rounding it up, and its guard
+condition is a chained comparison that reduces to "both edges were already
+aligned". Building a partial path on that is building on sand, and the M10
+section below has the detail.
+
+### M10 — Replace the vendored driver (M) — buildable today
+
+Everything above `render/` is typed, tested, and has a paragraph somewhere
+explaining why it is the way it is. The two files underneath it are a 2022
+vendor demo, and they are the only code on the wall that no test in this
+repository executes. M8 put them on the glass; the first cycle under the systemd
+unit produced a CPU figure that did not make sense, and reading the file to
+explain it found eight more defects that nobody was looking for.
+
+**This is the milestone that waits on nothing.** M9 waits on a decision, the
+comfort bands and the viewing distance wait on the family. This waits on a
+`git checkout -b`.
+
+**And it can be proven in the container, which is the part worth knowing.** The
+vendored `EPD` class imports neither `gpiozero` nor `spidev`; it talks to
+exactly one object, the module-scope `epdconfig`, through seven methods. Put a
+recorder in `sys.modules["epdconfig"]` before importing `epd7in5b_V2` and the
+whole driver runs on a workstation, emitting the precise sequence of pin writes,
+SPI bytes and delays it would emit on the Pi. **That transcript is the
+specification**, it costs no hardware, and it turns "rewrite the driver" from an
+act of faith into a diff.
+
+#### What reading it found
+
+Line numbers are `src/epd7in5b_V2.py` unless stated.
+
+| Finding | Line | What it costs |
+| --- | --- | --- |
+| `ReadBusy()` has no timeout | 79 | A panel that never releases BUSY hangs the process **forever**. `Restart=always` cannot help — the unit is still running — so the wall silently keeps yesterday's frame and the journal says nothing. This is the worst one. |
+| `ReadBusy()` polls with no delay in the loop | 83 | One core at ~100 % for the full 26 s: **29,9 s of CPU in a 32 s cycle**, measured under the unit on 2026-09-20 (`HARDWARE.md` §4). |
+| `display()` inverts its argument in place | 214 | The same buffer sent twice draws its own negative the second time. Nothing does that today because `show()` rebuilds both planes every cycle; a retry written later would, and it would look like a driver fault rather than a caller one. |
+| `display_Partial()` truncates unaligned windows | 246–258 | The guard is a **chained comparison** — `\|` binds tighter than `==` in Python — and reduces to "both edges are already multiples of 8". Otherwise the else branch sets `Xend = Xend // 8 * 8 + 1`: one *pixel*, where one *byte* was meant. A window ending at x=13 is sent as a window ending at x=8. |
+| `display_Base_color()` sends `~color` | 239 | `~0x00` is `-1`, not `0xFF`. Unreachable from this project today, and broken for every input if it ever is reached. |
+| Flat fills send one byte per SPI transaction | 232–239, 285–287 | 48 000 transactions, each with four `digital_write` calls, where `send_data2()` sends the whole buffer at once. **M9's first partial refresh runs exactly this loop** as its `partFlag` pre-fill. |
+| The inversions are Python `for` loops | 207, 214 | **29,3 ms per plane on this board against 0,326 ms for `bytes.translate()`** — 90×, measured on the Pi. Three of them run per frame: 88 ms where 1 ms would do. |
+| `RaspberryPi()` is constructed at module scope | 39 | Importing the driver *claims* five GPIO pins and opens SPI. This is why `render/epd.py` reaches it through `importlib` and why `test_hardware_boundary.py` checks from three sides. |
+| `digital_read()` on any pin but BUSY | `epdconfig.py` 84–91 | `self.RST_PIN.value`, where `RST_PIN` is the integer 17. Three dead branches, each an `AttributeError`. |
+
+The fourth row is also a **documentation defect**, and `HARDWARE.md` §4 has been
+corrected: it said `display_Partial` "floors `Xstart` and rounds `Xend` up",
+which is what the code means and not what it does.
+
+#### Slices
+
+- **10.1** The transcript harness. A fake `epdconfig` in `tests/` — the seven
+  methods the driver calls, the pin constants, and a scripted BUSY pin so
+  `ReadBusy()` terminates — injected into `sys.modules` before the driver is
+  imported. Capture `init()`, `display()`, `Clear()` and `sleep()` against a
+  known frame; commit the transcripts. Nothing in `src/` moves, and the import
+  stays inside a fixture so `test_hardware_boundary.py` still passes.
+- **10.2** `src/render/panel/transport.py` — GPIO and SPI behind a small typed
+  surface, with `gpiozero` and `spidev` imported **inside the constructor**. The
+  module then becomes importable in the tools container and only *constructing*
+  it claims the pins, which is the distinction the vendored file collapses. An
+  explicit `close()` releases them, which `module_exit(cleanup=False)` never
+  does.
+- **10.3** `src/render/panel/driver.py` — the full-refresh path only:
+  `init()`, the `getbuffer()` equivalent returning immutable `bytes`,
+  `display()`, `clear()`, `sleep()`. Same commands, same order, same data,
+  asserted against 10.1's transcripts. Every deliberate difference is named in
+  the test rather than discovered later: `bytes.translate()` for the
+  inversions, no mutation of the caller's buffer, a wrong-sized image that
+  raises instead of returning a blank one, and a `ReadBusy` that sleeps between
+  polls and gives up.
+- **10.4** Wire it in. `open_panel()` builds the new driver and that is the
+  whole blast radius — the rewrite lives behind one function because that is
+  what the function was for. `DRIVER` changes, so the `target=epd:…` string in
+  the log changes and the tests pinning it change with it.
+- **10.5** The vendored files stay, imported by nothing but 10.1. They are the
+  reference the transcripts were recorded from and the only way to re-record.
+  `test_hardware_boundary.py`'s gateway moves to `render/panel/`;
+  `test_source_boundary.py`'s `LEGACY` keeps both files for the reason its
+  comment already gives. Whether they belong in `src/` once nothing in `src/`
+  imports them is a question for the slice, not for this paragraph.
+- **10.6** One frame on the glass, and one `Clear()`. A transcript proves the
+  same bytes in the same order; it cannot prove `spidev`'s chunking of a
+  48 000-byte `writebytes2`, `gpiozero`'s timing, or that a deadline never fires
+  early on a cold panel.
+
+**Two numbers the slices have to choose and defend.** The poll interval: the
+vendor's own `delay_ms(200)` after the loop is the scale, so **10 ms** adds at
+most 10 ms to a 26 000 ms refresh and takes the spin from ~430 000 polls to
+~2 600. The deadline: **40 s** — comfortably past a 26 s refresh, and
+comfortably inside the unit's `TimeoutStopSec=45s`, so a hung panel raises
+before systemd starts killing things. `PanelError` already has exactly the right
+semantics for it: the loop does not record the cycle, so the floor, the
+keep-alive and the budget behave as though it never happened, and the next tick
+tries again.
+
+**What this buys, stated honestly.** Not speed: 88 ms of byte-flipping against a
+26 s refresh is 0,3 %, and the panel sets the pace either way. The CPU figure is
+real — sixteen minutes a day of a busy core goes to approximately nothing — and
+on a board also running a desktop that is worth having, but nothing is starved
+today. The two things that actually justify the milestone are narrower and
+neither is about performance: **a panel that stops answering currently takes the
+dashboard down silently and permanently**, and M9 would otherwise build its
+window snapping on arithmetic that is provably wrong. The third is not
+technical. This is the code closest to the hardware the vendor says can be
+damaged beyond repair, and it is the only code here that nothing tests.
+
+**What it costs.** The vendored file stops being the thing that runs, so an
+upstream fix becomes a port rather than a drop-in. The transcript test is what
+makes that payable: re-record, diff, and the difference *is* the fix.
+
+**Done when:** the new driver's transcript matches the vendored driver's for
+every full-refresh operation, every deliberate divergence is a named assertion,
+and one frame and one clear have been watched on the panel.
+
+### M11 — Retire the old, align the docs (S)
 
 Delete `src/components/`, `src/dashboard.py`, `src/localize.py`,
 `rooms.widget.yml` and `tests/test_widgets.py`. Keep `assets/`, the vendored
@@ -336,6 +457,13 @@ find out from the region count than after building the second init path.
 
 **Hardware cannot be validated in the container.** Everything up to M7 can be
 proven in CI; M8 is a bench step, and the plan does not pretend otherwise.
+
+**A rewritten driver is a fork.** M10 replaces vendored code with our own, and
+the price is that an upstream fix stops being a file copy. The mitigation is
+that the vendored file stays and the equivalence transcript stays with it, so
+the port is a diff of two recordings rather than a reading of two files. The
+risk that remains is the one a transcript cannot cover: identical bytes, and
+different timing.
 
 **Icon assets are pre-rendered mono BMPs** at 50 and 100 px. They are fine for
 the black plane; anything red is drawn, not iconified.
@@ -814,7 +942,7 @@ prose that it holds no Home Assistant vocabulary, and `homeassistant.py`
 explains why it refuses to depend on `homeassistant_api`. A grep-based version
 would fail on both. Naming the thing you refuse to depend on is not depending on
 it. The legacy widget layer is exempted by an explicit file list rather than a
-pattern, so M10's deletions make the list shrink instead of quietly widening.
+pattern, so M11's deletions make the list shrink instead of quietly widening.
 
 Verified by deliberately leaking `hvac_action` into `domain/derive.py` and
 watching the test name the file and the identifier, because a boundary test that
@@ -919,6 +1047,17 @@ the panel is hung.* 8.3 proved the frame reaches the glass; it could not prove
 the glass is readable from a hallway, because it was photographed on a desk.
 It costs nothing to move a decision that is about a hallway; it costs a layout
 change to discover it from the hallway.
+
+**And one milestone that waits on nobody: M10.** The first day under the systemd
+unit was also the first time anyone read the vendored driver closely, and it
+does not survive the reading — no timeout on the busy wait, a partial window
+calculation that truncates rather than rounds, a `display()` that inverts its
+own argument, and three byte loops that cost 90× what `bytes.translate()` costs
+on this board. The section above has the full list with line numbers. The reason
+it is buildable today rather than a bench task is that the driver's only contact
+with the world is one `epdconfig` object, so a recorder in `sys.modules` puts
+the whole thing under test in the tools container and the rewrite is proven by
+diffing transcripts against the vendored file.
 
 **Then M9, and it should be decided before it is built.** The region count from
 M5 stands: 53 partial-eligible against 28 full-only, and the full-only 28 are

@@ -76,7 +76,7 @@ docker compose run --rm --entrypoint python tools tools/render_fixture.py
 
 - `screen.bmp` — the three-colour composite. **This is the file to look at**
   when a change touches rendering. (`test_output.bmp` belongs to the legacy
-  widget suite, which M10 deletes.)
+  widget suite, which M11 deletes.)
 - `screen-preview.bmp` — the black plane alone, which is everything a partial
   refresh can carry. Anything red is missing from it on purpose.
 

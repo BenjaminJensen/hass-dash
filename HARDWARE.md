@@ -125,9 +125,17 @@ Consequences that the design has to absorb:
 - Any region whose content can be red is full-refresh-only, for all inputs.
 - Partial and full need different init sequences, so switching class means
   re-initialising.
-- The x window is **byte-aligned**: `display_Partial` floors `Xstart` to a
-  multiple of 8 and rounds `Xend` up. Partial regions snap to 8-pixel
-  boundaries on x. Y is unconstrained.
+- The x window is **byte-aligned**, and the driver gets this wrong. It floors
+  `Xstart` to a multiple of 8, which is right, and then *floors* `Xend` too —
+  the else branch reads `Xend = Xend // 8 * 8 + 1`, adding one **pixel** where
+  one **byte** was meant, and `Width = (Xend - Xstart) // 8` discards it again.
+  A window ending at x=13 is sent as a window ending at x=8. The guard above it
+  is a chained comparison rather than the three-way `or` its layout suggests —
+  `|` binds tighter than `==` in Python — and reduces to "both edges are
+  already multiples of 8", so it only ever selects between two branches that
+  agree. Partial regions must therefore snap to 8-pixel boundaries on x
+  *before* they reach the driver. Y is unconstrained. PLAN.md M10 replaces this
+  arithmetic; M9 depends on it.
 - `partFlag` is set at construction and cleared on first partial refresh; the
   first partial after construction pre-fills the window white.
 
@@ -144,11 +152,14 @@ held at roughly 100 % for the whole cycle. Core temperature rose from 50.5 °C
 idle to 55.3 °C, and `get_throttled` stayed `0x0`.
 
 At the M8 cadence that is ~16 minutes a day of one busy core on an otherwise
-idle board, so it is recorded rather than fixed. It matters to two later
-decisions: anything sharing this Pi will feel it, and M9's partial refreshes
-would make the spin more frequent rather than shorter. Adding a
-`delay_ms(10)` inside the loop would be a change to vendored code, which §2's
-reasoning says not to make casually.
+idle board, so it was recorded rather than fixed: adding a `delay_ms(10)` inside
+the loop is a change to vendored code, which §2's reasoning says not to make
+casually. Reading the file to explain the figure found enough else wrong with it
+that the answer became PLAN.md **M10**, which replaces the driver rather than
+patching it — and the defect that milestone leads with is not the spin but the
+fact that **the loop has no timeout at all**. A panel that never releases BUSY
+holds the process there forever, with the unit still "running" and the journal
+silent.
 
 ### Buffer convention
 

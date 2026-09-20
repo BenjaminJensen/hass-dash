@@ -43,7 +43,7 @@ COMPOSITION_ROOT = "app.py"
 ROOT_MAY_NAME = frozenset({"homeassistant", "hass"})
 
 #: The widget layer, the retired HA client and the vendored panel driver. These
-#: are dead code walking: PLAN.md M10 deletes `components/`, `core/`,
+#: are dead code walking: PLAN.md M11 deletes `components/`, `core/`,
 #: `dashboard.py`, `localize.py` and `rendering/` once the new screen is on the
 #: wall. They are listed individually rather than skipped by a pattern so that
 #: deleting one makes this list shrink, and adding a file to one of them does
@@ -64,7 +64,8 @@ LEGACY = (
     "rendering/__init__.py",
     "rendering/renderer.py",
     # Vendored Waveshare driver and its pin configuration, kept verbatim so
-    # upstream fixes can be diffed in (PLAN.md M10).
+    # upstream fixes can be diffed in. PLAN.md M10 replaces them as the code
+    # that runs and keeps them here as the reference it is proven against.
     "epd7in5b_V2.py",
     "epdconfig.py",
 )
@@ -296,7 +297,7 @@ class TestTheScanItself:
         assert not any("entity_id" in name for name in identifiers(tree))
 
     def test_the_legacy_list_names_only_files_that_exist(self):
-        """When M10 deletes a legacy module, this list must shrink with it."""
+        """When M11 deletes a legacy module, this list must shrink with it."""
         stale = [name for name in LEGACY if not (SRC / name).exists()]
         assert stale == [], f"LEGACY names files that are gone: {stale}"
 
