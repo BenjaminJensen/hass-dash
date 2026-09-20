@@ -32,6 +32,16 @@ SRC = Path(__file__).parent.parent / "src"
 #: which is where entity ids are written down.
 EXEMPT_PACKAGES = ("sources", "config")
 
+#: The composition root, which is scanned by its own narrower rule below.
+#: `app.py` has to import `sources/` and name the adapter it is building -
+#: that is what composing means - and no other module in the project does.
+COMPOSITION_ROOT = "app.py"
+
+#: The only two words the composition root may use that the rest of the code
+#: may not. It may *name* the adapter; it may not *speak* its language, so
+#: `entity_id`, `current_humidity` and the rest of FORBIDDEN still apply to it.
+ROOT_MAY_NAME = frozenset({"homeassistant", "hass"})
+
 #: The widget layer, the retired HA client and the vendored panel driver. These
 #: are dead code walking: PLAN.md M10 deletes `components/`, `core/`,
 #: `dashboard.py`, `localize.py` and `rendering/` once the new screen is on the
@@ -94,6 +104,8 @@ def modules() -> list[Path]:
     for path in sorted(SRC.rglob("*.py")):
         relative = path.relative_to(SRC)
         if relative.parts[0] in EXEMPT_PACKAGES or relative.as_posix() in LEGACY:
+            continue
+        if relative.as_posix() == COMPOSITION_ROOT:
             continue
         found.append(path)
     return found
@@ -180,6 +192,52 @@ class TestNoHomeAssistantAboveTheBoundary:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 
         assert "sources" not in _imports(tree), f"{path.relative_to(SRC)} imports sources/"
+
+
+class TestTheCompositionRoot:
+    """`app.py` gets an exemption, and it is deliberately a narrow one.
+
+    A composition root selects concrete implementations; that is its entire
+    job, and INTENT.md section 6 puts it at the top of the diagram for exactly
+    that reason. It therefore has to import `sources/` and it has to be able to
+    write `--source hass` on a command line. What it must *not* do is read one
+    of Home Assistant's fields: the moment `app.py` knows what an `entity_id`
+    is, the adapter layer has stopped being a boundary and has become a
+    suggestion.
+
+    So the exemption is two words wide - the names of the thing being built -
+    and every other piece of HA vocabulary still applies.
+    """
+
+    @staticmethod
+    def root() -> Path:
+        return SRC / COMPOSITION_ROOT
+
+    def test_the_exemption_is_two_words_and_not_a_free_pass(self):
+        """If this ever grows, it is a boundary decision, not a typo."""
+        assert ROOT_MAY_NAME < FORBIDDEN
+        assert len(ROOT_MAY_NAME) == 2
+
+    def test_it_may_name_the_adapter_but_not_speak_its_language(self):
+        tree = ast.parse(self.root().read_text(encoding="utf-8"), filename=str(self.root()))
+        vocabulary = FORBIDDEN - ROOT_MAY_NAME
+        leaked = sorted(name for name in identifiers(tree) if name.lower().strip() in vocabulary)
+
+        assert leaked == [], (
+            f"app.py uses Home Assistant vocabulary {leaked}. The composition root may "
+            "name the adapter it builds; it may not read Home Assistant's fields."
+        )
+
+    def test_it_is_the_only_module_allowed_to_import_the_source_layer(self):
+        """Stated from the other side: everything else is checked above."""
+        tree = ast.parse(self.root().read_text(encoding="utf-8"), filename=str(self.root()))
+
+        assert "sources" in _imports(tree), "app.py stopped composing the source layer"
+
+    def test_the_root_exists_and_is_outside_the_general_scan(self):
+        """Guards against the exemption silently covering nothing, or everything."""
+        assert self.root().exists()
+        assert self.root() not in modules()
 
 
 class TestTheSourceLayerItself:

@@ -1,4 +1,4 @@
-.PHONY: help build test test-watch lint lint-fix format render clean
+.PHONY: help build test test-watch lint lint-fix format render run clean
 
 help:
 	@echo "HASS Dashboard - Development Commands"
@@ -10,6 +10,7 @@ help:
 	@echo "make lint-fix    - Auto-fix linting issues"
 	@echo "make format      - Format code with ruff"
 	@echo "make render      - Render the recorded snapshot to screen.bmp"
+	@echo "make run         - Run the dashboard once against the fixtures"
 	@echo "make clean       - Remove test outputs and cache"
 
 build:
@@ -35,6 +36,9 @@ format:
 
 render:
 	docker compose run --rm --entrypoint python tools tools/render_fixture.py
+
+run:
+	docker compose run --rm --entrypoint python tools src/app.py --once
 
 clean:
 	rm -f test_*.bmp test_output.bmp screen.bmp screen-preview.bmp

@@ -53,9 +53,10 @@ the eleven rooms render red. See the M2.2 log entry.
 
 ## Milestones
 
-**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3, M4, M5 and M6 are done, on
-branch `rewrite/intent-architecture`. M7 is next, and everything it composes now
-exists. Slice 2.3 - the comfort bands - is the only thing still waiting on a
+**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3, M4, M5, M6 and M7 are
+done, on branch `rewrite/intent-architecture`. The dashboard now runs as one
+program; everything remaining is the panel. M8 is next and its verification is a
+bench step. Slice 2.3 - the comfort bands - is the only thing still waiting on a
 human, and it is now the last thing between the screen and truthful red: see the
 log.
 
@@ -68,7 +69,7 @@ log.
 | M4 ✅ | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
 | M5 ✅ | Complete the screen | L | M4 | Every region of §3 rendered |
 | M6 ✅ | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
-| M7 | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
+| M7 ✅ | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
 | M8 | Hardware, full refresh | M | M7 | On the wall |
 | M9 | Partial refresh | M | M8 | Decided with numbers in hand |
 | M10 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
@@ -218,7 +219,7 @@ that knows a panel exists.
 **Done when:** the vendor's limits hold as invariants over a simulated two days,
 not as assertions on one decision. ✅ — see the log.
 
-### M7 — App and composition root (S)
+### M7 — App and composition root (S) ✅
 
 `src/app.py` — build config, source, view and renderer; drive the loop from the
 policy. Flags: `--source fixture|hass`, `--target bmp|epd`, `--once`, `--out`.
@@ -227,7 +228,8 @@ and why. Last-good-frame fallback, because §2 says a source failure may never
 blank the screen.
 
 **Done when:** `--source fixture --target bmp --once` renders the screen inside
-the container, and the loop obeys M6 under a fast-forwarded clock.
+the container, and the loop obeys M6 under a fast-forwarded clock. ✅ — see the
+log.
 
 ### M8 — Hardware, full refresh (M)
 
@@ -345,6 +347,80 @@ Anything touching rendering also gets its BMP looked at before it is called
 done.
 
 ## Log
+
+**M7** — `src/app.py`. +40 tests, **807 in the suite**. There is now one
+program: `docker compose run --rm --entrypoint python tools src/app.py --once`
+builds the config, fetches a snapshot, composes the screen, validates the draw
+list and writes the BMP, and the same file with no `--once` drives the panel
+from M6's policy until it is stopped.
+
+**The loop reproduces M6's arithmetic exactly, which is the point of building
+it separately.** Driven over a simulated day at a 30-second tick, the loop
+performs **38 full refreshes and 155 partials** — the same numbers the policy's
+own 48-hour simulation predicted, arrived at by a different route. M6 counted
+decisions; this counts frames that reached a target, and they agree.
+
+**Five decisions worth remembering.**
+
+*Decide, then fetch — never the other way round.* The policy is a function of
+two clocks and a small state, and §4 is explicit that it must not be a function
+of the data: red lags on purpose. So a tick that is going to do nothing never
+opens a socket. Over a day that is 2880 wakes and **193 requests**, instead of
+2880 requests to be told 2687 times that nothing is happening — and it also
+means the readings on the glass were taken in the same second as the refresh,
+rather than up to thirty minutes before it.
+
+*A stale frame keeps its own timestamp.* When the source is unreachable the
+previous draw list is redrawn unchanged, header included, so the "opdateret
+17.12" in the corner goes on saying 17.12 while the clock moves. Re-rendering
+the last good snapshot with the current time was the alternative and it is the
+one lie this screen must not tell: a fresh clock over stale readings is
+indistinguishable, at three metres, from a house that has stopped changing. The
+frame ages visibly instead, and a test asserts the draw list is byte-identical
+across the outage.
+
+*The composition root gets an exemption from the boundary test, two words
+wide.* `app.py` has to import `sources/` and has to be able to spell
+`--source hass`; selecting concrete implementations is the entire job of a
+composition root and §6 puts it at the top of the diagram for that reason. So
+the M3 boundary scan now excludes `app.py` from the general sweep and applies a
+*narrower* rule to it: it may name the adapter, and every other piece of HA
+vocabulary — `entity_id`, `current_humidity`, `unavailable` — still applies. The
+rule caught a real leak while it was being written: a log line keyed
+`unavailable=` on the source-failure path, which is a Home Assistant state value
+that had wandered two layers up. It reads `down=` now.
+
+*`record()` runs after the write, and the monotonic clock is read again there.*
+A refresh that raised halfway through did not happen: it does not reset the
+partial budget, does not move the keep-alive, and does not advance the floor.
+Taking a second monotonic reading after `show()` returns also puts the floor's
+180 seconds where they belong — counted from when the panel *finished*, which
+for a full refresh is 26 seconds after it started. A test drives a target that
+fails every cycle and asserts the loop keeps treating the next frame as the
+first one.
+
+*"Why not" is logged on change, not on every tick.* A NONE decision every 30
+seconds would bury the refreshes the log exists to explain, and logging nothing
+would make "the screen stopped updating at 22:00" unreconstructable. So a
+decision not to refresh is logged when the *reason* changes — one line entering
+quiet hours, none while sitting in them. Source errors get the same treatment,
+which turns "this is still broken" into "this broke" and "this was fixed".
+
+**The dirty set is still the placeholder, and it is doing no harm.** Every
+region of the last frame, split by the update class the layout declared for it,
+rather than a diff of two draw lists. It over-reports, and the direction of the
+error is the safe one: a region called dirty that did not change costs a redraw
+inside a refresh that was going to happen anyway. M9 replaces it with a real
+diff in `render/`, where §6 says it belongs.
+
+**`--target epd` is accepted by the parser and refused by the builder,** with a
+message naming M8. The flag is in the CLI now so that M8 is a new class and one
+line in `build_target()`, and an honest refusal beats a stub that pretends to
+drive a panel.
+
+**Rendered and looked at.** `--once` against the recorded house produces the
+same frame M5 inspected — the app changed who calls `screen()`, not what it
+draws — with the header now stamped by the live clock instead of a pinned one.
 
 **M6** — `src/refresh/policy.py`. +57 tests, **767 in the suite**. §4 is now a
 pure function of two clocks and a small state, and the vendor's limits are
@@ -698,7 +774,7 @@ imposing decimal rounding would buy nothing but a dependency.
 `.env` has been revoked. A new one is needed before `--source hass` can run
 there, and the URL loses its `/api` suffix at the same time.
 
-**Two answers from you, neither of which blocks M7:**
+**Two answers from you, neither of which blocks M8's bench work:**
 
 *The comfort bands (slice 2.3).* Real numbers from the family, per room. This
 is now the last thing between the screen and truthful red, and M5 has made the
@@ -713,14 +789,16 @@ comfortable at ~1,5 m and unreadable at 3 m, and no amount of typography changes
 that on a 7,5" panel. Either the stated distance moves or the table sheds rows.
 Nothing is blocked by it until M8 puts the panel on a wall.
 
-**Then M7 — the app and the composition root.** Every part it wires together now
-exists: a config, two sources, a screen, a renderer and a policy. What M7 has to
-invent is the part M6 deliberately left out — the **dirty set**. `decide()` takes
-one and nobody produces one yet, because a diff of two draw lists belongs in
-`render/` (`INTENT.md` §6) and M9 builds it properly against 8-aligned windows.
-Until then the honest placeholder is "every partial region is dirty every tick",
-which is nearly true anyway: the updated-at clock changes every minute.
+**Then M8 — the panel.** Everything above it is now one program and proven in
+CI; what is left is the part the container cannot validate. In order: the
+`EPDRenderer` behind the same `show(items, refresh)` the BMP target already
+implements, the lazy `epdconfig` import with its test, a fresh venv on the
+device, and the systemd unit.
 
-M7 also owns the two clocks in practice. `time.monotonic()` for the durations,
-wall time for the rest, and — for M8.4 — `last_full_at` persisted to disk so the
-floor and the keep-alive survive a reboot the monotonic clock does not.
+Three things M7 leaves ready for it. `build_target()` refuses `--target epd`
+with a message naming this milestone, so M8 is one new class and one line.
+`run()` takes the `RefreshState` it starts from, which is where 8.4's persisted
+`last_full_at` plugs in — the loop needs no change to survive a reboot without
+losing the keep-alive or violating the floor. And `HASS_URL` ending in `/api` is
+now refused at startup with the corrected URL in the message, so the device's
+carried-over `.env` fails loudly instead of 404-ing quietly.

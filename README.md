@@ -88,6 +88,50 @@ The tool validates the draw list before drawing anything and exits non-zero if
 the layout breaks the refresh contract, so a bad update class fails here rather
 than on the wall.
 
+### Run the dashboard
+
+`src/app.py` is the composition root: it builds the configuration, a source, the
+view and a renderer, and drives the loop from the refresh policy. One frame and
+exit:
+
+```bash
+docker compose run --rm --entrypoint python tools src/app.py --once
+```
+
+Or the loop, which is what runs on the wall:
+
+```bash
+docker compose run --rm --entrypoint python tools src/app.py --source hass
+```
+
+| Flag | Default | |
+| --- | --- | --- |
+| `--source fixture\|hass` | `fixture` | recorded payloads, or the live instance |
+| `--target bmp\|epd` | `bmp` | a file on disk, or the panel (**M8 builds `epd`**) |
+| `--once` | off | one cycle, then exit — with fresh state that is always a full refresh |
+| `--out` | `screen.bmp` | where the BMP target writes; the preview goes beside it |
+| `--house`, `--fixtures`, `--env` | repository root | |
+| `--verbose` | off | log every decision, including the ones to do nothing |
+
+It logs one `key=value` line per refresh — what class, why, how many regions
+changed, and how long the write took — plus a line when a decision *not* to
+refresh changes, so entering quiet hours is visible without a line every tick:
+
+```
+refresh=full reason=morning_cadence changed=53 source=hass:… target=bmp:screen.bmp ms=61
+refresh=none reason=quiet_hours
+```
+
+The loop decides before it fetches. A tick that is not going to refresh never
+asks Home Assistant anything, which is why a day of the loop is roughly 190
+requests rather than 2880. If a fetch fails, the previous frame stays on the
+glass with its original timestamp — the header ages visibly rather than putting
+a fresh clock on stale readings (`INTENT.md` §2).
+
+`--source hass` needs `HASS_URL` and `HASS_TOKEN`; see
+[Capturing real Home Assistant data](#capturing-real-home-assistant-data) for
+the `.env` format. A real environment variable wins over the file.
+
 ### Local Python Environment (Optional)
 
 For IDE support and local development, create a virtual environment:
