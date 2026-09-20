@@ -158,6 +158,8 @@ class BMPRenderer:
             self._draw_text(item, draw, fill)
         elif item.primitive is Primitive.ICON:
             self._draw_icon(item, surface, fill)
+        elif item.primitive is Primitive.LINE:
+            draw.line(list(item.points), fill=fill, width=item.thickness, joint="curve")
 
     def _draw_text(self, item: DrawItem, draw: Any, fill: int) -> None:
         """Place a string inside its box by alignment, from the ascender line.

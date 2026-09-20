@@ -53,9 +53,10 @@ the eleven rooms render red. See the M2.2 log entry.
 
 ## Milestones
 
-**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3 and M4 are done, on branch
-`rewrite/intent-architecture`. M5 is next. Slice 2.3 - the comfort bands - is
-the only thing still waiting on a human, and M4 has made it urgent: see the log.
+**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3, M4 and M5 are done, on
+branch `rewrite/intent-architecture`. M6 is next. Slice 2.3 - the comfort bands
+- is the only thing still waiting on a human, and it is now the last thing
+between the screen and truthful red: see the log.
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
@@ -64,7 +65,7 @@ the only thing still waiting on a human, and M4 has made it urgent: see the log.
 | M2 ✅ | Config and captured ground truth (2.3 open) | M | M1 | `house.yml` + recorded HA fixtures |
 | M3 ✅ | Sources | M | M2 | HA behind a port, hostile inputs survived |
 | M4 ✅ | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
-| M5 | Complete the screen | L | M4 | Every region of §3 rendered |
+| M5 ✅ | Complete the screen | L | M4 | Every region of §3 rendered |
 | M6 | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
 | M7 | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
 | M8 | Hardware, full refresh | M | M7 | On the wall |
@@ -186,21 +187,20 @@ column is either legible at three metres or the box model has been adjusted
 until it is. Per `AGENTS.md`, this is the inspection step, and it is the point
 of putting this milestone this early.
 
-### M5 — Complete the screen (L)
+### M5 — Complete the screen (L) ✅
 
 One pure `domain -> list[DrawItem]` function per region, each independently
 tested: weather hero (icon, the largest number on the screen, condition text,
 apparent temperature, high/low); the six-slot strip (sunrise, sunset, wind,
-outdoor humidity, pressure, precipitation); today's curve 00–24 with the now
-marker and precipitation bars; the seven-day strip; and `screen.py` composing
-everything.
+outdoor humidity, pressure, precipitation); the temperature curve with
+precipitation bars; the day strip; and `screen.py` composing everything.
 
 Tests assert content, position, colour and update class — not pixels, so they
 survive a font change. One test walks the whole draw list and asserts red
 appears **only** in the places §3 permits.
 
 **Done when:** the fixture snapshot renders the full screen and it has been
-inspected as a BMP.
+inspected as a BMP. ✅ — see the log.
 
 ### M6 — Refresh policy (M)
 
@@ -342,6 +342,68 @@ done.
 
 ## Log
 
+**M5** — `src/view/weather.py`, `src/view/forecast.py`, `src/view/icons.py`,
+the left column's box model, and four new derivations. +175 tests, **706 in the
+suite**. Every region of `INTENT.md` §3 is on the glass, and both the dry
+capture and the wet synthetic set have been rendered and looked at.
+
+**The design works, and the wet frame is the proof.** Rendered against the
+recorded house — a dry, grey Saturday — the frame spends red in 19 regions, all
+but one of them a room alerting against a placeholder comfort band. Rendered
+against the rainy `nominal` set, it spends red in **six**: the condition text
+(`Regn`), the precipitation value, the bars under the curve, one cold room and
+one humid bathroom. That second frame is what §2 asks for — red meaning "act",
+and meaning it rarely. The first frame is what slice 2.3 costs.
+
+**Three answers the capture forced, taken here.**
+
+*Apparent temperature is computed.* `weather.home` publishes no
+`apparent_temperature`, so §3's "Føles som 15°" is derived in
+`domain/derive.py` from the temperature, humidity and wind it does publish,
+using the Bureau of Meteorology formula. A source that ever starts publishing
+one wins over the arithmetic, and any missing input yields no number at all
+rather than a "feels like" built from two thirds of one.
+
+*The curve is the next 24 hours, and the now-marker is gone with it.* The
+hourly forecast starts at the current hour, so the curve *begins* at now and a
+marker on its left edge would be decoration — which §2 says destroys red used
+semantically. The hours are labelled every six instead. §3 has been amended.
+
+*The day strip is six days.* This provider returns six.
+
+**Four decisions worth remembering.**
+
+*The draw list grew a `LINE` primitive, and it has to stay inside its box.* A
+temperature curve is not expressible as a rectangle, so `LINE` is the one
+primitive carrying geometry of its own. `violations()` therefore checks that
+every point lies inside the item's box: a region is a refresh window, and ink
+outside the window is ink nothing will ever repaint.
+
+*The curve plots on a 16-pixel step, not on `width // 23`.* The step is what
+makes every sixth point land on a multiple of 8, which is what lets the hour
+labels hanging off those points be partial-eligible boxes at all. An arbitrary
+step would have quietly made the axis full-only.
+
+*The whole plot is one full-only region.* The temperature line is black and the
+precipitation bars are red and they share a rectangle. One region is one update
+class, and there is no partial path to red — so the line waits for the full
+cycle too. It costs nothing: a forecast that moved in the last five minutes was
+not worth redrawing.
+
+*Widths are tested, not eyeballed.* A fit test measures the longest string each
+style can produce against the box it has to fit — and it caught a real defect
+before the BMP did: `Føles som -12°` overflowed its cell by four pixels, which
+would have clipped on exactly the winter night nobody stands close enough to
+guess at a half-word. The hero's split is now set by those two numbers.
+
+**Partial refresh gained ground, and it is still not obviously worth building.**
+The split moved from 33/25 at M4 to **53 partial-eligible against 28 full-only**
+on the same recorded frame. The whole weather column rides a partial refresh
+except three regions — the condition text, the precipitation slot and the plot.
+But the full-only 28 are still the ones that matter to a person walking past,
+and the M9 decision is unchanged in shape: partial carries the clock, the
+labels, the summary and now the forecast, and not one room reading.
+
 **M4** — `src/view/`, `src/render/`, `tools/render_fixture.py`. +170 tests,
 531 in the suite. A real 800×480 three-colour BMP exists, it has been looked at,
 and it answered the question the milestone was placed this early to ask.
@@ -366,8 +428,8 @@ cannot both be true on a 7,5" panel. The layout was pushed to the largest type
 the space allows; the remaining lever is content, not typography.
 
 **So: a decision for you, not a silent adjustment.** Either the hallway
-distance becomes ~1,5 m, or the room table sheds rows. Nothing downstream is
-blocked by it — M5 fills the left column either way — but it should be settled
+distance becomes ~1,5 m, or the room table sheds rows. Nothing downstream was
+blocked by it — M5 filled the left column either way — but it should be settled
 before M8 puts it on a wall.
 
 **Red is not scarce today, and that is slice 2.3.** The recorded snapshot draws
@@ -460,7 +522,7 @@ and an unrecognised unit yields `None` rather than a number a factor of 3,6 out.
 *`apparent_temperature` does not exist on this instance.* §3's "Føles som 15°"
 has no source. `dew_point`, `cloud_coverage`, `uv_index` and `wind_gust_speed`
 *are* present. Either the slot gets computed from temperature, wind and
-humidity, or §3 loses it. **A decision for M5, and one for you.**
+humidity, or §3 loses it. **Answered at M5: computed.** See the M5 log.
 
 *The daily forecast returns six days, not seven.* §3's seven-day strip can only
 be a six-day strip from this provider.
@@ -563,25 +625,26 @@ imposing decimal rounding would buy nothing but a dependency.
 
 ## The next commit
 
-**One thing to do on the device, for M7/M8 rather than M5:** the long-lived
-token in the Pi's `.env` has been revoked. A new one is needed before
-`--source hass` can run there, and the URL loses its `/api` suffix at the same
-time.
+**One thing to do on the device, for M7/M8:** the long-lived token in the Pi's
+`.env` has been revoked. A new one is needed before `--source hass` can run
+there, and the URL loses its `/api` suffix at the same time.
 
-**Two answers from you, neither of which blocks M5:**
+**Two answers from you, neither of which blocks M6:**
 
-*The comfort bands (slice 2.3).* Real numbers from the family, per room. M4 has
-made the cost of not having them visible: nine of eleven rooms currently draw
-red. Until these are real, every red mark on the screen is guesswork wearing the
-one colour reserved for "act".
+*The comfort bands (slice 2.3).* Real numbers from the family, per room. This
+is now the last thing between the screen and truthful red, and M5 has made the
+cost of not having them unmistakable: side by side, the recorded house draws red
+in 19 regions and the rainy synthetic house draws it in six. The difference is
+not the weather, it is that one of them has honest thresholds. Until these are
+real, every red mark on the wall is guesswork wearing the one colour reserved
+for "act".
 
 *The viewing distance, or the room count.* See the M4 log. Eleven rooms are
 comfortable at ~1,5 m and unreadable at 3 m, and no amount of typography changes
 that on a 7,5" panel. Either the stated distance moves or the table sheds rows.
+Nothing is blocked by it until M8 puts the panel on a wall.
 
-**Then M5 — complete the screen.** The left column's box model is already
-computed and empty; M5 is a render function per region. Two decisions from the
-2.2 capture land there and are worth deciding before writing the code:
-`apparent_temperature` does not exist on this instance, so §3's "Føles som 15°"
-is either computed or dropped; and the daily forecast returns six days, not
-seven, so the strip is a six-day strip.
+**Then M6 — the refresh policy.** A pure function of `(now, last_full,
+partials_since_full, dirty regions, quiet hours)`, tested against a frozen clock
+over a simulated 48 hours. It depends on M1 only, so neither answer above holds
+it up.

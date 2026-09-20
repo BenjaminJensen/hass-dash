@@ -81,21 +81,36 @@ against a bitmap.
 │ SOL OP  SOL NED  VIND         │  Stort bad        22,8°  [68 %]│
 │ LUFTFUGT  TRYK   NEDBØR       │  … 10 rooms total …            │
 ├───────────────────────────────┤  Garage         ▼ 14,2°   58 % │
-│ TEMPERATUR I DAG      9°–18°  │  Ude              11,6°   82 % │  inverted row
-│      ╭──╮   ┆NU                ├────────────────────────────────┤
+│ NÆSTE 24 TIMER        9°–18°  │  Ude              11,6°   82 % │  inverted row
+│      ╭──╮                     ├────────────────────────────────┤
 │  ╭───╯  ╰────╮                │  HUSET – 10 RUM   20,8°   49 % │
 │ ▪  ▪        ▪ ▪  (nedbør)     │  TEMP MIN/MAX/SPREDN.          │
-├───────────────────────────────┤  RF MIN/MAX/MED.               │
-│ SØN MAN TIR ONS TOR FRE LØR   │                                │
+│ 14   20   02   08             │  RF MIN/MAX/MED.               │
+├───────────────────────────────┤                                │
+│ LØR SØN MAN TIR ONS TOR       │                                │
 └───────────────────────────────┴────────────────────────────────┘
 ```
 
 **Left — weather, for dressing.** Condition icon, current temperature at the
 largest size on the screen, condition text, apparent temperature, today's
 high/low. Below it a six-slot strip: sunrise, sunset, wind, outdoor humidity,
-pressure, precipitation. Below that today's temperature curve from 00 to 24
-with a marker at now and precipitation as bars along the baseline. Below that
-seven days: weekday, icon, high, low.
+pressure, precipitation. Below that the temperature curve for the next 24
+hours, with precipitation as bars along the baseline and the hour labelled
+every six. Below that six days: weekday, icon, high, low.
+
+Two of those are what the provider gives rather than what was first asked for,
+and the difference is recorded because it is not a detail. The hourly forecast
+**starts at the current hour** and runs forward, so the curve cannot be "today
+from 00 to 24" without pulling history out of the recorder API for hours nobody
+is dressing for — and since the curve starts at now, the now-marker that was
+sketched on it would sit on its left edge, where it would be decoration. The
+daily forecast returns **six days, not seven**. Both were settled by the capture
+in PLAN.md slice 2.2.
+
+The apparent temperature is **computed**, not fetched: this instance publishes
+no `apparent_temperature`, but it publishes the temperature, humidity and wind
+speed that the Bureau of Meteorology formula takes, and a source that starts
+publishing one overrules the arithmetic. See `domain/derive.py`.
 
 **Right — the house, for wellbeing.** One row per room: icon, name,
 temperature, relative humidity. Rooms in a fixed, deliberate order; the outdoor
@@ -104,9 +119,10 @@ Beneath, a summary block: room count, mean temperature, mean humidity, and the
 min / max / spread that reveal whether the house is evenly heated.
 
 **Where red is allowed.** Condition text when precipitation is occurring; the
-precipitation value and bars; the now-marker on the curve; the alert arrow and
-value on a room outside its comfort band; a humidity badge on a room above its
-threshold. Nowhere else.
+precipitation value and the bars on the curve; the alert arrow and value on a
+room outside its comfort band; a humidity badge on a room above its threshold.
+Nowhere else — and in particular not on the largest number on the screen, which
+reports the weather rather than asking anyone to act on it.
 
 Comfort bands and humidity thresholds are configuration, per room. A bathroom
 and a bedroom do not share a definition of "too humid".
@@ -286,6 +302,8 @@ about do not go on the wall.
 | Greenfield `src/`; keep assets, vendored driver, Docker/Ruff/pytest/CI | The existing widget layer bakes in floorplan pixel coordinates and widget-owned fetching, both of which this design removes. Rewriting is cheaper than unpicking. |
 | Retire the floorplan background | The new screen is tables and strips, which need a computed box model. `hass-dash-house.bmp` and `.xcf` stay in the repo, unused. |
 | Model rooms fully, render climate only | The device model is cheap now and expensive to retrofit. Screen real estate for devices does not exist yet and is not invented speculatively. |
+| Compute the apparent temperature rather than drop the slot | This instance publishes no `apparent_temperature`, but it publishes all three inputs to the standard formula. A source that starts publishing one wins over the arithmetic. Cost: a derived number on a screen where everything else is reported. |
+| The curve is the next 24 hours, not today 00–24 | The hourly forecast begins at the current hour. The alternative is the recorder API for hours already lived through. Consequence: no now-marker, and one fewer place red is spent. |
 
 ## 10. Cleared in the rewrite
 
@@ -300,19 +318,24 @@ assets are force-added and tracked, so every new icon is silently ignored by
 
 ## 11. Open questions
 
-These block specific slices, not the architecture. Each needs an answer from
-the live Home Assistant instance.
+These block specific slices, not the architecture.
 
-- **Duplicate humidity sensor.** `sophie` and `gang` both point at
-  `sensor.0x5cc7c1fffede1ef5_humidity_9`. One is wrong; `_humidity_8` is the
-  plausible candidate but needs confirming against the real sensor layout.
-- **The outdoor row.** Which entity backs "Ude" — the weather provider, or a
-  physical outdoor sensor?
-- **Weather depth.** Apparent temperature, pressure, wind bearing and
-  precipitation amount: are these attributes on the existing weather entity, or
-  do they need separate sensors? `WeatherWidget` currently hardcodes
-  `weather.home` while accepting and ignoring a `device_id`.
-- **The seven-day strip** needs the daily forecast service, not the hourly one
-  the current code calls.
+- ~~**Duplicate humidity sensor.**~~ Settled by the capture (PLAN.md 2.2): both
+  ids were guessed correctly and `sophie` and `gang` read distinct sensors.
+- ~~**The outdoor row.**~~ Settled: the weather provider. There *is* a physical
+  outdoor sensor and it is broken — 23,2° against the forecast's 17,7°, and a
+  humidity pinned at exactly 100,0 since 2026-09-09.
+- ~~**Weather depth.**~~ Settled: pressure, wind bearing and precipitation are
+  attributes on `weather.home`. Apparent temperature is not, and is computed
+  instead — see section 9.
+- ~~**The seven-day strip**~~ is a six-day strip. The daily forecast service
+  returns six days from this provider.
 - **Comfort bands.** Per-room temperature ranges and humidity ceilings need
-  real numbers from the family, not defaults.
+  real numbers from the family, not defaults. **Still open, and now the only
+  thing standing between the screen and truthful red:** with the placeholder
+  bands, eight of eleven rooms alert at once, which is section 2's failure mode
+  exactly.
+- **The viewing distance, or the room count.** Eleven rooms are comfortable at
+  ~1,5 m and below the legibility threshold at 3 m, and no typography changes
+  that on a 7,5" panel (PLAN.md, M4 log). Either the stated distance moves or
+  the table sheds rows. Needs settling before the panel goes on a wall.

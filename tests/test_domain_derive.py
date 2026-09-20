@@ -11,21 +11,29 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from domain.derive import (
+    apparent_temperature,
+    curve_hours,
+    forecast_days,
     house_summary,
     humidity_alert,
     indoor_rooms,
     is_night,
+    is_precipitating,
     ordered_rooms,
     room_alert,
     temperature_alert,
+    temperature_bounds,
 )
 from domain.models import (
     Climate,
     ComfortBand,
+    DailyPoint,
+    HourlyPoint,
     HumidityAlert,
     Room,
     SunTimes,
     TemperatureAlert,
+    Weather,
 )
 
 UTC = timezone.utc
@@ -247,3 +255,144 @@ class TestHouseSummary:
         )
 
         assert house_summary(rooms).humidity_median == 44.0
+
+
+def weather(**kwargs):
+    """Weather with just the fields a test cares about."""
+    return Weather(**kwargs)
+
+
+class TestIsPrecipitating:
+    """The one thing that turns the condition text red. INTENT.md section 3."""
+
+    @pytest.mark.parametrize(
+        "condition",
+        ["rainy", "pouring", "snowy", "snowy-rainy", "hail", "lightning-rainy"],
+    )
+    def test_water_falling_is_precipitation(self, condition):
+        assert is_precipitating(weather(condition=condition)) is True
+
+    @pytest.mark.parametrize(
+        "condition",
+        ["sunny", "cloudy", "partlycloudy", "fog", "windy", "lightning", "exceptional"],
+    )
+    def test_everything_else_is_not(self, condition):
+        """Fog is wet and thunder is loud. Neither of them lands on a coat."""
+        assert is_precipitating(weather(condition=condition)) is False
+
+    def test_no_condition_at_all_is_not_precipitation(self):
+        assert is_precipitating(weather()) is False
+
+    def test_the_condition_is_matched_case_and_space_insensitively(self):
+        assert is_precipitating(weather(condition=" Rainy ")) is True
+
+
+class TestApparentTemperature:
+    """The slot INTENT.md section 3 sketches as "Føles som 15°".
+
+    This instance does not publish `apparent_temperature` (PLAN.md slice 2.2),
+    so the number is computed. These cases pin the formula against values
+    worked out by hand, and the two directional cases pin what a reader would
+    actually notice if a sign were flipped.
+    """
+
+    def test_the_source_s_own_value_wins_when_it_exists(self):
+        reported = weather(
+            apparent_temperature=11.0, temperature=17.7, humidity=92.0, wind_speed=6.4
+        )
+
+        assert apparent_temperature(reported) == 11.0
+
+    def test_it_is_computed_from_temperature_humidity_and_wind(self):
+        """17,7 degrees at 92 % in a 23 km/h wind feels like 15,4."""
+        cool = weather(temperature=17.7, humidity=92.0, wind_speed=23 / 3.6)
+
+        assert apparent_temperature(cool) == pytest.approx(15.36, abs=0.01)
+
+    def test_wind_makes_it_colder(self):
+        still = weather(temperature=2.0, humidity=60.0, wind_speed=0.0)
+        gale = weather(temperature=2.0, humidity=60.0, wind_speed=10.0)
+
+        assert apparent_temperature(gale) < apparent_temperature(still)
+        assert apparent_temperature(gale) == pytest.approx(-7.60, abs=0.01)
+
+    def test_humidity_makes_it_hotter(self):
+        dry = weather(temperature=30.0, humidity=20.0, wind_speed=0.5)
+        muggy = weather(temperature=30.0, humidity=80.0, wind_speed=0.5)
+
+        assert apparent_temperature(muggy) > apparent_temperature(dry)
+        assert apparent_temperature(muggy) == pytest.approx(36.81, abs=0.01)
+
+    @pytest.mark.parametrize("missing", ["temperature", "humidity", "wind_speed"])
+    def test_any_missing_input_yields_no_answer_at_all(self, missing):
+        """A "feels like" from two of the three is a guess with a decimal point."""
+        fields = {"temperature": 17.7, "humidity": 92.0, "wind_speed": 6.4}
+        fields[missing] = None
+
+        assert apparent_temperature(weather(**fields)) is None
+
+
+class TestCurveHours:
+    """The next 24 hours, because today from 00 is not in the payload."""
+
+    def test_it_takes_the_first_n_points(self):
+        points = tuple(HourlyPoint(temperature=float(hour)) for hour in range(48))
+
+        taken = curve_hours(points, 24)
+
+        assert len(taken) == 24
+        assert taken[0].temperature == 0.0
+        assert taken[-1].temperature == 23.0
+
+    def test_a_short_forecast_is_short_rather_than_padded(self):
+        points = (HourlyPoint(temperature=1.0), HourlyPoint(temperature=2.0))
+
+        assert len(curve_hours(points, 24)) == 2
+
+    def test_no_forecast_is_no_points(self):
+        assert curve_hours(()) == ()
+
+    def test_an_hour_with_no_temperature_is_kept(self):
+        """A gap in the forecast is a gap in the line, not a shorter day."""
+        points = (HourlyPoint(temperature=1.0), HourlyPoint(), HourlyPoint(temperature=3.0))
+
+        assert len(curve_hours(points)) == 3
+
+
+class TestForecastDays:
+    """Six, not seven: this provider returns six. PLAN.md slice 2.2."""
+
+    def test_it_takes_the_first_n_days(self):
+        days = tuple(DailyPoint(temperature_high=float(day)) for day in range(7))
+
+        assert len(forecast_days(days, 6)) == 6
+        assert forecast_days(days, 6)[-1].temperature_high == 5.0
+
+    def test_a_provider_that_returns_fewer_is_not_padded(self):
+        assert len(forecast_days((DailyPoint(),), 6)) == 1
+
+    def test_the_count_is_a_parameter_so_a_richer_provider_is_not_truncated(self):
+        days = tuple(DailyPoint() for _ in range(10))
+
+        assert len(forecast_days(days, 10)) == 10
+
+
+class TestTemperatureBounds:
+    def test_it_is_the_lowest_and_highest_of_the_run(self):
+        points = (
+            HourlyPoint(temperature=9.0),
+            HourlyPoint(temperature=18.0),
+            HourlyPoint(temperature=12.0),
+        )
+
+        assert temperature_bounds(points) == (9.0, 18.0)
+
+    def test_hours_with_no_reading_do_not_count(self):
+        points = (HourlyPoint(), HourlyPoint(temperature=12.0), HourlyPoint())
+
+        assert temperature_bounds(points) == (12.0, 12.0)
+
+    def test_nothing_to_measure_is_two_nones(self):
+        """Not (0, 0) - a flat line at zero is a claim, and an empty plot is not."""
+        assert temperature_bounds(()) == (None, None)
+        assert temperature_bounds((HourlyPoint(), HourlyPoint())) == (None, None)

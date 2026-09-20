@@ -28,6 +28,7 @@ from view.drawlist import (
     UpdateClass,
     draw_fill,
     draw_icon,
+    draw_line,
     draw_outline,
     draw_rule,
     draw_text,
@@ -196,6 +197,34 @@ class TestPrimitives:
 
         assert tops[0] == tops[1]
 
+    def test_a_line_inks_its_endpoints_and_the_path_between(self, renderer):
+        item = draw_line("l", BOX, ((8, 8), (8, 20)), UpdateClass.FULL, thickness=1)
+
+        planes = renderer.planes([item])
+
+        assert planes.black.getpixel((8, 8)) == INK
+        assert planes.black.getpixel((8, 14)) == INK
+        assert planes.black.getpixel((8, 20)) == INK
+        assert planes.black.getpixel((8, 22)) == BLANK
+
+    def test_a_red_line_goes_to_the_red_plane(self, renderer):
+        item = draw_line("l", BOX, ((8, 8), (20, 8)), UpdateClass.FULL, colour=Colour.RED)
+
+        planes = renderer.planes([item])
+
+        assert planes.red.getpixel((14, 8)) == INK
+        assert ink_pixels(planes.black) == set()
+
+    def test_a_thicker_line_inks_more_than_one_pixel_across(self, renderer):
+        thin = renderer.planes(
+            [draw_line("l", BOX, ((8, 14), (20, 14)), UpdateClass.FULL, thickness=1)]
+        )
+        thick = renderer.planes(
+            [draw_line("l", BOX, ((8, 14), (20, 14)), UpdateClass.FULL, thickness=3)]
+        )
+
+        assert len(ink_pixels(thick.black)) > len(ink_pixels(thin.black))
+
     def test_an_icon_is_pasted_from_the_asset_tree(self):
         renderer = BMPRenderer(size=(128, 128))
         planes = renderer.planes(
@@ -308,6 +337,62 @@ class TestFonts:
     def test_the_fit_check_would_notice_a_font_that_is_too_big(self):
         """A row of 30 pixels cannot hold a 60-pixel face."""
         assert FontBook().line_height(TextStyle.ROOM_VALUE) > 20
+
+    def test_every_left_column_style_fits_the_box_the_layout_gives_it(self):
+        """The weather half, measured against its own boxes rather than a constant."""
+        from view.boxes import curve_boxes, day_boxes, hero_boxes, strip_boxes
+
+        left = screen_boxes().left
+        hero = hero_boxes(left.hero)
+        slot = strip_boxes(left.strip)[0]
+        curve = curve_boxes(left.curve)
+        day = day_boxes(left.days)[0]
+        book = FontBook()
+
+        pairs = (
+            (TextStyle.HERO_TEMPERATURE, hero.temperature.height),
+            (TextStyle.HERO_CONDITION, hero.condition.height),
+            (TextStyle.HERO_DETAIL, hero.apparent.height),
+            (TextStyle.SLOT_LABEL, slot.label.height),
+            (TextStyle.SLOT_VALUE, slot.value.height),
+            (TextStyle.CURVE_TITLE, curve.title.height),
+            (TextStyle.CURVE_AXIS, curve.axis.height),
+            (TextStyle.DAY_NAME, day.name.height),
+            (TextStyle.DAY_VALUE, day.values.height),
+        )
+        too_tall = [style.value for style, height in pairs if book.line_height(style) > height]
+
+        assert too_tall == []
+
+    def test_the_longest_string_each_style_can_draw_fits_its_box(self):
+        """A layout that fits "Skyet" and clips "Torden og regn" is not a layout.
+
+        Widths, unlike heights, only bite for the longest value a formatter can
+        produce - which is a known set, because the vocabulary is a table.
+        """
+        from domain import format_da
+        from view.boxes import hero_boxes, strip_boxes
+        from view.weather import APPARENT_LABEL, RANGE_SEPARATOR
+
+        left = screen_boxes().left
+        hero = hero_boxes(left.hero)
+        book = FontBook()
+
+        longest_condition = max(format_da.CONDITIONS.values(), key=len)
+        cases = (
+            (longest_condition, TextStyle.HERO_CONDITION, hero.condition.width),
+            (f"{APPARENT_LABEL} -12°", TextStyle.HERO_DETAIL, hero.apparent.width),
+            (f"-12°{RANGE_SEPARATOR}-18°", TextStyle.HERO_DETAIL, hero.range.width),
+            ("-12°", TextStyle.HERO_TEMPERATURE, hero.temperature.width),
+            ("LUFTFUGT", TextStyle.SLOT_LABEL, strip_boxes(left.strip)[3].label.width),
+            ("-12,3 m/s NØ", TextStyle.SLOT_VALUE, strip_boxes(left.strip)[2].value.width),
+        )
+
+        overflowing = [
+            text for text, style, width in cases if book.get(style).getlength(text) > width
+        ]
+
+        assert overflowing == []
 
 
 def test_the_asset_tree_is_where_the_renderer_thinks_it_is():

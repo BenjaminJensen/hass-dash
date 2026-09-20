@@ -90,6 +90,9 @@ class TestMissingValues:
             fmt.clock,
             fmt.date_long,
             fmt.weekday_short,
+            fmt.condition,
+            fmt.wind_direction,
+            fmt.hour,
         ],
     )
     def test_every_formatter_renders_none_as_the_placeholder(self, formatter):
@@ -101,3 +104,68 @@ class TestMissingValues:
     def test_the_placeholder_is_an_en_dash_not_a_hyphen(self):
         assert fmt.PLACEHOLDER == "–"
         assert fmt.PLACEHOLDER != "-"
+
+
+class TestConditions:
+    @pytest.mark.parametrize(
+        ("key", "danish"),
+        [
+            ("sunny", "Sol"),
+            ("partlycloudy", "Delvist skyet"),
+            ("rainy", "Regn"),
+            ("pouring", "Kraftig regn"),
+            ("snowy-rainy", "Slud"),
+            ("clear-night", "Klar nat"),
+            ("fog", "Tåge"),
+        ],
+    )
+    def test_it_renders_home_assistant_s_vocabulary_in_danish(self, key, danish):
+        assert fmt.condition(key) == danish
+
+    def test_an_unknown_condition_is_a_placeholder_not_its_key(self):
+        """ "windy-variant" on a wall reads as a broken dashboard; a dash does not."""
+        assert fmt.condition("meteor-shower") == fmt.PLACEHOLDER
+
+    def test_case_and_surrounding_space_do_not_matter(self):
+        assert fmt.condition(" PartlyCloudy ") == "Delvist skyet"
+
+    def test_every_condition_the_icons_cover_has_a_danish_word(self):
+        """The two tables are separate on purpose; neither may fall behind."""
+        from view.icons import CONDITION_ICONS
+
+        assert set(CONDITION_ICONS) <= set(fmt.CONDITIONS)
+
+
+class TestWindDirection:
+    @pytest.mark.parametrize(
+        ("bearing", "point"),
+        [
+            (0.0, "N"),
+            (45.0, "NØ"),
+            (90.0, "Ø"),
+            (180.0, "S"),
+            (237.0, "SV"),
+            (270.0, "V"),
+            (315.0, "NV"),
+        ],
+    )
+    def test_a_bearing_lands_in_its_compass_point(self, bearing, point):
+        assert fmt.wind_direction(bearing) == point
+
+    def test_it_rounds_to_the_nearest_point_rather_than_flooring(self):
+        """23 degrees is nearer north-east than north, and 22 is not."""
+        assert fmt.wind_direction(23.0) == "NØ"
+        assert fmt.wind_direction(21.0) == "N"
+
+    def test_it_wraps_past_north_instead_of_falling_off_the_end(self):
+        assert fmt.wind_direction(359.0) == "N"
+        assert fmt.wind_direction(361.0) == "N"
+
+
+class TestHour:
+    def test_it_is_the_local_hour_with_a_leading_zero(self):
+        """07.00 UTC in September is 09.00 in Copenhagen."""
+        assert fmt.hour(datetime(2026, 9, 19, 7, 0, tzinfo=timezone.utc)) == "09"
+
+    def test_midnight_is_zero_zero_not_twenty_four(self):
+        assert fmt.hour(datetime(2026, 9, 19, 22, 0, tzinfo=timezone.utc)) == "00"

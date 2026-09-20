@@ -154,7 +154,7 @@ class HourlyPoint:
 
 @dataclass(frozen=True)
 class DailyPoint:
-    """One day of the seven-day strip."""
+    """One day of the forecast strip. Six of these, not seven - see derive."""
 
     date: datetime | None = None
     condition: str | None = None

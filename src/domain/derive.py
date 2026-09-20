@@ -7,15 +7,34 @@ testable without a display, a source or a Home Assistant instance.
 
 from __future__ import annotations
 
+from math import exp
 from statistics import mean, median
 
 from domain.models import (
+    DailyPoint,
+    HourlyPoint,
     HouseSummary,
     HumidityAlert,
     Room,
     RoomAlert,
     SunTimes,
     TemperatureAlert,
+    Weather,
+)
+
+#: Conditions that mean water is falling right now, which is the one case
+#: INTENT.md section 3 lets the condition text go red. Fog and wind are not
+#: precipitation however unpleasant they are, and `exceptional` is a severity
+#: flag rather than a kind of weather, so neither earns the colour.
+PRECIPITATION_CONDITIONS = frozenset(
+    {
+        "rainy",
+        "pouring",
+        "snowy",
+        "snowy-rainy",
+        "hail",
+        "lightning-rainy",
+    }
 )
 
 
@@ -122,3 +141,87 @@ def house_summary(rooms: tuple[Room, ...]) -> HouseSummary:
         humidity_max=max(humidities) if humidities else None,
         humidity_median=median(humidities) if humidities else None,
     )
+
+
+def is_precipitating(weather: Weather) -> bool:
+    """Whether the current condition is water actually falling.
+
+    Deliberately not "is there precipitation in the forecast". The red is for
+    the person standing in the hall deciding on a coat, and a condition of
+    `rainy` is the only thing on this screen that says it is raining *now*
+    (INTENT.md section 3).
+    """
+    condition = (weather.condition or "").strip().lower()
+    return condition in PRECIPITATION_CONDITIONS
+
+
+def apparent_temperature(weather: Weather) -> float | None:
+    """What the air feels like, reported if the source knows and computed if not.
+
+    The instance this house runs does not publish `apparent_temperature`
+    (PLAN.md slice 2.2), but it does publish temperature, relative humidity and
+    wind speed - which is exactly the input to the Australian Bureau of
+    Meteorology's apparent temperature, the same formula Home Assistant's own
+    integrations use where they compute one:
+
+        AT = T + 0.33e - 0.70v - 4.00
+        e  = RH/100 x 6.105 x exp(17.27T / (237.7 + T))
+
+    with T in degrees Celsius, RH in percent and v in metres per second. The
+    source's own value wins where it exists, so a future integration that
+    starts publishing one is not quietly overruled by arithmetic.
+
+    Returns None unless all three inputs are present. A "feels like" computed
+    from two of them is a guess wearing the authority of a number.
+    """
+    if weather.apparent_temperature is not None:
+        return weather.apparent_temperature
+
+    temperature = weather.temperature
+    humidity = weather.humidity
+    wind = weather.wind_speed
+    if temperature is None or humidity is None or wind is None:
+        return None
+
+    vapour = (humidity / 100) * 6.105 * exp(17.27 * temperature / (237.7 + temperature))
+    return temperature + 0.33 * vapour - 0.70 * wind - 4.00
+
+
+def curve_hours(hourly: tuple[HourlyPoint, ...], count: int = 24) -> tuple[HourlyPoint, ...]:
+    """The points the temperature curve draws, from now forward.
+
+    INTENT.md section 3 asked for today from 00 to 24. The provider's hourly
+    forecast starts at the current hour and runs 48 hours forward, so the first
+    half of today is simply not in the payload (PLAN.md slice 2.2) and drawing
+    it would mean fetching history from the recorder API for the sake of hours
+    nobody is dressing for. The curve is the next `count` hours instead, which
+    is the half of the day the screen exists to inform.
+
+    Points with no temperature are kept rather than dropped, so a gap in the
+    forecast is a gap in the line rather than a shortened day.
+    """
+    return tuple(hourly[:count])
+
+
+def forecast_days(daily: tuple[DailyPoint, ...], count: int = 6) -> tuple[DailyPoint, ...]:
+    """The days the strip draws, today first.
+
+    Six, not seven: this provider returns six days and INTENT.md section 3's
+    seven-day strip cannot be drawn from six days of data (PLAN.md slice 2.2).
+    The count is a parameter so a provider that returns more is not truncated
+    by a constant buried in a layout function.
+    """
+    return tuple(daily[:count])
+
+
+def temperature_bounds(points: tuple[HourlyPoint, ...]) -> tuple[float | None, float | None]:
+    """The lowest and highest temperature across a run of hourly points.
+
+    The curve's own scale, rather than the day's forecast high and low: a plot
+    scaled to numbers that are not on it has a line that never touches its
+    edges and a reader who cannot tell why.
+    """
+    values = [point.temperature for point in points if point.temperature is not None]
+    if not values:
+        return (None, None)
+    return (min(values), max(values))

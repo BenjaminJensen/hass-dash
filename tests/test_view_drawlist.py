@@ -20,6 +20,7 @@ from view.drawlist import (
     UpdateClass,
     draw_fill,
     draw_icon,
+    draw_line,
     draw_outline,
     draw_rule,
     draw_text,
@@ -115,6 +116,21 @@ class TestFactories:
 
         assert (item.primitive, item.icon, item.icon_size) == (Primitive.ICON, "weather-sunny", 100)
 
+    def test_line_carries_its_points(self):
+        item = draw_line("l", ALIGNED, ((8, 0), (20, 5)), UpdateClass.FULL, thickness=2)
+
+        assert (item.primitive, item.points, item.thickness) == (
+            Primitive.LINE,
+            ((8, 0), (20, 5)),
+            2,
+        )
+
+    def test_line_accepts_any_sequence_and_keeps_a_tuple(self):
+        """The layout builds points in a list; a DrawItem is frozen and stays so."""
+        item = draw_line("l", ALIGNED, [(8, 0), (20, 5)], UpdateClass.FULL)
+
+        assert item.points == ((8, 0), (20, 5))
+
     def test_an_unconsidered_item_is_full_by_default(self):
         """The safe default. Claiming a partial path you do not have is the bug."""
         from view.drawlist import DrawItem
@@ -167,6 +183,23 @@ class TestViolations:
         item = draw_text("t", ALIGNED, "", TextStyle.ROOM_NAME, UpdateClass.PARTIAL)
 
         assert any("nothing to draw" in line for line in violations([item]))
+
+    def test_a_line_needs_two_points_to_be_a_line(self):
+        found = violations([draw_line("l", ALIGNED, ((8, 0),), UpdateClass.FULL)])
+
+        assert any("fewer than two points" in line for line in found)
+
+    def test_a_line_may_not_leave_its_box(self):
+        """The box is the refresh window. Ink outside it is ink nothing repaints."""
+        found = violations([draw_line("l", ALIGNED, ((8, 0), (40, 5)), UpdateClass.FULL)])
+
+        assert any("leaves its box" in line for line in found)
+
+    def test_a_line_inside_its_box_is_fine(self):
+        """The right and bottom edges are exclusive, as a box is everywhere else."""
+        points = ((ALIGNED.x, ALIGNED.y), (ALIGNED.right - 1, ALIGNED.bottom - 1))
+
+        assert violations([draw_line("l", ALIGNED, points, UpdateClass.FULL)]) == ()
 
     def test_every_problem_is_reported_not_just_the_first(self):
         items = [

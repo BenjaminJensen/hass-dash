@@ -16,8 +16,15 @@ import pytest
 
 from view.boxes import (
     COLUMN_HEAD_HEIGHT,
+    CURVE_AXIS_EVERY,
+    CURVE_POINT_STEP,
+    CURVE_POINTS,
+    DAY_COUNT,
+    DAY_WIDTH,
     HEADER_HEIGHT,
     HUMIDITY_WIDTH,
+    LEFT_GUTTER,
+    LEFT_MARGIN,
     MARKER_WIDTH,
     NAME_WIDTH,
     RIGHT_MARGIN,
@@ -25,9 +32,13 @@ from view.boxes import (
     SCREEN_WIDTH,
     SUMMARY_HEIGHT,
     TEMPERATURE_WIDTH,
+    curve_boxes,
+    day_boxes,
+    hero_boxes,
     room_table,
     row_cells,
     screen_boxes,
+    strip_boxes,
 )
 
 ROOMS = 11
@@ -61,6 +72,19 @@ def every_box() -> list:
         cells = row_cells(row)
         found.extend([cells.box, cells.marker, cells.name, cells.temperature, cells.humidity])
         found.append(cells.title)
+
+    hero = hero_boxes(boxes.left.hero)
+    found.extend([hero.icon, hero.temperature, hero.condition, hero.apparent, hero.range])
+
+    for slot in strip_boxes(boxes.left.strip):
+        found.extend([slot.box, slot.label, slot.value])
+
+    curve = curve_boxes(boxes.left.curve)
+    found.extend([curve.title, curve.plot, curve.bars, curve.line, curve.axis])
+
+    for day in day_boxes(boxes.left.days):
+        found.extend([day.box, day.name, day.icon, day.values])
+
     return found
 
 
@@ -105,11 +129,122 @@ class TestTheScreen:
         assert left.curve.bottom == left.days.y
         assert left.days.bottom == left.box.bottom
 
-    def test_the_left_column_is_empty_but_measured(self):
-        """M5 fills it. The box model is not revisited when it does."""
+    def test_the_column_s_content_sits_inside_its_margins(self):
         left = screen_boxes().left
 
-        assert left.hero.height > 0 and left.days.height > 0
+        assert left.content.x == left.box.x + LEFT_MARGIN
+        assert left.content.right == left.box.right - LEFT_GUTTER
+
+    def test_the_gutter_keeps_content_off_the_column_rule(self):
+        """The divider's rule is drawn on its left edge, which is the column's right."""
+        boxes = screen_boxes()
+
+        assert boxes.left.content.right < boxes.divider.x
+
+
+class TestTheLeftColumn:
+    """The regions INTENT.md section 3 puts on the weather half."""
+
+    def test_the_hero_splits_two_rows_at_the_same_x(self):
+        hero = hero_boxes(screen_boxes().left.hero)
+
+        assert hero.temperature.right == hero.range.x
+        assert hero.condition.right == hero.apparent.x
+        assert hero.temperature.x == hero.condition.x
+
+    def test_the_icon_sits_left_of_everything_else(self):
+        hero = hero_boxes(screen_boxes().left.hero)
+
+        assert hero.icon.right == hero.temperature.x
+
+    def test_the_hero_leaves_its_slack_at_the_bottom_as_a_gap(self):
+        """Not as padding inside a box - the gap is what separates hero from strip."""
+        hero = hero_boxes(screen_boxes().left.hero)
+
+        assert hero.apparent.bottom < hero.box.bottom
+
+    def test_the_strip_is_six_slots_in_two_rows_of_three(self):
+        slots = strip_boxes(screen_boxes().left.strip)
+
+        assert len(slots) == 6
+        assert slots[0].box.y == slots[1].box.y == slots[2].box.y
+        assert slots[3].box.y == slots[0].box.bottom
+
+    def test_each_slot_stacks_a_label_over_a_value(self):
+        slot = strip_boxes(screen_boxes().left.strip)[0]
+
+        assert slot.label.bottom == slot.value.y
+        assert slot.value.bottom == slot.box.bottom
+
+    def test_a_slot_row_leaves_slack_under_its_value(self):
+        """The only thing separating one row's value from the next row's label."""
+        from render.fonts import FontBook
+        from view.drawlist import TextStyle
+
+        slot = strip_boxes(screen_boxes().left.strip)[0]
+
+        assert slot.value.height > FontBook().line_height(TextStyle.SLOT_VALUE)
+
+    def test_the_curve_tiles_title_plot_and_axis(self):
+        curve = curve_boxes(screen_boxes().left.curve)
+
+        assert curve.title.y == curve.box.y
+        assert curve.title.bottom <= curve.plot.y
+        assert curve.plot.bottom <= curve.axis.y
+        assert curve.axis.bottom == curve.box.bottom
+
+    def test_the_bar_band_is_the_bottom_of_the_plot_and_the_line_the_rest(self):
+        curve = curve_boxes(screen_boxes().left.curve)
+
+        assert curve.line.y == curve.plot.y
+        assert curve.line.bottom == curve.bars.y
+        assert curve.bars.bottom == curve.plot.bottom
+
+    def test_every_plotted_hour_lands_on_a_byte_boundary(self):
+        """Which is what lets the axis labels hanging off them be partial windows."""
+        curve = curve_boxes(screen_boxes().left.curve)
+        labelled = range(0, CURVE_POINTS, CURVE_AXIS_EVERY)
+
+        assert all((curve.plot.x + index * CURVE_POINT_STEP) % 8 == 0 for index in labelled)
+
+    def test_the_last_plotted_hour_stays_inside_the_plot(self):
+        curve = curve_boxes(screen_boxes().left.curve)
+        last = curve.plot.x + (CURVE_POINTS - 1) * CURVE_POINT_STEP
+
+        assert last < curve.plot.right
+
+    def test_the_day_strip_is_six_equal_columns(self):
+        columns = day_boxes(screen_boxes().left.days)
+
+        assert len(columns) == DAY_COUNT
+        assert {column.box.width for column in columns} == {DAY_WIDTH}
+
+    def test_the_day_columns_tile_each_other(self):
+        columns = day_boxes(screen_boxes().left.days)
+
+        for left, right in zip(columns, columns[1:]):
+            assert left.box.right == right.box.x
+
+    def test_the_day_strip_leaves_the_same_gutter_as_everything_above_it(self):
+        boxes = screen_boxes()
+        columns = day_boxes(boxes.left.days)
+
+        assert columns[-1].box.right == boxes.left.box.right - LEFT_GUTTER
+
+    def test_a_day_column_stacks_a_weekday_an_icon_and_its_values(self):
+        day = day_boxes(screen_boxes().left.days)[0]
+
+        assert day.name.bottom == day.icon.y
+        assert day.icon.bottom == day.values.y
+        assert day.values.bottom == day.box.bottom
+
+    def test_the_icon_cell_fits_the_icon_the_layout_draws_in_it(self):
+        from view.boxes import DAY_ICON_SIZE
+
+        day = day_boxes(screen_boxes().left.days)[0]
+
+        assert day.icon.height >= DAY_ICON_SIZE
+        assert day.icon.width >= DAY_ICON_SIZE
 
 
 class TestTheRoomTable:

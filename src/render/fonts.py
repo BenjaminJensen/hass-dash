@@ -11,6 +11,11 @@ caps the value font at whatever has an ascent plus descent of 30 or less. See
 `view/boxes.py` for the arithmetic and PLAN.md M4 for what that means at three
 metres.
 
+`HERO_TEMPERATURE` is the one size chosen for effect rather than by division:
+INTENT.md section 3 asks for the current temperature at the largest size on the
+screen, and 72 px is the largest that leaves the condition text and the
+apparent temperature a line each inside a 140 px hero.
+
 Faces are cached per `FontBook`, because the loop on the Pi renders a frame
 every few minutes for months and re-reading nine TrueType files off an SD card
 each time is pure waste.
@@ -48,6 +53,15 @@ STYLES: dict[TextStyle, FontSpec] = {
     TextStyle.SUMMARY_TITLE: FontSpec(BOLD, 21),
     TextStyle.SUMMARY_VALUE: FontSpec(BOLD, 25),
     TextStyle.SUMMARY_STAT: FontSpec(REGULAR, 16),
+    TextStyle.HERO_TEMPERATURE: FontSpec(BOLD, 72),
+    TextStyle.HERO_CONDITION: FontSpec(BOLD, 20),
+    TextStyle.HERO_DETAIL: FontSpec(REGULAR, 16),
+    TextStyle.SLOT_LABEL: FontSpec(BOLD, 13),
+    TextStyle.SLOT_VALUE: FontSpec(BOLD, 20),
+    TextStyle.CURVE_TITLE: FontSpec(BOLD, 15),
+    TextStyle.CURVE_AXIS: FontSpec(REGULAR, 12),
+    TextStyle.DAY_NAME: FontSpec(BOLD, 14),
+    TextStyle.DAY_VALUE: FontSpec(REGULAR, 15),
 }
 
 

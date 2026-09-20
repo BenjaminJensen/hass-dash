@@ -65,6 +65,11 @@ class Primitive(Enum):
     `RULE` draws a thin line along one edge of its box rather than being given
     the thin geometry directly, so that the box stays a legal refresh window -
     a 2-pixel-wide box could never satisfy the byte alignment rule.
+
+    `LINE` is the one primitive that carries geometry of its own, because a
+    temperature curve is not expressible as a rectangle. Its points are still
+    required to lie inside its box, so the box remains an honest refresh
+    window - see `violations()`.
     """
 
     FILL = "fill"
@@ -72,6 +77,7 @@ class Primitive(Enum):
     RULE = "rule"
     TEXT = "text"
     ICON = "icon"
+    LINE = "line"
 
 
 class Align(Enum):
@@ -116,6 +122,15 @@ class TextStyle(Enum):
     SUMMARY_TITLE = "summary_title"
     SUMMARY_VALUE = "summary_value"
     SUMMARY_STAT = "summary_stat"
+    HERO_TEMPERATURE = "hero_temperature"
+    HERO_CONDITION = "hero_condition"
+    HERO_DETAIL = "hero_detail"
+    SLOT_LABEL = "slot_label"
+    SLOT_VALUE = "slot_value"
+    CURVE_TITLE = "curve_title"
+    CURVE_AXIS = "curve_axis"
+    DAY_NAME = "day_name"
+    DAY_VALUE = "day_value"
 
 
 @dataclass(frozen=True)
@@ -200,6 +215,7 @@ class DrawItem:
     edge: Edge = Edge.BOTTOM
     icon: str = ""
     icon_size: int = 50
+    points: tuple[tuple[int, int], ...] = ()
 
 
 def draw_fill(region: str, box: Box, colour: Colour, update: UpdateClass) -> DrawItem:
@@ -299,6 +315,31 @@ def draw_icon(
     )
 
 
+def draw_line(
+    region: str,
+    box: Box,
+    points: tuple[tuple[int, int], ...],
+    update: UpdateClass,
+    colour: Colour = Colour.BLACK,
+    thickness: int = 2,
+) -> DrawItem:
+    """A polyline - today's temperature, and nothing else so far.
+
+    The points are absolute screen coordinates rather than offsets inside the
+    box, because the curve is computed from a value range against a plot area
+    and converting twice is one conversion too many to get wrong.
+    """
+    return DrawItem(
+        region=region,
+        primitive=Primitive.LINE,
+        box=box,
+        colour=colour,
+        update=update,
+        thickness=thickness,
+        points=tuple(points),
+    )
+
+
 def violations(items: tuple[DrawItem, ...] | list[DrawItem]) -> tuple[str, ...]:
     """Everything wrong with one draw list, as readable lines.
 
@@ -325,6 +366,13 @@ def violations(items: tuple[DrawItem, ...] | list[DrawItem]) -> tuple[str, ...]:
         if item.primitive is Primitive.TEXT and not item.text:
             found.append(f"{where}: text item with nothing to draw")
 
+        if item.primitive is Primitive.LINE:
+            if len(item.points) < 2:
+                found.append(f"{where}: line with fewer than two points")
+            outside = [point for point in item.points if not _inside(item.box, point)]
+            if outside:
+                found.append(f"{where}: line leaves its box at {outside[0]}")
+
         seen = classes.setdefault(item.region, item.update)
         if seen is not item.update:
             found.append(
@@ -333,6 +381,17 @@ def violations(items: tuple[DrawItem, ...] | list[DrawItem]) -> tuple[str, ...]:
             )
 
     return tuple(found)
+
+
+def _inside(box: Box, point: tuple[int, int]) -> bool:
+    """Whether a point falls within a box, right and bottom edges exclusive.
+
+    A line that strays outside its box turns the box into a refresh window that
+    does not contain what it refreshes, which is the one thing the region model
+    may not allow - a partial refresh would leave the stray pixels behind.
+    """
+    x, y = point
+    return box.x <= x < box.right and box.y <= y < box.bottom
 
 
 def region_colours(items: tuple[DrawItem, ...] | list[DrawItem]) -> dict[str, set[Colour]]:
