@@ -58,10 +58,35 @@ make test      # docker compose run --rm tools pytest tests/ -v
 make lint      # docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/
 make lint-fix  # docker compose run --rm --entrypoint ruff tools check src/ tests/ tools/ --fix
 make format    # docker compose run --rm --entrypoint ruff tools format src/ tests/ tools/
+make render    # render the recorded snapshot to screen.bmp
 make clean     # Remove test outputs and caches
 ```
 
 **On Windows PowerShell:** Use the `docker compose` commands directly (listed above). The Makefile is not available on Windows.
+
+### Render the screen
+
+The development target is a BMP on disk, not the panel (`INTENT.md` §7).
+`tools/render_fixture.py` replays a recorded snapshot through the real
+configuration, view and renderer and writes two files:
+
+```bash
+docker compose run --rm --entrypoint python tools tools/render_fixture.py
+```
+
+- `screen.bmp` — the three-colour composite. **This is the file to look at**
+  when a change touches rendering. (`test_output.bmp` belongs to the legacy
+  widget suite, which M10 deletes.)
+- `screen-preview.bmp` — the black plane alone, which is everything a partial
+  refresh can carry. Anything red is missing from it on purpose.
+
+Both are gitignored. Useful flags: `--fixtures tests/fixtures/sets/hostile` to
+render a house where every sensor is broken, and `--at 2026-09-19T12:32:00+00:00`
+to pin the clock so two renders are byte-identical.
+
+The tool validates the draw list before drawing anything and exits non-zero if
+the layout breaks the refresh contract, so a bad update class fails here rather
+than on the wall.
 
 ### Local Python Environment (Optional)
 

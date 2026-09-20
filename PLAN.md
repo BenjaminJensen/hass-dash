@@ -53,9 +53,9 @@ the eleven rooms render red. See the M2.2 log entry.
 
 ## Milestones
 
-**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2 and M3 are done, on branch
-`rewrite/intent-architecture`. M4 is next, and slice 2.2 is still waiting on
-one command being run against the live instance.
+**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3 and M4 are done, on branch
+`rewrite/intent-architecture`. M5 is next. Slice 2.3 - the comfort bands - is
+the only thing still waiting on a human, and M4 has made it urgent: see the log.
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
@@ -63,7 +63,7 @@ one command being run against the live instance.
 | M1 ✅ | Domain core | M | M0 | Pure model + derivations, honestly tested |
 | M2 ✅ | Config and captured ground truth (2.3 open) | M | M1 | `house.yml` + recorded HA fixtures |
 | M3 ✅ | Sources | M | M2 | HA behind a port, hostile inputs survived |
-| M4 | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
+| M4 ✅ | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
 | M5 | Complete the screen | L | M4 | Every region of §3 rendered |
 | M6 | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
 | M7 | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
@@ -314,6 +314,98 @@ done.
 
 ## Log
 
+**M4** — `src/view/`, `src/render/`, `tools/render_fixture.py`. +170 tests,
+531 in the suite. A real 800×480 three-colour BMP exists, it has been looked at,
+and it answered the question the milestone was placed this early to ask.
+
+**The right column fits, and three metres does not.** This is the risk the plan
+named, and the numbers are now in hand rather than estimated. Eleven rooms plus
+a column header and a summary cap the row at 30 px, which caps the value font at
+a 17 px cap height — 3,5 mm on a panel whose dot pitch is 0,205 mm.
+
+| Distance | Cap height | Verdict |
+| --- | --- | --- |
+| 1,0 m | 12,0 arcmin | comfortable, including the summary statistics |
+| 1,5 m | 8,0 arcmin | readable at a glance |
+| 2,0 m | 6,0 arcmin | marginal — the red is what carries, not the digits |
+| 3,0 m | 4,0 arcmin | **below the 20/20 threshold of 5 arcmin** |
+
+Working backwards instead: a comfortable 10–12 arcmin at three metres needs a
+43–51 px cap height, so a 63–75 px row, so **six or seven rows fill the entire
+panel** — with no header, no summary, and no weather column. `INTENT.md` §3 puts
+weather on the left half as priority one, so three metres and eleven rooms
+cannot both be true on a 7,5" panel. The layout was pushed to the largest type
+the space allows; the remaining lever is content, not typography.
+
+**So: a decision for you, not a silent adjustment.** Either the hallway
+distance becomes ~1,5 m, or the room table sheds rows. Nothing downstream is
+blocked by it — M5 fills the left column either way — but it should be settled
+before M8 puts it on a wall.
+
+**Red is not scarce today, and that is slice 2.3.** The recorded snapshot draws
+red in 18 regions across 9 of the 11 rooms. Rendered, it is a wall of red boxes,
+which is `INTENT.md` §2's failure mode stated exactly: red used everywhere is
+red used nowhere. The layout is correct and the numbers are placeholders. This
+is now visible rather than arithmetic.
+
+**Partial refresh can carry more than expected — and still not much.** The
+region count M9 has to be decided on, from the live snapshot: **33 regions are
+partial-eligible, 25 are full-only.** But the split is not where it looked: the
+full-only 25 are exactly the room value cells and alert markers, and the
+partial-eligible 33 are names, labels, rules, the outdoor row, the summary block
+and the clock. So a partial refresh can carry the whole house summary and the
+updated-at time, and none of the individual room readings. `test_view_screen.py`
+pins those counts so they cannot drift unnoticed.
+
+**The Pi 3B+ is not the constraint, and it is worth saying so now.** Measured in
+the container: 0,2 ms to turn a snapshot into a draw list, 12 ms to execute it
+into the two planes, 3 ms to composite — 28 MB peak RSS for the whole process.
+Even at ten times slower on the Pi's A53, a frame costs well under a second
+against a panel that takes 26. The composite and its two masks are the largest
+allocation and exist only for the BMP target: `EPDRenderer` will take
+`planes()` straight to `getbuffer()` and never build them. Nothing here needs a
+lighter representation, and the SD card sees no writes per cycle once the target
+is the panel rather than a file.
+
+Four decisions worth remembering:
+
+*A region is a refresh window, and one window is one update class.* Items carry
+a region name, `violations()` rejects a region that mixes classes, and
+`inconsistent_regions()` takes the draw lists of many inputs and names any
+region whose class depends on the data. That last one is how §4's "if a region
+could be red for some input, it is full-only for all inputs" became a test
+rather than a discipline — `TestTheRefreshContract` drives the room table over
+comfortable, too hot, too cold, too humid, both and missing, and asserts nothing
+moved.
+
+*The inverted outdoor row is reported, never judged.* White text on black has
+nowhere to put red, so the layout does not colour that row by alert state — and
+that is exactly why it is the one row whose values a partial refresh can carry.
+It matches the configuration, where `ude` opts out of a comfort band with
+`comfort: {}`. Written down in `view/rooms.py` because a band set on an inverted
+row would otherwise be computed and silently ignored.
+
+*A rule is drawn on the edge of its box, not given thin geometry.* Every
+partial-eligible box has to be byte-aligned on x, and a two-pixel-wide box can
+never be. So the column divider is an eight-pixel box carrying a two-pixel rule.
+The refresh window is the layout's business; the thin geometry is the
+renderer's.
+
+*Text is placed from the font's metrics, not from its own ink extent.* Centring
+on ink drops "23,1" a pixel below "Stue" and the whole table ripples. Two tests
+hold it: one that two descender-free strings share a baseline, and one that the
+comma in "23,1" hangs below that baseline instead of moving it.
+
+**And a documentation defect this surfaced.** `HARDWARE.md` §4's table said
+`display()` writes `0x10` for black and `0x13` for red, and two paragraphs later
+that `display_Partial()` writes `0x13` and has no path to red. Both are accurate
+readings of the vendored driver and together they are confusing: partial mode is
+entered via `0x91` and pre-fills `0x10` blank, and the driver's own comment on
+that write reads "Write Black and White image to RAM". Same register, different
+role by mode. `HARDWARE.md` now says so, and flags it as a bench check before
+M9 builds anything on it. Nothing in `render/bmp.py` depends on the resolution.
+
+
 **2.2 — the capture, run 2026-09-19 against the live instance.** All 24
 configured entities exist; the three `UNCONFIRMED` humidity ids and the `ude`
 row were all guessed correctly, and those markers can come out of `house.yml`.
@@ -439,23 +531,20 @@ imposing decimal rounding would buy nothing but a dependency.
 
 ## The next commit
 
-**First, one command, by you:**
+**Two answers from you, neither of which blocks M5:**
 
-```bash
-python3 tools/capture_snapshot.py     # outside the container; needs .env
-```
+*The comfort bands (slice 2.3).* Real numbers from the family, per room. M4 has
+made the cost of not having them visible: nine of eleven rooms currently draw
+red. Until these are real, every red mark on the screen is guesswork wearing the
+one colour reserved for "act".
 
-Then read `tests/fixtures/capture_report.md` and commit the fixtures. That
-settles four of the five open questions in `INTENT.md` §11 and unblocks the
-weather half of M5. Until it has been run, three humidity entity ids and the
-whole `ude` row in `house.yml` are marked UNCONFIRMED and are a guess.
+*The viewing distance, or the room count.* See the M4 log. Eleven rooms are
+comfortable at ~1,5 m and unreadable at 3 m, and no amount of typography changes
+that on a 7,5" panel. Either the stated distance moves or the table sheds rows.
 
-M3 was built without it, against a synthetic fixture set, because the sources
-layer needed hostile input far more than it needed real input — and the hostile
-shapes were never going to come off a live instance anyway. That trade has one
-open edge: `tests/fixtures/sets/nominal/` asserts attribute names this project
-has never actually seen on the wire. `TestRecordedCapture` in
-`tests/test_sources_fixture.py` **skips** today and starts checking every
-configured entity against the instance the moment the capture exists.
-
-Then M4 — the walking skeleton, which does not depend on anything still open.
+**Then M5 — complete the screen.** The left column's box model is already
+computed and empty; M5 is a render function per region. Two decisions from the
+2.2 capture land there and are worth deciding before writing the code:
+`apparent_temperature` does not exist on this instance, so §3's "Føles som 15°"
+is either computed or dropped; and the daily forecast returns six days, not
+seven, so the strip is a six-day strip.

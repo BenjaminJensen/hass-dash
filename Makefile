@@ -1,4 +1,4 @@
-.PHONY: help build test test-watch lint lint-fix format clean
+.PHONY: help build test test-watch lint lint-fix format render clean
 
 help:
 	@echo "HASS Dashboard - Development Commands"
@@ -9,6 +9,7 @@ help:
 	@echo "make lint        - Run ruff linter"
 	@echo "make lint-fix    - Auto-fix linting issues"
 	@echo "make format      - Format code with ruff"
+	@echo "make render      - Render the recorded snapshot to screen.bmp"
 	@echo "make clean       - Remove test outputs and cache"
 
 build:
@@ -32,8 +33,11 @@ lint-fix:
 format:
 	docker compose run --rm --entrypoint ruff tools format src/ tests/ tools/
 
+render:
+	docker compose run --rm --entrypoint python tools tools/render_fixture.py
+
 clean:
-	rm -f test_*.bmp test_output.bmp
+	rm -f test_*.bmp test_output.bmp screen.bmp screen-preview.bmp
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
 	rm -rf htmlcov

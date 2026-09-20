@@ -109,6 +109,14 @@ Verified by reading `src/epd7in5b_V2.py`, not assumed from the vendor demo.
 `display_Partial()` writes **only the `0x13` plane**. There is **no partial
 path to the red plane.** Partial refresh on this panel is black-and-white only.
 
+The register numbering is confusing and worth stating plainly: in `display()`,
+`0x10` carries black and `0x13` carries red. `display_Partial()` writes `0x13`
+as well — but only after `0x91` has put the controller into partial mode, and
+after pre-filling `0x10` blank across the window. The driver's own comment on
+that write reads *"Write Black and White image to RAM"*. Same register,
+different role, depending on the mode. **Verify this on the bench before
+building anything on it (M9).**
+
 Consequences that the design has to absorb:
 
 - Any region whose content can be red is full-refresh-only, for all inputs.
