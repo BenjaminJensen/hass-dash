@@ -88,7 +88,7 @@ writes the same BMP the container produces. Copy it off and look at it.
 .venv/bin/python src/app.py --source hass --target epd --once --verbose
 ```
 
-Expect a single `refresh=full reason=first_frame … target=epd:epd7in5b_V2` line
+Expect a single `refresh=full reason=first_frame … target=epd:7in5b_V2` line
 about 30 seconds later. The panel flashes through its full 26-second cycle;
 that is the only cycle it has.
 
@@ -99,9 +99,33 @@ the ones the container cannot answer:
 | Check | Why it is in doubt |
 | --- | --- |
 | Red is red, and black is black | The two planes are separate registers and swapping them is a one-line mistake that only hardware reveals (`HARDWARE.md` §4) |
-| Nothing is inverted | `getbuffer()` inverts and `display()` inverts the black plane back |
+| Nothing is inverted | `buffer()` inverts and `display()` inverts the black plane back |
 | The text is legible from where people stand | `PLAN.md` M4: eleven rooms are comfortable at ~1,5 m and below the readable threshold at 3 m |
 | Red is spent where it earns its keep | `INTENT.md` §2. With placeholder comfort bands most rooms alert; see slice 2.3 |
+
+### 4.1 The driver bench check (`PLAN.md` M10.6)
+
+The frame now goes out through this project's own driver rather than the
+vendored one. A transcript proves the same bytes leave in the same order; it
+cannot prove `spidev`'s chunking of a 48 000-byte write, `gpiozero`'s timing,
+or that the BUSY deadline never fires early on a cold panel. So, once:
+
+```bash
+.venv/bin/python tools/panel_check.py frame
+# wait 180 s — the vendor floor, and this script has no state to enforce it
+.venv/bin/python tools/panel_check.py clear
+```
+
+Each prints `wall=` and `cpu=`. **The wall figure should be about 26 s and the
+CPU figure a fraction of a second.** That second number is M10's one
+measurable claim: the vendored `ReadBusy()` polled with no delay in the loop
+and spent 29,9 s of CPU in a 32 s cycle (`HARDWARE.md` §4). If the CPU figure
+comes back anywhere near the wall figure, the new poll delay is not doing what
+it is supposed to.
+
+Watch the clear as well as the frame. A `Clear()` is the one operation whose
+result is unambiguous from across a room, and `HARDWARE.md` §3 wants it run
+before a panel is ever put into storage anyway.
 
 ## 5. The loop, and then the unit
 

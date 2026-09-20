@@ -95,6 +95,26 @@ class Transcript:
         return "".join(f"{line}\n" for line in self.lines)
 
 
+class BusyScript:
+    """A BUSY pin that eventually lets go.
+
+    Readings in order, the last one repeating; 0 means busy. Scripted because
+    the vendored `ReadBusy()` has no timeout, so a pin stuck at 0 would hang
+    the suite the way a dead panel hangs the dashboard.
+    """
+
+    def __init__(self, transcript: Transcript, readings: Sequence[int] = (1,)) -> None:
+        self.transcript = transcript
+        self.readings = list(readings) or [1]
+        self.polls = 0
+
+    def read(self) -> int:
+        value = self.readings[min(self.polls, len(self.readings) - 1)]
+        self.polls += 1
+        self.transcript.read("BUSY", value)
+        return value
+
+
 class RecordingConfig:
     """What `epdconfig.RaspberryPi` looks like from the driver's side.
 
@@ -115,9 +135,7 @@ class RecordingConfig:
 
     def __init__(self, transcript: Transcript, busy: Sequence[int] = (1,)) -> None:
         self.transcript = transcript
-        #: BUSY pin readings in order; the last one repeats forever. 0 is busy.
-        self.busy = list(busy) or [1]
-        self.polls = 0
+        self.busy = BusyScript(transcript, busy)
 
     # -- the seven methods ------------------------------------------------
 
@@ -136,10 +154,7 @@ class RecordingConfig:
             # `self.RST_PIN.value` on an integer. Three dead branches, and the
             # recorder is the place that says so out loud.
             raise AttributeError("'int' object has no attribute 'value'")
-        value = self.busy[min(self.polls, len(self.busy) - 1)]
-        self.polls += 1
-        self.transcript.read("BUSY", value)
-        return value
+        return self.busy.read()
 
     def delay_ms(self, delaytime: float) -> None:
         self.transcript.delay(delaytime)
@@ -162,6 +177,51 @@ class RecordingConfig:
         self.transcript.pin("PWR", 0)
         if cleanup:
             self.transcript.release()
+
+
+class RecordingTransport:
+    """The replacement's `Transport`, writing the same transcript.
+
+    The two recorders adapt different APIs to one vocabulary, which is the
+    whole trick: a difference between them can only be a difference in what
+    the panel would see. There is no CS here because `render/panel/transport.py`
+    has no CS - and the vendored config's CS branch is commented out, so
+    neither does the hardware.
+    """
+
+    def __init__(self, transcript: Transcript, busy: Sequence[int] = (1,)) -> None:
+        self.transcript = transcript
+        self.busy = BusyScript(transcript, busy)
+        self.released = False
+
+    def open(self) -> None:
+        self.transcript.pin("PWR", 1)
+        self.transcript.spi_open()
+
+    def power_down(self) -> None:
+        self.transcript.spi_close()
+        self.transcript.pin("RST", 0)
+        self.transcript.pin("DC", 0)
+        self.transcript.pin("PWR", 0)
+
+    def close(self) -> None:
+        self.transcript.release()
+        self.released = True
+
+    def set_pin(self, pin: Any, value: int) -> None:
+        self.transcript.pin(pin.value, value)
+
+    def busy_pin(self) -> int:
+        return self.busy.read()
+
+    def write(self, data: bytes) -> None:
+        self.transcript.write(data)
+
+    def write_bulk(self, data: bytes) -> None:
+        self.transcript.write_bulk(data)
+
+    def delay_ms(self, milliseconds: float) -> None:
+        self.transcript.delay(milliseconds)
 
 
 @contextmanager
@@ -228,11 +288,33 @@ def vendored_operations(epd: Any) -> dict[str, Any]:
     }
 
 
+def panel_operations(panel: Any) -> dict[str, Any]:
+    """The same four, as `render/panel/driver.py` spells them."""
+    return {
+        "init": panel.init,
+        "display": lambda: panel.display(panel.buffer(BLACK_PLANE), panel.buffer(RED_PLANE)),
+        "clear": panel.clear,
+        "sleep": panel.sleep,
+    }
+
+
 def record_vendored(name: str, busy: Sequence[int] = (1,)) -> Transcript:
     """Run one operation against the recorder and return what it emitted."""
     transcript = Transcript()
     with vendored_panel(transcript, busy) as epd:
         vendored_operations(epd)[name]()
+    return transcript
+
+
+def record_panel(name: str, busy: Sequence[int] = (1,), **kwargs: Any) -> Transcript:
+    """The same, for the replacement. No `sys.modules` surgery needed: the
+    driver takes its transport as an argument, which is the difference this
+    milestone is mostly about."""
+    from render.panel.driver import Panel
+
+    transcript = Transcript()
+    panel = Panel(RecordingTransport(transcript, busy), **kwargs)
+    panel_operations(panel)[name]()
     return transcript
 
 

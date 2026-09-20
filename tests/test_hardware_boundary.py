@@ -3,18 +3,25 @@
 > Do not assume GPIO, SPI, or e-paper hardware access works inside the
 > container.
 
-Importing `epdconfig` is not a statement that hardware exists - it is a claim
-on it. The module imports `gpiozero` and `spidev` at the top, and
-`epd7in5b_V2` goes further: it does `epdconfig = RaspberryPi()` at module
-scope, and that constructor takes five GPIO pins and opens an SPI device. On
-the Pi, an accidental import at collection time would take the pins away from
-the running dashboard; in the container it is an `ImportError` that would turn
-one milestone's module into a suite-wide collection failure.
+Importing a pin configuration is not a statement that hardware exists - it is
+a claim on it. The vendored `epdconfig` imports `gpiozero` and `spidev` at the
+top, and `epd7in5b_V2` goes further: it does `epdconfig = RaspberryPi()` at
+module scope, and that constructor takes four GPIO pins (HARDWARE.md
+section 5). On the Pi, an accidental import at collection time would take the
+pins away from the running dashboard; in the container it is an `ImportError`
+that would turn one milestone's module into a suite-wide collection failure.
 
-So the rule is: **the import happens inside `render.epd.open_panel()` and
-nowhere else.** This file asserts it from three sides - the source tree, the
-test tree, and a real interpreter that imports the composition root and looks
-at what came with it.
+So the rule is: **one module may name the hardware libraries, and only inside
+a constructor.** Since PLAN.md M10 that module is `render/panel/transport.py`,
+where the claim is made by `SpiTransport()` rather than by an import, and the
+one place that constructs one is `render.epd.open_panel()`. The vendored
+driver is now named by nothing in `src/` at all - it survives as the reference
+the transcripts in `tests/fixtures/transcripts/` were recorded from, imported
+only inside `tests/panel_harness.py`'s fixture.
+
+This file asserts it from three sides - the source tree, the test tree, and a
+real interpreter that imports the composition root and looks at what came with
+it.
 
 The sibling of `test_source_boundary.py`: same argument, different boundary.
 One keeps Home Assistant's vocabulary below the adapter; this one keeps the
@@ -38,8 +45,16 @@ TESTS = Path(__file__).parent
 #: only two modules in the repository that may touch GPIO or SPI at import.
 HARDWARE = frozenset({"epdconfig", "epd7in5b_V2", "gpiozero", "spidev"})
 
-#: The one module allowed to reach them, and only from inside a function.
-GATEWAY = "render/epd.py"
+#: The libraries themselves, as opposed to the vendored modules that wrap
+#: them. The gateway may name these; nothing may name the vendored pair.
+LIBRARIES = frozenset({"gpiozero", "spidev"})
+
+#: The one module allowed to reach them, and only from inside a constructor.
+GATEWAY = "render/panel/transport.py"
+
+#: The one place allowed to construct the gateway, so that the claim on the
+#: pins happens at a known line rather than wherever an import lands.
+OPENER = "render/epd.py"
 
 #: The vendored files themselves, which import each other by design. Named
 #: individually rather than skipped by a pattern, so that a third file cannot
@@ -93,30 +108,60 @@ class TestTheSourceTree:
 
         assert leaked == [], (
             f"{path.relative_to(SRC)} imports {leaked} at module scope. "
-            "The driver claims GPIO pins on import; it belongs inside "
-            "render.epd.open_panel()."
+            "GPIO and SPI are claimed on import; they belong inside "
+            f"{GATEWAY}'s constructor."
         )
 
     @pytest.mark.parametrize("path", application_modules(), ids=lambda p: p.name)
-    def test_only_the_gateway_names_the_driver_at_all(self, path):
+    def test_only_the_gateway_names_the_libraries_at_all(self, path):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         reached = sorted(any_imports(tree) & HARDWARE)
 
         if path.relative_to(SRC).as_posix() == GATEWAY:
+            assert set(reached) <= LIBRARIES, f"{GATEWAY} imports {reached}"
             return
 
         assert reached == [], f"{path.relative_to(SRC)} imports {reached}"
 
-    def test_the_gateway_reaches_the_driver_dynamically(self):
-        """`importlib` rather than an `import` statement, so that the name is a
-        string the AST scan above cannot mistake for a dependency - and so the
-        driver is loaded on the first frame rather than on the first import."""
+    def test_the_gateway_claims_the_pins_in_its_constructor(self):
+        """The import is the claim, so it happens where the claim is wanted -
+        and the module stays importable in a container that has neither
+        library, which is what lets `--target epd` be built anywhere."""
         source = (SRC / GATEWAY).read_text(encoding="utf-8")
         tree = ast.parse(source)
 
         assert module_scope_imports(tree) & HARDWARE == set()
-        assert "importlib" in any_imports(tree)
-        assert "epd7in5b_V2" in source
+        assert any_imports(tree) & HARDWARE == LIBRARIES
+
+        constructor = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "__init__"
+        )
+        assert any_imports(constructor) & HARDWARE == LIBRARIES
+
+    def test_the_vendored_driver_is_named_by_nothing_in_src(self):
+        """PLAN.md M10.5. It stays in the tree as the reference the transcripts
+        were recorded from and the only way to re-record, but nothing in the
+        application reaches it any more - `tests/panel_harness.py` is the only
+        importer, and it does that inside a fixture."""
+        for path in application_modules():
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            named = sorted(any_imports(tree) & {"epdconfig", "epd7in5b_V2"})
+
+            assert named == [], f"{path.relative_to(SRC)} imports {named}"
+
+    def test_one_module_constructs_the_gateway(self):
+        """So the claim on the pins is one line in one file, rather than
+        wherever a transport happens to be built."""
+        builders = [
+            path.relative_to(SRC).as_posix()
+            for path in application_modules()
+            if "SpiTransport" in path.read_text(encoding="utf-8")
+            and path.relative_to(SRC).as_posix() != GATEWAY
+        ]
+
+        assert builders == [OPENER]
 
 
 class TestTheTestTree:
@@ -164,3 +209,15 @@ class TestARealInterpreter:
         """Building `--target epd` inside the container has to work; only
         driving it may fail."""
         assert self.imports("from render.epd import EPDRenderer; EPDRenderer()") == set()
+
+    def test_importing_the_gateway_itself_touches_no_hardware(self):
+        """The strongest form of M10.2's claim: the module that owns the pins
+        can be imported on a machine that has none. Constructing it is what
+        fails, and `tests/test_panel_transport.py` shows it failing."""
+        assert self.imports("from render.panel.transport import SpiTransport") == set()
+
+    def test_importing_the_driver_touches_no_hardware(self):
+        """Every command sequence in `render/panel/driver.py` is asserted in
+        this container, which is only possible because the driver takes its
+        transport as an argument."""
+        assert self.imports("from render.panel.driver import Panel") == set()

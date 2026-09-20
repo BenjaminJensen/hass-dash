@@ -114,10 +114,11 @@ docker compose run --rm --entrypoint python tools src/app.py --source hass
 | `--house`, `--fixtures`, `--env` | repository root | |
 | `--verbose` | off | log every decision, including the ones to do nothing |
 
-`--target epd` builds anywhere and only fails when it tries to draw: the
-vendored driver claims GPIO pins the moment it is imported, so that import
-waits for the first frame. In this container that first frame is an
-`ImportError` and the process exits 1. Putting it on real hardware is
+`--target epd` builds anywhere and only fails when it tries to draw: the GPIO
+pins are claimed by constructing `render/panel/transport.py`, which happens on
+the first frame and nowhere else. In this container that first frame is an
+`ImportError` — `gpiozero` and `spidev` are not installed — and the process
+exits 1. Putting it on real hardware is
 [`deploy/README.md`](deploy/README.md).
 
 `--state` is off by default, and deliberately: a state file would make the

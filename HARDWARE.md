@@ -96,6 +96,14 @@ program before storing it.
 
 Verified by reading `src/epd7in5b_V2.py`, not assumed from the vendor demo.
 
+**Since PLAN.md M10 this is a reference, not a description of what runs.** The
+full-refresh path is `src/render/panel/driver.py`, which emits the same
+commands in the same order with the same bytes — asserted against transcripts
+recorded from the vendored file and committed in
+`tests/fixtures/transcripts/`. The vendored pair stays in the tree as the
+reference those were recorded from and the only way to re-record. Every
+deliberate divergence is listed in §4.1 below.
+
 | Call | Line | Behaviour |
 | --- | --- | --- |
 | `init()` | 89 | Full-refresh init sequence |
@@ -139,6 +147,27 @@ Consequences that the design has to absorb:
 - `partFlag` is set at construction and cleared on first partial refresh; the
   first partial after construction pre-fills the window white.
 
+### 4.1 What the replacement does differently
+
+Six differences, all of them deliberate, each a defect in the file above. The
+full argument for each is in `src/render/panel/driver.py`'s docstring and the
+assertion that holds it is in `tests/test_panel_driver.py`.
+
+| Difference | The defect it fixes |
+| --- | --- |
+| `ReadBusy` has a **40 s deadline** | The vendored loop has none, so a panel that never releases BUSY hangs the process forever — the unit still "running", the journal silent, yesterday's frame on the wall |
+| It **sleeps 10 ms** between polls | The vendored loop re-sends `0x71` as fast as CPython will go: 29.9 s of CPU in a 32 s cycle, measured below |
+| Buffers are immutable `bytes` and the inversion is `bytes.translate()` | `display()` inverts `imageblack` **in place**, so the same buffer sent twice draws its own negative; and the Python `for` loop costs 29.3 ms per plane against 0.326 ms, three planes per frame |
+| A wrong-sized image **raises** | `getbuffer()` answers one with a warning and a blank buffer, which reaches the wall as a cleared screen with nothing in the log |
+| CS is **never driven** | `send_command()` toggles it around every byte and `RaspberryPi.digital_write()` has that branch commented out, so the toggles have never reached a pin. `spidev` drives CE0 itself |
+| `close()` **releases the pins** | `module_exit(cleanup=False)` never closes the `gpiozero` devices, so nothing in the vendored path can give them back |
+
+Not ported at all: `init_Fast()`, `init_part()`, `display_Partial()` and
+`display_Base_color()`. The first is unused; the middle two belong to a partial
+path PLAN.md M9 has not decided to build, and the window arithmetic they rest
+on is wrong (see the x-window bullet above); the last sends `~color` — which is
+`-1`, not `0xFF`, for `0x00` — one byte per SPI transaction, 48 000 times.
+
 ### `ReadBusy()` spins, and a refresh costs a core
 
 `ReadBusy()` (line 79) polls in a loop with **no delay in it**: it re-sends
@@ -161,11 +190,23 @@ fact that **the loop has no timeout at all**. A panel that never releases BUSY
 holds the process there forever, with the unit still "running" and the journal
 silent.
 
+Both are fixed in `render/panel/driver.py`; the figure the fix should produce
+is a fraction of a second of CPU against the same 26 s of wall clock.
+`tools/panel_check.py` prints both clocks, so this line can be replaced with a
+measurement rather than an expectation. **Not yet measured on the board.**
+
 ### Buffer convention
 
 `getbuffer()` inverts every byte — PIL uses 0=black, the panel uses 0=white.
 `display()` then inverts the black buffer *back* before sending. Any new
 renderer must respect this double inversion rather than reimplementing it.
+
+`render/panel/driver.py`'s `buffer()` does exactly this, and the transcript
+pins the result from the far end: what reaches `0x10` is the plane PIL
+produced and what reaches `0x13` is its negative. Reimplementing either half
+is how this gets broken, and the white-on-black `Ude` row is what would show
+it first — which is why §6 records that the photographed frame was not
+inverted.
 
 ## 5. Wiring
 
@@ -189,13 +230,27 @@ GPIO via `gpiozero`, SPI via `spidev`. Neither is available in the tools
 container, so nothing under test may import `epdconfig` at module scope.
 
 That is now enforced rather than remembered. `epd7in5b_V2.py` runs
-`epdconfig = RaspberryPi()` at module scope, and that constructor claims all
-five pins above — so importing the driver is a *claim* on the hardware, not a
-declaration that it exists. The import therefore lives inside
-`render/epd.py`'s `open_panel()`, reached through `importlib`, and
+`epdconfig = RaspberryPi()` at module scope, and that constructor takes GPIO
+pins — so importing the driver is a *claim* on the hardware, not a declaration
+that it exists.
+
+**Four pins, not five, and this file said five until M10 read the
+constructor.** `RaspberryPi.__init__` builds `gpiozero` devices for RST, DC
+and PWR as outputs and BUSY as an input; its `GPIO_CS_PIN` line is commented
+out, because CS is CE0 and the kernel's SPI driver owns it — along with MOSI
+and SCLK — from the moment `SPI.open(0, 0)` is called. `SpiDev()` itself is
+constructed without opening anything, so the import claims the four GPIO pins
+and the bus waits for `module_init()`.
+
+Since PLAN.md M10 the claim is made by a constructor instead of by an import:
+`render/panel/transport.py` imports `gpiozero` and `spidev` inside
+`SpiTransport.__init__`, so the module is importable on any machine and only
+building one takes a pin. It drives the same four. `render/epd.py`'s
+`open_panel()` is the one place that builds one, and
 `tests/test_hardware_boundary.py` checks from three sides that nothing else
-pulls it in: the source tree, the test tree, and a real interpreter that
-imports the composition root and reports what came with it.
+reaches the libraries: the source tree, the test tree, and a real interpreter
+that imports the composition root and reports what came with it. The vendored
+pair is imported by nothing outside the transcript harness.
 
 ## 6. The deployment target, as surveyed
 
