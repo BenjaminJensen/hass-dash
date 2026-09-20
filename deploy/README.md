@@ -15,23 +15,35 @@ time zone already `Europe/Copenhagen`, and no hardware clock.
 Fresh on both counts, and both for reasons the survey found:
 
 - **The existing checkout at `~/hass-dash` is dirty** — roughly 350 uncommitted
-  lines of pre-rewrite work against the old coordinate-based `rooms.yml`. Clone
-  beside it rather than pulling onto it.
+  lines of pre-rewrite work against the old coordinate-based `rooms.yml`. Move
+  it aside rather than pulling onto it; it is kept as `~/hass-dash-old`.
 - **Neither Python environment on the device is usable as it stands.** The
   system interpreter has Pillow but no PyYAML; the existing `~/py_envs` venv has
   neither and carries the `HomeAssistant-API` / `aiohttp` / `pydantic` stack
   that `sources/` was written to do without.
 
 ```bash
-git clone <this repository> ~/hass-dash-new
-cd ~/hass-dash-new
-git checkout rewrite/intent-architecture
+# Move the old one aside rather than pulling onto it, and take the name, so
+# that the path in hass-dash.service is the path on disk.
+mv ~/hass-dash ~/hass-dash-old
+
+git clone -b rewrite/intent-architecture \
+  https://github.com/BenjaminJensen/hass-dash ~/hass-dash
+cd ~/hass-dash
 
 # --system-site-packages so the venv can see the gpiozero and spidev that have
 # already driven this panel, rather than building spidev from source.
 python3 -m venv --system-site-packages .venv
 .venv/bin/pip install -r deploy/requirements-device.txt
 ```
+
+**Build the venv where it will live.** A venv records its own absolute path in
+`pyvenv.cfg`, in `bin/activate` and in the shebang of every console script, and
+none of those follow a `mv`. `bin/python` survives — it resolves its prefix
+from its own location, so `app.py` and the unit keep working and the breakage
+stays hidden — but `bin/pip` stops executing entirely. If the directory does
+get renamed, `rm -rf .venv` and repeat the two commands above; there is nothing
+in it worth preserving.
 
 Check what that gave you before going further:
 
@@ -106,13 +118,7 @@ decided.
 
 Then install the unit:
 
-The unit hardcodes `/home/ben/hass-dash`, and §1 above told you to clone to
-`~/hass-dash-new` so as not to land on the dirty pre-rewrite checkout. Reconcile
-the two before installing — either rename the old checkout out of the way, or:
-
 ```bash
-sed -i 's#/home/ben/hass-dash#/home/ben/hass-dash-new#g' deploy/hass-dash.service
-
 sudo cp deploy/hass-dash.service /etc/systemd/system/
 sudoedit /etc/systemd/system/hass-dash.service   # check User= and the paths
 sudo systemctl daemon-reload

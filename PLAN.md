@@ -877,10 +877,16 @@ beside the dirty on-device checkout, venv with `--system-site-packages` against
 then one frame to the panel. Both credential traps were real and both were
 handled: the revoked token was reminted, and `HASS_URL` is now refused at
 startup with the corrected URL in the message rather than 404-ing as a broken
-instance. The only friction worth fixing is a path disagreement the runbook
-anticipates but does not resolve: §1 clones to `~/hass-dash-new` and
-`deploy/hass-dash.service` hardcodes `/home/ben/hass-dash`, so installing the
-unit needs one `sed` first.
+instance. One piece of friction, since fixed: the runbook cloned beside the old
+checkout under a different name while `deploy/hass-dash.service` hardcodes
+`/home/ben/hass-dash`. Resolved by taking the name instead — the pre-rewrite
+tree is now `~/hass-dash-old` — which surfaced a second trap worth recording. A
+venv stores its own absolute path in `pyvenv.cfg`, `bin/activate` and every
+console-script shebang, and none of them follow a `mv`; `bin/python` does
+survive, because it resolves its prefix from its own location, so the
+dashboard and the unit keep working while `bin/pip` silently stops executing.
+The runbook now says to build the venv where it will live, and to delete and
+rebuild it if the directory ever moves.
 
 The photograph answered three of its four questions and confirmed the fourth
 was never about the panel. Red is red and black is black, so the `0x10`/`0x13`
