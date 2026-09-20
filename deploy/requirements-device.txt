@@ -1,0 +1,23 @@
+# What the appliance needs on the Pi, which is less than the tools container.
+#
+# Deliberately not requirements.txt: that file installs the development and
+# capture stack - HomeAssistant-API, aiohttp, pydantic, ruff - and `sources/`
+# was written to do without every one of them (see src/sources/homeassistant.py
+# and PLAN.md M3). On a 1.2 GHz Cortex-A53 the difference is minutes.
+#
+# The whole runtime import list, checked rather than assumed: yaml and PIL from
+# here, gpiozero and spidev for the panel, and stdlib for the rest -
+# urllib.request is the HTTP client and zoneinfo is the time zone.
+
+# Loose on purpose. Bookworm's system Pillow is 9.4.0 (HARDWARE.md section 6)
+# and nothing here needs anything newer, so a venv built with
+# --system-site-packages installs nothing at all for this line. Pinning 12.0.0
+# to match the container would download an aarch64 wheel to no purpose.
+pillow>=9.4
+
+PyYAML>=6.0
+
+# The panel. Both are imported only from render/epd.py's open_panel(), and only
+# on the device - the tools container has neither, by design (AGENTS.md).
+gpiozero>=2.0
+spidev>=3.5

@@ -1,0 +1,58 @@
+# The dashboard as an appliance. PLAN.md M8.4.
+#
+# Install per deploy/README.md; the paths below assume the checkout is at
+# /home/ben/hass-dash with its virtual environment in .venv, and the user is
+# the one HARDWARE.md section 6 recorded as already being in the `spi` and
+# `gpio` groups. systemd initialises supplementary groups from the user
+# database, so nothing here needs `sudo` and nothing grants it.
+
+[Unit]
+Description=Hallway e-paper dashboard
+After=network-online.target
+Wants=network-online.target
+
+# Ordering only, and deliberately without a Wants=. The board has no RTC
+# (HARDWARE.md section 6), so at boot the clock is whatever fake-hwclock last
+# wrote and the header would be stamped with it. Where systemd-time-wait-sync
+# is enabled this holds the first frame until NTP has landed; where it is not,
+# time-sync.target is never reached and this line does nothing - which is why
+# it cannot deadlock the unit.
+After=time-sync.target
+
+[Service]
+Type=exec
+User=ben
+WorkingDirectory=/home/ben/hass-dash
+
+# HASS_URL and HASS_TOKEN come from the checkout's own .env, read by app.py.
+# Not EnvironmentFile=, so that there is one file in one format rather than
+# two that look alike and quote differently.
+ExecStart=/home/ben/hass-dash/.venv/bin/python src/app.py \
+    --source hass \
+    --target epd \
+    --state %S/hass-dash/refresh.json
+
+# systemd creates and owns /var/lib/hass-dash. The state file is what stops a
+# restart from re-flashing the panel: see refresh/store.py.
+StateDirectory=hass-dash
+
+Restart=always
+RestartSec=30s
+
+# A full refresh is 26 s of high voltage and the panel must not be killed part
+# way through it - HARDWARE.md section 3 calls that damage "cannot be
+# repaired". SIGTERM is turned into a KeyboardInterrupt by app.py so the
+# renderer's `finally` puts the panel to sleep; this is the time that unwinding
+# is allowed to take.
+TimeoutStopSec=45s
+
+SyslogIdentifier=hass-dash
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/ben/hass-dash
+
+[Install]
+WantedBy=multi-user.target

@@ -118,6 +118,16 @@ class Policy:
 
 DEFAULT_POLICY = Policy()
 
+#: The same cadence, for a target that has no partial path at all.
+#:
+#: Zero budget rather than a longer partial interval, because the honest
+#: statement is "this one cannot do partials", not "it does them rarely". The
+#: full cycle is untouched: 30 minutes, 15 in the morning, and quiet hours
+#: unchanged. PLAN.md M8 pairs it with the panel, which can write red only
+#: inside a full refresh (HARDWARE.md section 4), and M9 is where that may
+#: stop being true.
+FULL_ONLY_POLICY = Policy(max_partials=0)
+
 
 @dataclass(frozen=True)
 class Dirty:

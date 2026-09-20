@@ -158,6 +158,15 @@ wiring:
 GPIO via `gpiozero`, SPI via `spidev`. Neither is available in the tools
 container, so nothing under test may import `epdconfig` at module scope.
 
+That is now enforced rather than remembered. `epd7in5b_V2.py` runs
+`epdconfig = RaspberryPi()` at module scope, and that constructor claims all
+five pins above — so importing the driver is a *claim* on the hardware, not a
+declaration that it exists. The import therefore lives inside
+`render/epd.py`'s `open_panel()`, reached through `importlib`, and
+`tests/test_hardware_boundary.py` checks from three sides that nothing else
+pulls it in: the source tree, the test tree, and a real interpreter that
+imports the composition root and reports what came with it.
+
 ## 6. The deployment target, as surveyed
 
 Surveyed over SSH on 2026-09-20. Recorded because several of these were assumed
@@ -209,3 +218,9 @@ documented assumption, and needs no revisiting.
 
 **Still unverified:** everything about *partial* refresh, including the `0x13`
 question raised in §4. `Clear()` and `display()` exercise the full path only.
+
+**Also still unverified: this project's own renderer against this panel.**
+`EPDRenderer` (PLAN.md M8.1) has never driven it. What was run on the board in
+September was the pre-rewrite code. The bench step is PLAN.md M8.3 and the
+runbook is `deploy/README.md`; until a photograph exists, "the driver works
+here" is a statement about the vendor's code, not about ours.

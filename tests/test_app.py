@@ -32,6 +32,7 @@ from app import (
     build_source,
     build_target,
     main,
+    policy_for,
     preview_path,
     read_env_file,
     run,
@@ -40,7 +41,18 @@ from app import (
 from config.loader import load_house
 from domain.format_da import LOCAL_TZ
 from domain.models import Snapshot
-from refresh.policy import DEFAULT_POLICY, FLOOR_SECONDS, MAX_PARTIALS, Refresh, RefreshState
+from refresh.policy import (
+    DEFAULT_POLICY,
+    FLOOR_SECONDS,
+    FULL_ONLY_POLICY,
+    MAX_PARTIALS,
+    Policy,
+    Refresh,
+    RefreshState,
+    policy_violations,
+)
+from refresh.store import RefreshStore
+from render.epd import EPDRenderer
 from sources.fixture import FixtureSource
 from sources.port import SourceUnavailable
 from view.drawlist import UpdateClass
@@ -123,6 +135,7 @@ class RecordingTarget:
     """
 
     name = "recording"
+    partial_capable = True
 
     def __init__(self, clock: FakeClock, fail: bool = False):
         self.clock = clock
@@ -506,21 +519,242 @@ class TestBuildingTheTarget:
         assert isinstance(target, BMPTarget)
         assert target.name == "bmp:screen.bmp"
 
-    def test_the_panel_target_says_which_milestone_builds_it(self, tmp_path):
-        """Better an honest refusal than a stub that pretends to drive a panel."""
+    def test_the_panel_is_built_without_being_touched(self, tmp_path):
+        """Constructing it has to work in this container; only driving it may
+        fail. The driver claims GPIO pins the moment it is imported, so that
+        import waits for the first frame (`tests/test_hardware_boundary.py`)."""
+        target = build_target("epd", tmp_path / "screen.bmp")
+
+        assert isinstance(target, EPDRenderer)
+        assert target.name.startswith("epd:")
+
+    def test_an_unknown_target_names_the_ones_that_exist(self, tmp_path):
         with pytest.raises(ConfigurationError) as error:
-            build_target("epd", tmp_path / "screen.bmp")
+            build_target("eink", tmp_path / "screen.bmp")
 
-        assert "M8" in str(error.value)
+        assert "bmp" in str(error.value) and "epd" in str(error.value)
 
-    def test_asking_for_the_panel_exits_rather_than_raising(self, tmp_path):
-        assert main(["--target", "epd", "--once", "--out", str(tmp_path / "s.bmp")]) == 2
+    def test_asking_for_the_panel_here_fails_at_the_frame_not_the_flag(self, tmp_path):
+        """Exit 1 - a render that did not happen - rather than exit 2, which
+        means the command line itself was wrong."""
+        assert main(["--target", "epd", "--once", "--out", str(tmp_path / "s.bmp")]) == 1
+
+
+class TestTheCadenceMatchesTheTarget:
+    """A target that cannot perform a partial refresh is not asked to.
+
+    The panel has no partial path to red at all (HARDWARE.md section 4), so
+    PLAN.md M8 runs it on a full-only cadence. Letting the policy call for
+    partials and having the panel refuse them would fill the gap between full
+    refreshes with decisions that end in an exception.
+    """
+
+    def test_a_file_keeps_the_default_cadence(self, tmp_path):
+        assert policy_for(BMPTarget(tmp_path / "s.bmp")) is DEFAULT_POLICY
+
+    def test_the_panel_gets_no_partial_budget(self):
+        assert policy_for(EPDRenderer()).max_partials == 0
+
+    def test_a_full_only_cadence_is_still_a_legal_one(self):
+        """The numbers that stay are the ones with the vendor behind them."""
+        assert policy_violations(FULL_ONLY_POLICY) == ()
+        assert FULL_ONLY_POLICY.floor_seconds == FLOOR_SECONDS
+        assert FULL_ONLY_POLICY.full_interval_seconds == DEFAULT_POLICY.full_interval_seconds
+
+    def test_a_tuned_policy_keeps_everything_but_the_budget(self):
+        tuned = Policy(full_interval_seconds=3600, max_partials=5)
+
+        adjusted = policy_for(EPDRenderer(), tuned)
+
+        assert adjusted.max_partials == 0
+        assert adjusted.full_interval_seconds == 3600
+
+    def test_the_panel_never_sees_a_partial_over_a_simulated_day(self, config):
+        """Asserted over the loop rather than over the policy, because it is
+        the pairing of the two that is new here."""
+        clock = FakeClock()
+        target = RecordingTarget(clock)
+        target.partial_capable = False
+
+        run(
+            FixtureSource(config, FIXTURES),
+            target,
+            policy=policy_for(target),
+            ticks=DAY_OF_TICKS,
+            tick_seconds=TICK,
+            now=clock.now,
+            monotonic=clock.monotonic,
+            sleep=clock.sleep,
+        )
+
+        assert target.fulls, "a day with no frames at all proves nothing"
+        assert target.partials == []
+
+    def test_and_the_day_it_produces_is_the_same_one_minus_the_partials(self, config):
+        """38 full refreshes was M6's count and M7's; dropping the partial path
+        must not disturb it, because the full cadence is not a function of the
+        partial one."""
+        clock = FakeClock()
+        target = RecordingTarget(clock)
+        target.partial_capable = False
+
+        run(
+            FixtureSource(config, FIXTURES),
+            target,
+            policy=policy_for(target),
+            ticks=DAY_OF_TICKS,
+            tick_seconds=TICK,
+            now=clock.now,
+            monotonic=clock.monotonic,
+            sleep=clock.sleep,
+        )
+
+        assert len(target.fulls) == 38
 
     def test_a_bad_house_file_exits_rather_than_raising(self, tmp_path):
         bad = tmp_path / "house.yml"
         bad.write_text("rooms: not-a-list\n", encoding="utf-8")
 
         assert main(["--once", "--house", str(bad), "--out", str(tmp_path / "s.bmp")]) == 2
+
+
+class TestRememberingAcrossARestart:
+    """PLAN.md M8.4, from the loop's side.
+
+    `refresh/store.py` proves the file round-trips and that a reboot is told
+    from a restart. What is unproven until here is that the loop writes it at
+    the right moment - after a refresh that reached the glass, and never on the
+    strength of a decision alone.
+    """
+
+    def test_the_state_is_written_after_every_frame(self, config):
+        clock = FakeClock()
+        target = RecordingTarget(clock)
+        written: list[RefreshState] = []
+
+        run(
+            FixtureSource(config, FIXTURES),
+            target,
+            ticks=DAY_OF_TICKS,
+            tick_seconds=TICK,
+            now=clock.now,
+            monotonic=clock.monotonic,
+            sleep=clock.sleep,
+            persist=written.append,
+        )
+
+        assert len(written) == len(target.shown)
+        assert written[-1].last_full_at is not None
+
+    def test_a_tick_that_does_nothing_writes_nothing(self, config):
+        """Most ticks. A write per wake would be 2880 SD card writes a day to
+        record that nothing happened."""
+        clock = FakeClock(start=datetime(2026, 3, 10, 23, 0, tzinfo=LOCAL_TZ))
+        written: list[RefreshState] = []
+
+        run(
+            FixtureSource(config, FIXTURES),
+            RecordingTarget(clock),
+            state=RefreshState(0.0, 0.0, clock.now(), 0),
+            ticks=20,
+            tick_seconds=TICK,
+            now=clock.now,
+            monotonic=clock.monotonic,
+            sleep=clock.sleep,
+            persist=written.append,
+        )
+
+        assert written == []
+
+    def test_a_frame_that_did_not_reach_the_glass_is_not_remembered(self, config):
+        """Same rule as `record()`: a refresh that raised did not happen, and
+        writing it down would let a failing cycle move the floor."""
+        clock = FakeClock()
+        written: list[RefreshState] = []
+
+        code = run(
+            FixtureSource(config, FIXTURES),
+            RecordingTarget(clock, fail=True),
+            ticks=10,
+            tick_seconds=TICK,
+            now=clock.now,
+            monotonic=clock.monotonic,
+            sleep=clock.sleep,
+            persist=written.append,
+        )
+
+        assert code == 1
+        assert written == []
+
+    def test_a_store_that_cannot_be_written_does_not_stop_the_panel(self, config, caplog):
+        """A read-only filesystem is a deployment fault worth a line, not a
+        reason to stop driving the wall."""
+        clock = FakeClock()
+        target = RecordingTarget(clock)
+
+        def refuse(_state):
+            raise OSError("read-only file system")
+
+        code = run(
+            FixtureSource(config, FIXTURES),
+            target,
+            ticks=200,
+            tick_seconds=TICK,
+            now=clock.now,
+            monotonic=clock.monotonic,
+            sleep=clock.sleep,
+            persist=refuse,
+        )
+
+        assert code == 0
+        assert target.shown
+        assert "state=unsaved" in caplog.text
+
+    def test_the_flag_makes_a_file_and_a_second_run_stays_off_the_panel(self, tmp_path):
+        """The restart loop, end to end through `main()`: the second process
+        reads the first one's timestamp and declines to re-flash."""
+        out = tmp_path / "screen.bmp"
+        state = tmp_path / "refresh.json"
+        argv = ["--once", "--out", str(out), "--state", str(state)]
+
+        assert main(argv) == 0
+        assert state.is_file()
+        out.unlink()
+
+        assert main(argv) == 0
+        assert not out.exists(), "the second run refreshed inside the 180 s floor"
+
+    def test_without_the_flag_nothing_is_read_or_written(self, tmp_path):
+        """A development command whose job is to produce a BMP must produce one
+        every time it is run."""
+        out = tmp_path / "screen.bmp"
+
+        assert main(["--once", "--out", str(out)]) == 0
+        out.unlink()
+
+        assert main(["--once", "--out", str(out)]) == 0
+        assert out.is_file()
+        assert list(tmp_path.glob("*.json")) == []
+
+    def test_a_restored_state_is_what_the_first_decision_sees(self, tmp_path, config):
+        """The seam M7 left for this: `run()` takes the state it starts from."""
+        store = RefreshStore(tmp_path / "refresh.json", "same-boot")
+        store.save(RefreshState(1000.0, 1000.0, MIDNIGHT, 0))
+        clock = FakeClock()
+        clock.mono = 1060.0
+        target = RecordingTarget(clock)
+
+        run(
+            FixtureSource(config, FIXTURES),
+            target,
+            state=store.load(clock.monotonic()),
+            ticks=1,
+            now=clock.now,
+            monotonic=clock.monotonic,
+            sleep=clock.sleep,
+        )
+
+        assert target.shown == [], "a restart drew a frame inside the floor"
 
 
 class TestNothingHereTouchesHardware:

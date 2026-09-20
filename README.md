@@ -107,11 +107,23 @@ docker compose run --rm --entrypoint python tools src/app.py --source hass
 | Flag | Default | |
 | --- | --- | --- |
 | `--source fixture\|hass` | `fixture` | recorded payloads, or the live instance |
-| `--target bmp\|epd` | `bmp` | a file on disk, or the panel (**M8 builds `epd`**) |
+| `--target bmp\|epd` | `bmp` | a file on disk, or the panel — `epd` needs the Pi |
 | `--once` | off | one cycle, then exit — with fresh state that is always a full refresh |
 | `--out` | `screen.bmp` | where the BMP target writes; the preview goes beside it |
+| `--state` | off | remember the last refresh here, so a restart cannot re-flash the panel |
 | `--house`, `--fixtures`, `--env` | repository root | |
 | `--verbose` | off | log every decision, including the ones to do nothing |
+
+`--target epd` builds anywhere and only fails when it tries to draw: the
+vendored driver claims GPIO pins the moment it is imported, so that import
+waits for the first frame. In this container that first frame is an
+`ImportError` and the process exits 1. Putting it on real hardware is
+[`deploy/README.md`](deploy/README.md).
+
+`--state` is off by default, and deliberately: a state file would make the
+second `--once` in a row decide to do nothing, which is correct and useless
+from a command whose job is to produce a BMP to look at. The deployment passes
+it; a workstation does not.
 
 It logs one `key=value` line per refresh — what class, why, how many regions
 changed, and how long the write took — plus a line when a decision *not* to
@@ -131,6 +143,14 @@ a fresh clock on stale readings (`INTENT.md` §2).
 `--source hass` needs `HASS_URL` and `HASS_TOKEN`; see
 [Capturing real Home Assistant data](#capturing-real-home-assistant-data) for
 the `.env` format. A real environment variable wins over the file.
+
+### On the Pi
+
+The same program, with `--target epd` and a systemd unit in front of it. The
+bring-up runbook — a fresh venv, the two credential traps the device survey
+found, one frame to a file before any electricity, and what to look for in the
+photograph — is [`deploy/README.md`](deploy/README.md). None of it can be
+validated in this container, which is why it is a runbook and not a test.
 
 ### Local Python Environment (Optional)
 

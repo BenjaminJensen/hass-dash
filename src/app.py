@@ -32,9 +32,14 @@ snapshot and a line in `source_errors` (see `sources/port.py`).
 `time.monotonic()` for "how long has it been" - the board has no RTC and
 HARDWARE.md section 6 is explicit about the consequence. Both are injectable,
 which is what lets the loop run a simulated day in a test without sleeping
-through it. `run()` also takes the `RefreshState` it starts from, which is the
-seam PLAN.md M8.4 hangs a persisted `last_full_at` on so a restart cannot lose
-the 24 h keep-alive.
+through it.
+
+**A restart is not a fresh start, when it is told where to look.** `--state`
+gives the loop a file to resume from and to write after each refresh, so a
+crash loop cannot re-flash the panel every time it comes back up and a reboot
+cannot lose the 24 h keep-alive (`refresh/store.py` has the argument). Without
+the flag nothing is read or written and every run is a first frame, which is
+what a development command should do.
 
 **What is still a placeholder.** The dirty set is "every region of the last
 frame, by its update class" rather than a diff of two draw lists. A real diff
@@ -49,7 +54,7 @@ import argparse
 import logging
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Protocol
@@ -59,6 +64,7 @@ from domain.format_da import LOCAL_TZ
 from domain.models import Snapshot
 from refresh.policy import (
     DEFAULT_POLICY,
+    FULL_ONLY_POLICY,
     Dirty,
     Policy,
     Refresh,
@@ -66,7 +72,9 @@ from refresh.policy import (
     decide,
     record,
 )
+from refresh.store import RefreshStore
 from render.bmp import BMPRenderer
+from render.epd import EPDRenderer
 from sources.fixture import FixtureSource
 from sources.homeassistant import HomeAssistantSource
 from sources.port import SourceUnavailable
@@ -114,10 +122,16 @@ class ConfigurationError(Exception):
 
 
 class RenderTarget(Protocol):
-    """Somewhere a draw list can be put. A file today, the panel at M8."""
+    """Somewhere a draw list can be put: a file on disk, or the panel."""
 
     #: Short identifier for logs, so a line says where a frame went.
     name: str
+
+    #: Whether a partial refresh can reach this target at all. The panel's
+    #: answer is no until M9 (HARDWARE.md section 4: no partial path to red),
+    #: and `policy_for()` turns that into a cadence rather than leaving the
+    #: loop to schedule refreshes the target would only refuse.
+    partial_capable: bool
 
     def show(self, items: tuple[DrawItem, ...], refresh: Refresh) -> None:
         """Put this frame on the target, as this class of refresh."""
@@ -137,6 +151,11 @@ class BMPTarget:
     builds the partial path, and the parameter is in the signature now so that
     `EPDRenderer` is a drop-in rather than a change to the loop.
     """
+
+    #: A file has no previous frame to write onto, so it accepts either class
+    #: and the loop keeps the full cadence the development target has always
+    #: had. Only the panel constrains this.
+    partial_capable = True
 
     def __init__(
         self,
@@ -289,17 +308,39 @@ def build_source(kind: str, config: Any, fixtures: str | Path, env: dict[str, st
 
 
 def build_target(kind: str, out: str | Path) -> RenderTarget:
-    """The target named on the command line, or a clear reason it cannot be."""
+    """The target named on the command line, or a clear reason it cannot be.
+
+    `EPDRenderer` is constructed here but does not touch the panel until its
+    first `show()`: the vendored driver claims GPIO pins the moment it is
+    imported, and that import lives behind `render.epd.open_panel()`. So
+    building an epd target inside the tools container succeeds, and only
+    driving it fails - which is the right place for the failure, because it is
+    the machine that is wrong and not the command line.
+    """
     if kind == "bmp":
         return BMPTarget(out)
 
     if kind == "epd":
-        raise ConfigurationError(
-            "--target epd needs EPDRenderer, which PLAN.md M8 builds. "
-            "Nothing in this container can drive the panel: use --target bmp."
-        )
+        return EPDRenderer()
 
     raise ConfigurationError(f"unknown target {kind!r}; choose one of {', '.join(TARGETS)}")
+
+
+def policy_for(target: RenderTarget, policy: Policy = DEFAULT_POLICY) -> Policy:
+    """The cadence this target can actually keep.
+
+    A target that cannot perform a partial refresh gets a policy that does not
+    schedule one. The alternative - letting the policy call for partials and
+    having the panel refuse them - would spend the whole gap between full
+    refreshes producing decisions that end in an exception, and would make the
+    log a list of things that did not happen.
+    """
+    if target.partial_capable:
+        return policy
+    if policy is DEFAULT_POLICY:
+        return FULL_ONLY_POLICY
+    # Everything else about a tuned policy is kept; only the budget goes.
+    return replace(policy, max_partials=0)
 
 
 # ---------------------------------------------------------------------------
@@ -318,6 +359,7 @@ def run(
     monotonic: Callable[[], float] | None = None,
     sleep: Callable[[float], None] | None = None,
     frame: Frame | None = None,
+    persist: Callable[[RefreshState], None] | None = None,
 ) -> int:
     """Drive the panel until `ticks` cycles have passed, or forever.
 
@@ -406,6 +448,7 @@ def run(
         finished = monotonic()
         state = record(state, decision, now(), finished)
         frame = Frame(snapshot, items)
+        _persist(persist, state)
 
         logger.info(
             _kv(
@@ -426,6 +469,26 @@ def run(
         _wait(sleep, tick_seconds, woken, ticks)
 
     return 1 if failures else 0
+
+
+def _persist(persist: Callable[[RefreshState], None] | None, state: RefreshState) -> None:
+    """Write the refresh state down, and survive being unable to.
+
+    Called after `record()` and only for a refresh that reached the glass, for
+    the same reason `record()` is: a cycle that raised did not happen and must
+    not move the floor or the keep-alive.
+
+    A store that cannot be written - a read-only filesystem, a full card - is a
+    deployment fault worth one line per occurrence, not a reason to stop
+    driving the panel. The cost of continuing is bounded and known: the process
+    is back to M7's behaviour, where a restart is a first frame.
+    """
+    if persist is None:
+        return
+    try:
+        persist(state)
+    except OSError as error:
+        logger.warning(_kv(state="unsaved", error=error))
 
 
 def _wait(sleep: Callable[[float], None], seconds: float, woken: int, ticks: int | None) -> None:
@@ -496,6 +559,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--once", action="store_true", help="Run one cycle and exit.")
     parser.add_argument("--out", default=str(DEFAULT_OUT), help="BMP target: where to write.")
+    parser.add_argument(
+        "--state",
+        default=None,
+        help="Remember the last refresh here, so a restart cannot re-flash the panel.",
+    )
     parser.add_argument("--house", default=str(DEFAULT_HOUSE))
     parser.add_argument("--fixtures", default=str(DEFAULT_FIXTURES))
     parser.add_argument("--env", default=str(DEFAULT_ENV))
@@ -524,13 +592,86 @@ def main(argv: list[str] | None = None) -> int:
         logger.error(_kv(startup=error))
         return 2
 
-    logger.info(_kv(started=source.name, target=target.name, once=args.once or None))
+    policy = policy_for(target)
+    state, persist = _resume(args.state, policy)
+    _stop_gracefully()
+
+    logger.info(
+        _kv(
+            started=source.name,
+            target=target.name,
+            once=args.once or None,
+            partials=policy.max_partials or None,
+            state=args.state,
+        )
+    )
 
     try:
-        return run(source, target, ticks=1 if args.once else None)
+        return run(
+            source,
+            target,
+            policy=policy,
+            state=state,
+            persist=persist,
+            ticks=1 if args.once else None,
+        )
     except KeyboardInterrupt:
+        # Raised by Ctrl-C, and by the SIGTERM handler below. Either way the
+        # panel has already been put back to sleep by the `finally` inside the
+        # renderer before this is reached.
         logger.info(_kv(stopped="interrupt"))
         return 0
+
+
+def _resume(
+    path: str | None, policy: Policy
+) -> tuple[RefreshState, Callable[[RefreshState], None] | None]:
+    """Where this process picks up from, and how it writes that down.
+
+    Opt-in, and deliberately without a default path. A state file in the
+    repository root would make the second `--once` in a row decide to do
+    nothing - correct behaviour, wildly surprising from a development command
+    whose whole job is to produce a BMP to look at. The deployment passes
+    `--state` (see `deploy/hass-dash.service`); a workstation does not, and
+    gets M7's behaviour, where every run is a first frame.
+    """
+    if path is None:
+        return RefreshState(), None
+
+    store = RefreshStore.at(path)
+    state = store.load(time.monotonic())
+
+    if state.partials_since_full > policy.max_partials:
+        # A budget spent under a policy that no longer allows it - the target
+        # changed, or the numbers did. The count would refuse every partial
+        # until the next full anyway; this just says so where it is visible.
+        logger.info(_kv(state="budget", spent=state.partials_since_full))
+
+    return state, store.save
+
+
+def _stop_gracefully() -> None:
+    """Turn SIGTERM into the same exception Ctrl-C raises.
+
+    systemd stops a unit with SIGTERM, and Python's default handler for it ends
+    the process where it stands. Mid-refresh that leaves the panel awake and in
+    a high voltage state, which HARDWARE.md section 3 says damages it
+    permanently. Raising instead unwinds through `EPDRenderer.show()`'s
+    `finally`, so the panel is asleep before the process is gone - and the unit
+    gives it `TimeoutStopSec` enough to finish the 26-second cycle it is in.
+    """
+    import signal
+
+    def stop(_signal: int, _frame: Any) -> None:
+        raise KeyboardInterrupt
+
+    try:
+        signal.signal(signal.SIGTERM, stop)
+    except ValueError:
+        # Not the main thread. Nothing here runs off one, but a caller
+        # embedding `main()` should not be broken by a signal handler it did
+        # not ask for.
+        logger.debug(_kv(signal="unhandled"))
 
 
 if __name__ == "__main__":

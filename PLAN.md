@@ -54,11 +54,12 @@ the eleven rooms render red. See the M2.2 log entry.
 ## Milestones
 
 **Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3, M4, M5, M6 and M7 are
-done, on branch `rewrite/intent-architecture`. The dashboard now runs as one
-program; everything remaining is the panel. M8 is next and its verification is a
-bench step. Slice 2.3 - the comfort bands - is the only thing still waiting on a
-human, and it is now the last thing between the screen and truthful red: see the
-log.
+done, on branch `rewrite/intent-architecture`. **M8 is built and unverified:**
+8.1, 8.2 and 8.4 are code and are green in CI; 8.3 is the bench step, and until
+someone stands in front of the panel this milestone is written, not proven. Two
+things still wait on a human - slice 2.3's comfort bands, and the viewing
+distance M4 measured - and both are now the shortest path to a wall that tells
+the truth.
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
@@ -70,7 +71,7 @@ log.
 | M5 ✅ | Complete the screen | L | M4 | Every region of §3 rendered |
 | M6 ✅ | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
 | M7 ✅ | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
-| M8 | Hardware, full refresh | M | M7 | On the wall |
+| M8 ◐ | Hardware, full refresh | M | M7 | On the wall |
 | M9 | Partial refresh | M | M8 | Decided with numbers in hand |
 | M10 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
 
@@ -231,17 +232,18 @@ blank the screen.
 the container, and the loop obeys M6 under a fast-forwarded clock. ✅ — see the
 log.
 
-### M8 — Hardware, full refresh (M)
+### M8 — Hardware, full refresh (M) ◐
 
-- **8.1** `EPDRenderer` — wake, `init()`, `display(black, red)`, `sleep()`, as
+- **8.1** ✅ `EPDRenderer` — wake, `init()`, `display(black, red)`, `sleep()`, as
   one indivisible unit of work, every cycle without exception. Both planes go
   through the driver's `getbuffer()`; the double inversion documented in
   `HARDWARE.md` §4 is respected, never reimplemented.
-- **8.2** `epdconfig` is imported lazily inside the renderer, and a test asserts
+- **8.2** ✅ `epdconfig` is imported lazily inside the renderer, and a test asserts
   nothing under `tests/` can pull it in at module scope.
-- **8.3** Pi bring-up: a **fresh** venv, one render, photograph it, compare
-  against the BMP.
-- **8.4** systemd unit with a restart policy, and the last-refresh timestamp
+- **8.3** ⬜ Pi bring-up: a **fresh** venv, one render, photograph it, compare
+  against the BMP. **The only slice left, and the only one this repository
+  cannot do to itself.** The runbook is `deploy/README.md`.
+- **8.4** ✅ systemd unit with a restart policy, and the last-refresh timestamp
   persisted to disk so a restart loop cannot violate the 180 s floor or lose the
   24 h keep-alive. The floor is measured against a **monotonic** clock: the
   board has no RTC, so wall time jumps after a cold boot (`HARDWARE.md` §6).
@@ -291,6 +293,11 @@ windows, driven by diffing successive draw lists, with the partial counter
 feeding M6's forced full refresh. If it does not: say so, keep the update-class
 metadata in the draw list — it costs nothing and documents the constraint — and
 leave the panel on a pure full-refresh cadence.
+
+M8 built the seam either way. `EPDRenderer.partial_capable` is `False` and
+`app.policy_for()` turns that into a cadence with no partial budget, so "no" is
+already the shipped behaviour and "yes" is that flag, the second init path, and
+a real diff in `render/`. Deciding not to build it changes no code.
 
 ### M10 — Retire the old, align the docs (S)
 
@@ -347,6 +354,96 @@ Anything touching rendering also gets its BMP looked at before it is called
 done.
 
 ## Log
+
+**M8** — `src/render/epd.py`, `src/refresh/store.py`, `deploy/`. +184 tests,
+**991 in the suite**. Three of the four slices are code and are green; the
+fourth is a photograph nobody has taken yet. `--target epd` now builds
+anywhere, refuses to pretend anywhere, and drives the panel only on the board.
+
+**What is proven and what is not, stated plainly.** Proven in CI: the cycle is
+init → display → sleep, every time, with sleep in a `finally`; both planes go
+through the driver's own `getbuffer()`; a full-only cadence produces the same
+**38 full refreshes a day** M6 and M7 counted, and zero partials; a restart
+inherits the floor and the keep-alive, and a reboot does not inherit the
+monotonic clock. Not proven by anything: that the red plane is red, that
+nothing is inverted, that the wiring in `HARDWARE.md` §5 is the wiring on the
+desk. Those are 8.3, and per `AGENTS.md` this is the report that the rendering
+change could not be verified visually on hardware.
+
+**Five decisions worth remembering.**
+
+*The target declares what it can do, and the cadence follows from that.* The
+panel has no partial path to red at all, so pairing it with the default policy
+would have filled every gap between full refreshes with decisions that end in
+an exception. Instead `RenderTarget` grew `partial_capable`, `policy_for()`
+turns a `False` into `Policy(max_partials=0)`, and `EPDRenderer.show()` refuses
+a partial outright as a second line of defence. The rejected alternative was to
+quietly promote a partial to a full refresh: that is 193 frames a day instead
+of 38, **84 minutes of flashing instead of 16**, in a hallway. A budget of zero
+is the honest way to say "this one cannot do partials"; a longer partial
+interval would have said "it does them rarely", which is false.
+
+*A failed `sleep()` is logged and swallowed; every other failure propagates.*
+Sleep runs in a `finally` because §3's damage story is unrepairable and a panel
+left powered is the way it happens. But after a failed `init()` the SPI device
+was never opened, so `sleep()` raises too — and an exception from a `finally`
+replaces the exception that caused it. The real failure is the one worth
+keeping, so the cleanup's own failure gets a traceback in the log and nothing
+else. A test drives exactly that pair and asserts which one survives.
+
+*Importing the driver is not a declaration that hardware exists — it is a claim
+on it.* `epd7in5b_V2` runs `epdconfig = RaspberryPi()` at module scope, which
+takes five GPIO pins through `gpiozero` and opens `spidev`. So the import lives
+inside one function, reached by `importlib` rather than an `import` statement,
+and `tests/test_hardware_boundary.py` checks it from three sides: no module in
+`src/` or `tests/` imports it at module scope, only `render/epd.py` names it at
+all, and a **real interpreter** imports `app` and `EPDRenderer()` and reports
+what came with them. The last one is the only one that could catch a transitive
+import, which is the way this rule would actually be broken.
+
+*A restart and a reboot are different, and `boot_id` is what tells them apart.*
+`time.monotonic()` on Linux counts from boot, so its readings stay comparable
+across a *process* restart and become meaningless across a *machine* one. The
+state file records which boot wrote it; within that boot the readings are
+restored and the second process waits for the cadence like any other tick,
+which is what stops a crash loop spending 26 seconds of high voltage on every
+restart. Across a boot they are dropped and the floor is **assumed rather than
+calculated** — the first frame waits out a full 180 s, because after a reboot
+no clock on the board can say how long ago the last refresh was, and the panel
+is holding its previous image the whole time anyway. Where the downside is
+unrepairable damage, three minutes of patience is the cheap side of the trade.
+A reading from the *future* is treated as a different boot too: a forward-only
+counter cannot produce one, so the file came from another machine, and
+restoring it would park the floor beyond the end of time.
+
+*SIGTERM becomes an exception, or the unit is the thing that damages the
+panel.* systemd stops a service with SIGTERM and Python's default handler ends
+the process where it stands — which, 12 seconds into a 26-second refresh, is a
+panel left in a high voltage state with nothing to put it down. `main()`
+installs a handler that raises instead, so the stop unwinds through
+`EPDRenderer.show()`'s `finally`, and the unit's `TimeoutStopSec=45s` gives the
+cycle time to finish first. This was not in the slice as written; it is the
+part of "a systemd unit" that §3 makes load-bearing.
+
+**`--state` is opt-in and has no default path, which is a deliberate
+inconvenience.** A state file in the repository root would make the second
+`--once` in a row decide to do nothing — correct behaviour, and useless from a
+command whose entire job is to produce a BMP to look at. So the deployment
+passes `--state` and a workstation does not, and `make run` behaves exactly as
+it did at M7.
+
+**A frame the wrong size is refused rather than drawn.** `getbuffer()` answers
+a size it does not recognise with a warning and a blank buffer, which reaches
+the wall as a cleared screen and leaves nothing in the log to explain it. That
+is the worst failure mode available here — the screen's job is to be trusted at
+a glance, and a blank one looks like a quiet house rather than a broken program
+— so the planes are measured against `panel.width`/`panel.height` before the
+panel is woken.
+
+**Nothing new was rendered, and nothing needed to be.** `EPDRenderer` calls the
+same `BMPRenderer.planes()` M4 built; the composite and its masks are the only
+part it does not use. The fixture render was run and looked at anyway, to
+confirm the frame is byte-for-byte the one M5 inspected. It is.
 
 **M7** — `src/app.py`. +40 tests, **807 in the suite**. There is now one
 program: `docker compose run --rm --entrypoint python tools src/app.py --once`
@@ -770,11 +867,25 @@ imposing decimal rounding would buy nothing but a dependency.
 
 ## The next commit
 
-**One thing to do on the device, for M7/M8:** the long-lived token in the Pi's
-`.env` has been revoked. A new one is needed before `--source hass` can run
-there, and the URL loses its `/api` suffix at the same time.
+**M8.3 — the bench step, and the only thing between here and the wall.** The
+runbook is [`deploy/README.md`](deploy/README.md): clone fresh beside the dirty
+on-device checkout, build a venv with `--system-site-packages` against
+`deploy/requirements-device.txt` rather than `requirements.txt`, render one
+frame **to a file** before any electricity so that a bad frame and a bad panel
+cannot be confused for each other, then one frame to the panel, photograph it,
+and compare. Two credential traps are waiting and both fail quietly: the
+long-lived token in the Pi's `.env` was revoked on 2026-09-20, and `HASS_URL`
+must lose its `/api` suffix — though that second one is now refused at startup
+with the corrected URL in the message, so it fails loudly instead.
 
-**Two answers from you, neither of which blocks M8's bench work:**
+What the photograph is actually being asked: is red red and black black (two
+separate registers, one line apart), is anything inverted (`getbuffer()`
+inverts and `display()` inverts back), and is the type legible from where
+people stand. That last one is the M4 question, and it is why 8.3 should happen
+before the unit is enabled rather than after.
+
+**Two answers from you. The first no longer blocks anything technical; both
+block the screen being true:**
 
 *The comfort bands (slice 2.3).* Real numbers from the family, per room. This
 is now the last thing between the screen and truthful red, and M5 has made the
@@ -789,16 +900,16 @@ comfortable at ~1,5 m and unreadable at 3 m, and no amount of typography changes
 that on a 7,5" panel. Either the stated distance moves or the table sheds rows.
 Nothing is blocked by it until M8 puts the panel on a wall.
 
-**Then M8 — the panel.** Everything above it is now one program and proven in
-CI; what is left is the part the container cannot validate. In order: the
-`EPDRenderer` behind the same `show(items, refresh)` the BMP target already
-implements, the lazy `epdconfig` import with its test, a fresh venv on the
-device, and the systemd unit.
+*The viewing distance is now the more urgent of the two*, because 8.3 hangs the
+panel and the answer changes where. It costs nothing to move a decision that is
+about a hallway; it costs a layout change to discover it from the hallway.
 
-Three things M7 leaves ready for it. `build_target()` refuses `--target epd`
-with a message naming this milestone, so M8 is one new class and one line.
-`run()` takes the `RefreshState` it starts from, which is where 8.4's persisted
-`last_full_at` plugs in — the loop needs no change to survive a reboot without
-losing the keep-alive or violating the floor. And `HASS_URL` ending in `/api` is
-now refused at startup with the corrected URL in the message, so the device's
-carried-over `.env` fails loudly instead of 404-ing quietly.
+**Then M9, and it should be decided before it is built.** The region count from
+M5 stands: 53 partial-eligible against 28 full-only, and the full-only 28 are
+every room reading on the screen. M8 has now put the panel on a full-only
+cadence and a day of it costs 16 minutes of flashing, so the question M9 has to
+answer is narrower than it was — not "is partial refresh worth building" but
+"is carrying the clock, the labels and the forecast worth a second init path,
+8-pixel window snapping, and the `0x13` question `HARDWARE.md` §4 flags for the
+bench". If the answer is no, `partial_capable` stays `False`, the update-class
+metadata stays where it is, and that is the whole of M9.
