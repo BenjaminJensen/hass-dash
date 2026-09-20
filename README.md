@@ -136,6 +136,11 @@ HASS_URL=http://homeassistant.local:8123
 HASS_TOKEN=<long-lived access token from your HA profile page>
 ```
 
+`HASS_URL` is the base only — **no `/api` suffix**. The source appends
+`/api/states` itself, so a trailing `/api` produces `/api/api/states` and a 404
+that looks like an empty instance. The pre-rewrite code wanted the suffix, so
+an existing `.env` carried over from it needs editing.
+
 Then read `tests/fixtures/capture_report.md`.
 
 ## Architecture Notes

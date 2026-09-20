@@ -154,3 +154,51 @@ wiring:
 
 GPIO via `gpiozero`, SPI via `spidev`. Neither is available in the tools
 container, so nothing under test may import `epdconfig` at module scope.
+
+## 6. The deployment target, as surveyed
+
+Surveyed over SSH on 2026-09-20. Recorded because several of these were assumed
+wrong while M4 was being built, and because M8's bring-up should discover as
+little as possible.
+
+| Property | Value |
+| --- | --- |
+| Board | **Raspberry Pi 3 Model B Rev 1.2** — not a 3B+ |
+| CPU | 1.2 GHz quad Cortex-A53 (BCM2837) |
+| RAM | **906 MiB usable** — a 1 GB board, not 2 GB |
+| Architecture | `aarch64` / `arm64` |
+| OS | Debian 12 (bookworm) |
+| Python | 3.11.2, with `python3-venv` |
+| Storage | 29 GB card, 21 GB free |
+| Swap | 512 MB (`dphys-swapfile`) |
+| Thermals | 50.5 °C idle, `get_throttled=0x0` — never throttled |
+| Time zone | `Europe/Copenhagen`, NTP active, clock synchronised |
+| Hardware clock | **none** — `fake-hwclock` only |
+
+**arm64 is the load-bearing fact.** Pillow publishes official `aarch64` wheels,
+so `pip install pillow` is a download rather than a source build. On a 32-bit
+`armv7l` image the same install would compile from source on a 1.2 GHz A53.
+
+**SPI is already enabled and usable without root.** `dtparam=spi=on` is set,
+`/dev/spidev0.0` and `0.1` exist, and the deploying user is in the `spi`, `gpio`
+and `i2c` groups. M8 needs no `raspi-config` step and no `sudo`.
+
+**There is no hardware clock, and this constrains the refresh policy.** After a
+cold boot with no network, the system time is whatever `fake-hwclock` last
+wrote, and it jumps — possibly by days — when NTP lands. §3's 180 s floor must
+therefore be enforced against a **monotonic** clock, never against wall time; a
+backwards jump in wall time would otherwise permit a refresh inside the floor,
+and a forwards jump would stall the panel. Wall time remains correct for the
+24 h keep-alive and for the timestamp the screen displays.
+
+### Verified on the device
+
+**2026-09-20 — the vendored driver runs on this board and clears the panel.**
+The pre-rewrite code in the on-device checkout was executed against the real
+display and blanked it. That settles, without a bench session: the HAT wiring
+of §5, SPI access, panel power, and `gpiozero` 2.0.1 finding a working pin
+factory under Bookworm — the last of which is a common breakage on this OS and
+would otherwise have surfaced as an M8 mystery.
+
+**Still unverified:** everything about *partial* refresh, including the `0x13`
+question raised in §4. `Clear()` and `display()` exercise the full path only.

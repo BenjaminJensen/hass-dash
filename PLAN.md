@@ -233,14 +233,42 @@ the container, and the loop obeys M6 under a fast-forwarded clock.
   `HARDWARE.md` §4 is respected, never reimplemented.
 - **8.2** `epdconfig` is imported lazily inside the renderer, and a test asserts
   nothing under `tests/` can pull it in at module scope.
-- **8.3** Pi bring-up: venv with system site packages, one render, photograph it,
-  compare against the BMP.
+- **8.3** Pi bring-up: a **fresh** venv, one render, photograph it, compare
+  against the BMP.
 - **8.4** systemd unit with a restart policy, and the last-refresh timestamp
   persisted to disk so a restart loop cannot violate the 180 s floor or lose the
-  24 h keep-alive.
+  24 h keep-alive. The floor is measured against a **monotonic** clock: the
+  board has no RTC, so wall time jumps after a cold boot (`HARDWARE.md` §6).
 
 This is the milestone the container cannot validate. Its verification is manual
 and will be reported as manual.
+
+**The target was surveyed on 2026-09-20 (`HARDWARE.md` §6), and most of 8.3's
+unknowns are already discharged.** arm64 means Pillow installs from a wheel;
+SPI is enabled and group-accessible without `sudo`; the time zone is already
+`Europe/Copenhagen`; and the vendored driver has been run on the board and
+clears the panel, which settles the wiring, the power and `gpiozero`'s pin
+factory under Bookworm in one stroke. What the survey *added* to this
+milestone:
+
+- **Neither Python environment on the device is usable as-is.** The system
+  interpreter has Pillow 9.4.0 but no PyYAML; the existing `~/py_envs` venv has
+  neither, is built `include-system-site-packages = false`, and carries the
+  `HomeAssistant-API` / `aiohttp` / `pydantic` stack that `sources/` was written
+  to do without. 8.3 builds a new venv rather than reusing it.
+- **The on-device checkout is dirty** — roughly 350 substantive uncommitted
+  lines on `main`, over CRLF churn. It is all pre-rewrite work against the old
+  coordinate-based `rooms.yml`, so nothing is at risk, but 8.3 clones fresh
+  instead of pulling onto it.
+- **A full desktop is running** — `lightdm`, X, CUPS, bluetooth, `wayvnc` —
+  roughly a third of the 906 MiB. Not a blocker at 28 MB per frame, but it is
+  the obvious reclaim if the appliance ever needs the memory, and
+  `lightdm` plus `NetworkManager-wait-online` sit in front of anything 8.4 adds
+  to boot.
+- **`HASS_URL` must not end in `/api`.** The device's existing `.env` does;
+  `HomeAssistantSource` appends `/api/states` itself, so that value produces
+  `/api/api/states`. The old code wanted the suffix and the new code does not,
+  which makes this a silent 404 on first run rather than a config error.
 
 ### M9 — Partial refresh (M) — decide, then build
 
@@ -357,11 +385,15 @@ and the clock. So a partial refresh can carry the whole house summary and the
 updated-at time, and none of the individual room readings. `test_view_screen.py`
 pins those counts so they cannot drift unnoticed.
 
-**The Pi 3B+ is not the constraint, and it is worth saying so now.** Measured in
-the container: 0,2 ms to turn a snapshot into a draw list, 12 ms to execute it
-into the two planes, 3 ms to composite — 28 MB peak RSS for the whole process.
-Even at ten times slower on the Pi's A53, a frame costs well under a second
-against a panel that takes 26. The composite and its two masks are the largest
+**The Pi is not the constraint, and it is worth saying so now.** The target was
+surveyed over SSH after M4 landed: a **Raspberry Pi 3 Model B Rev 1.2** —
+1,2 GHz Cortex-A53, **906 MiB of RAM**, arm64 Bookworm, Python 3.11.2. Not the
+3B+ with 2 GB assumed while M4 was being built; the correction makes the
+margins smaller, not tight. Measured in the container: 0,2 ms to turn a
+snapshot into a draw list, 12 ms to execute it into the two planes, 3 ms to
+composite — 28 MB peak RSS for the whole process, against roughly 600 MB free
+on the device. Even at ten times slower on the A53, a frame costs well under a
+second against a panel that takes 26. The composite and its two masks are the largest
 allocation and exist only for the BMP target: `EPDRenderer` will take
 `planes()` straight to `getbuffer()` and never build them. Nothing here needs a
 lighter representation, and the SD card sees no writes per cycle once the target
@@ -530,6 +562,11 @@ binary floats, so `1.15` renders as `1,1`. Invisible at three metres, and
 imposing decimal rounding would buy nothing but a dependency.
 
 ## The next commit
+
+**One thing to do on the device, for M7/M8 rather than M5:** the long-lived
+token in the Pi's `.env` has been revoked. A new one is needed before
+`--source hass` can run there, and the URL loses its `/api` suffix at the same
+time.
 
 **Two answers from you, neither of which blocks M5:**
 
