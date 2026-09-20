@@ -53,10 +53,11 @@ the eleven rooms render red. See the M2.2 log entry.
 
 ## Milestones
 
-**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3, M4 and M5 are done, on
-branch `rewrite/intent-architecture`. M6 is next. Slice 2.3 - the comfort bands
-- is the only thing still waiting on a human, and it is now the last thing
-between the screen and truthful red: see the log.
+**Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3, M4, M5 and M6 are done, on
+branch `rewrite/intent-architecture`. M7 is next, and everything it composes now
+exists. Slice 2.3 - the comfort bands - is the only thing still waiting on a
+human, and it is now the last thing between the screen and truthful red: see the
+log.
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
@@ -66,7 +67,7 @@ between the screen and truthful red: see the log.
 | M3 ✅ | Sources | M | M2 | HA behind a port, hostile inputs survived |
 | M4 ✅ | Walking skeleton | M | M1 | **A real 800×480 three-colour BMP on disk** |
 | M5 ✅ | Complete the screen | L | M4 | Every region of §3 rendered |
-| M6 | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
+| M6 ✅ | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
 | M7 | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
 | M8 | Hardware, full refresh | M | M7 | On the wall |
 | M9 | Partial refresh | M | M8 | Decided with numbers in hand |
@@ -202,17 +203,20 @@ appears **only** in the places §3 permits.
 **Done when:** the fixture snapshot renders the full screen and it has been
 inspected as a BMP. ✅ — see the log.
 
-### M6 — Refresh policy (M)
+### M6 — Refresh policy (M) ✅
 
-`src/refresh/policy.py` — a pure function of `(now, last_full, partials_since_full,
-dirty regions, quiet hours)` returning *none / partial / full*. It encodes §4
-exactly: 180 s hard floor between refreshes of any class; full every 30 min,
+`src/refresh/policy.py` — a pure function of `(now, monotonic, state, dirty,
+policy)` returning *none / partial / full* with the reason it chose. It encodes
+§4 exactly: 180 s hard floor between refreshes of any class; full every 30 min,
 tightened to 15 min in the 06:00–08:30 window; 5 partials per full cycle; quiet
 hours overnight; and the 24 h keep-alive that overrides quiet hours.
 
 Tested against a frozen clock over a simulated 48 hours, including a DST
 changeover and a quiet-hours boundary. No imports from `render/` and nothing
 that knows a panel exists.
+
+**Done when:** the vendor's limits hold as invariants over a simulated two days,
+not as assertions on one decision. ✅ — see the log.
 
 ### M7 — App and composition root (S)
 
@@ -341,6 +345,71 @@ Anything touching rendering also gets its BMP looked at before it is called
 done.
 
 ## Log
+
+**M6** — `src/refresh/policy.py`. +57 tests, **767 in the suite**. §4 is now a
+pure function of two clocks and a small state, and the vendor's limits are
+invariants asserted over a simulated two days rather than assertions about one
+decision.
+
+**The day it produces, counted rather than imagined.** From midnight, with the
+default policy: **38 full refreshes and 155 partials** — the first frame, then
+silence until 06:00, ten fifteen-minute cycles through the morning window, then
+half-hourly until 21:45 and quiet again. That is **988 seconds of flashing per
+day**, a little over sixteen minutes, which is the entire budget §4 spends to
+keep the wall true.
+
+**Five decisions worth remembering.**
+
+*Two clocks, and each rule takes the one it is entitled to.* The plan's
+signature was `(now, last_full, …)`; it is `(now, monotonic, …)` instead,
+because the board has no RTC and `HARDWARE.md` §6 is explicit about the
+consequence. Durations — the 180 s floor, the 30- and 15-minute cycles, the
+5-minute partial — are counted on a monotonic clock, so a wall-time jump can
+neither permit a refresh inside the vendor floor nor stall the panel. Times of
+day — quiet hours, the morning window — are read off wall time, which is what
+wall time is for. The 24 h keep-alive is the one duration measured on the wall
+clock, deliberately: it is the rule that has to survive a reboot, and a
+monotonic clock restarts at zero while a persisted timestamp does not. Two
+tests drive the split from both sides — a backwards jump that must not defeat
+the floor, and an NTP landing that must fire the keep-alive exactly once
+instead of a storm.
+
+*The first frame is always full, including at 03:00 and including after a
+restart that has the timestamp on disk.* Not because quiet hours are negotiable
+but because a partial refresh writes changed regions onto whatever the panel is
+already holding, and a process with no previous frame has no diff to write. The
+floor still applies to it, which is what stops M8.4's restart loop.
+
+*A sixth partial is refused, not promoted to an early full.* The vendor rule is
+about performing partials, not about sitting on them, so the honest answer to a
+spent budget is to wait — and by construction the next full is at most one
+partial interval away, because §4's "exactly 5 partials per full cycle" is
+`full_interval == (max_partials + 1) × partial_interval` and that arithmetic is
+now a test.
+
+*Red lagging is asserted, not argued.* Two 48-hour runs, identical but for a
+permanently alerting room, produce byte-identical refresh timings. §4 accepts
+that a room crossing into alert waits for the next full cycle; this is the
+version of that sentence that fails if someone later makes dirty full-only
+regions urgent.
+
+*One consistency check was deleted for being unfalsifiable.* `policy_violations()`
+holds §4's prose as arithmetic — nothing may schedule inside the floor, the
+morning window may only tighten, the budget is the vendor's five. A check that
+quiet hours could not "swallow" the keep-alive failed its own test and turned
+out to be unprovable-by-construction: the keep-alive is decided *before* quiet
+hours, so no night can starve it. It was replaced by a test that demonstrates
+the rule order doing that job, with quiet hours stretched to 23 of the 24 hours.
+
+**One number §4 does not fix, chosen here.** The contract says quiet hours are
+"overnight" and stops. They are **22:00–06:00**, ending exactly where the
+morning window begins so the two tile with no gap and no minute belonging to
+both. It errs towards the panel ageing rather than towards informing a dark
+hallway, and it is one line in `Policy` if the family disagrees.
+
+**Nothing was rendered, so nothing was looked at.** Per `AGENTS.md` this is the
+milestone with no visual verification step: the policy imports no PIL, touches
+no draw list and produces no pixels.
 
 **M5** — `src/view/weather.py`, `src/view/forecast.py`, `src/view/icons.py`,
 the left column's box model, and four new derivations. +175 tests, **706 in the
@@ -629,7 +698,7 @@ imposing decimal rounding would buy nothing but a dependency.
 `.env` has been revoked. A new one is needed before `--source hass` can run
 there, and the URL loses its `/api` suffix at the same time.
 
-**Two answers from you, neither of which blocks M6:**
+**Two answers from you, neither of which blocks M7:**
 
 *The comfort bands (slice 2.3).* Real numbers from the family, per room. This
 is now the last thing between the screen and truthful red, and M5 has made the
@@ -644,7 +713,14 @@ comfortable at ~1,5 m and unreadable at 3 m, and no amount of typography changes
 that on a 7,5" panel. Either the stated distance moves or the table sheds rows.
 Nothing is blocked by it until M8 puts the panel on a wall.
 
-**Then M6 — the refresh policy.** A pure function of `(now, last_full,
-partials_since_full, dirty regions, quiet hours)`, tested against a frozen clock
-over a simulated 48 hours. It depends on M1 only, so neither answer above holds
-it up.
+**Then M7 — the app and the composition root.** Every part it wires together now
+exists: a config, two sources, a screen, a renderer and a policy. What M7 has to
+invent is the part M6 deliberately left out — the **dirty set**. `decide()` takes
+one and nobody produces one yet, because a diff of two draw lists belongs in
+`render/` (`INTENT.md` §6) and M9 builds it properly against 8-aligned windows.
+Until then the honest placeholder is "every partial region is dirty every tick",
+which is nearly true anyway: the updated-at clock changes every minute.
+
+M7 also owns the two clocks in practice. `time.monotonic()` for the durations,
+wall time for the rest, and — for M8.4 — `last_full_at` persisted to disk so the
+floor and the keep-alive survive a reboot the monotonic clock does not.
