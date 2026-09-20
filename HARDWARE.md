@@ -131,6 +131,25 @@ Consequences that the design has to absorb:
 - `partFlag` is set at construction and cleared on first partial refresh; the
   first partial after construction pre-fills the window white.
 
+### `ReadBusy()` spins, and a refresh costs a core
+
+`ReadBusy()` (line 79) polls in a loop with **no delay in it**: it re-sends
+`0x71` over SPI and reads the BUSY pin as fast as CPython will go, for as long
+as the panel is busy — the full 26 s of a refresh. The `delay_ms(200)` on line
+86 runs only after the loop exits.
+
+Measured on the device on 2026-09-20: a first frame under the systemd unit
+spent **29.9 s of CPU in 32 s of wall clock**, which is one of the four cores
+held at roughly 100 % for the whole cycle. Core temperature rose from 50.5 °C
+idle to 55.3 °C, and `get_throttled` stayed `0x0`.
+
+At the M8 cadence that is ~16 minutes a day of one busy core on an otherwise
+idle board, so it is recorded rather than fixed. It matters to two later
+decisions: anything sharing this Pi will feel it, and M9's partial refreshes
+would make the spin more frequent rather than shorter. Adding a
+`delay_ms(10)` inside the loop would be a change to vendored code, which §2's
+reasoning says not to make casually.
+
 ### Buffer convention
 
 `getbuffer()` inverts every byte — PIL uses 0=black, the panel uses 0=white.
