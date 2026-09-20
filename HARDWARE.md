@@ -34,8 +34,9 @@ in this repo.
 
 ## 2. Version — V3 panel, V2 driver, deliberately
 
-The physical panel is **V3**. The vendored driver is **`epd7in5b_V2.py`**. This
-is correct and must not be "fixed".
+The physical panel is **V3** — confirmed against the panel itself on
+2026-09-20, not inferred. The vendored driver is **`epd7in5b_V2.py`**. This is
+correct and must not be "fixed".
 
 Waveshare's manual: *"the resolution is same with V2, and its hardware and
 interfaces are compatible with V2. As V3 is totally compatible with V2, you can
@@ -47,7 +48,9 @@ use the V2 demo."*
 and no V3 variant of any of them.
 
 Revision history for orientation: V1 was 640 × 384; V2 and V3 are both
-800 × 480. The revision is printed on a label on the back of the panel.
+800 × 480, which is why a V1 would have announced itself immediately and a V2
+would not. The revision is printed on a label on the back of the panel; ours
+reads V3.
 
 Our vendored copy is Waveshare demo **V4.2, dated 2022-01-08**.
 
@@ -199,6 +202,10 @@ display and blanked it. That settles, without a bench session: the HAT wiring
 of §5, SPI access, panel power, and `gpiozero` 2.0.1 finding a working pin
 factory under Bookworm — the last of which is a common breakage on this OS and
 would otherwise have surfaced as an M8 mystery.
+
+**2026-09-20 — the panel is a V3.** Read off the label on the back. §2's
+pairing of a V3 panel with the V2 driver is now a checked fact rather than a
+documented assumption, and needs no revisiting.
 
 **Still unverified:** everything about *partial* refresh, including the `0x13`
 question raised in §4. `Clear()` and `display()` exercise the full path only.
