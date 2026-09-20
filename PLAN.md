@@ -57,14 +57,14 @@ the eleven rooms render red. See the M2.2 log entry.
 done, on branch `rewrite/intent-architecture`. **M8 is complete and proven on
 the panel:** 8.1, 8.2 and 8.4 are green in CI, and 8.3 was photographed on
 2026-09-20 — the frame reached the glass, the red plane is red, and nothing is
-inverted. Two things still wait on a human - slice 2.3's comfort bands, and the
-viewing distance M4 measured - and with the panel now lit, both are the only
-things between here and a wall that tells the truth.
+inverted. **M10 is complete in code:** 10.1 to 10.5 are green, the vendored
+driver is the reference rather than the thing that runs, and only 10.6 — one
+frame and one clear, watched — waits on the board.
 
-**The buildable milestone is M10**, added after the first day on the panel. M9
-waits on a decision and the two open answers wait on the family; replacing the
-vendored driver waits on nothing, and the evidence for it came from running the
-thing rather than from wanting to.
+Everything that is left waits on a human. Slice 2.3's comfort bands and the
+viewing distance M4 measured wait on the family; M9 waits on a decision; 10.6
+waits on somebody standing in front of the panel. **There is nothing left that
+waits only on code.**
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
@@ -78,7 +78,7 @@ thing rather than from wanting to.
 | M7 ✅ | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
 | M8 ✅ | Hardware, full refresh | M | M7 | On the wall |
 | M9 | Partial refresh | M | M8 | Decided with numbers in hand |
-| M10 | Replace the vendored driver | M | M8 | The panel driven by tested code |
+| M10 ✅ | Replace the vendored driver (10.6 open) | M | M8 | The panel driven by tested code |
 | M11 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
 
 M3 and M4/M5 are independent after M2 and can be worked in either order — the
@@ -305,14 +305,17 @@ M8 built the seam either way. `EPDRenderer.partial_capable` is `False` and
 already the shipped behaviour and "yes" is that flag, the second init path, and
 a real diff in `render/`. Deciding not to build it changes no code.
 
-**Do M10 first if the answer is yes.** The vendored `display_Partial()`'s
-window arithmetic is wrong in a way that was only found by reading it for M10 —
-it *floors* an unaligned right edge rather than rounding it up, and its guard
-condition is a chained comparison that reduces to "both edges were already
-aligned". Building a partial path on that is building on sand, and the M10
-section below has the detail.
+**M10 is done, which changes what a "yes" costs.** The vendored
+`display_Partial()`'s window arithmetic is wrong in a way that was only found
+by reading it for M10 — it *floors* an unaligned right edge rather than
+rounding it up, and its guard condition is a chained comparison that reduces to
+"both edges were already aligned". That arithmetic is no longer in the path:
+`render/panel/driver.py` has no partial path at all, so a "yes" means writing
+`init_part()` and `display_Partial()` correctly from the datasheet, against a
+transport that is already under test and a transcript harness that can record
+whatever is written. A "no" still costs nothing.
 
-### M10 — Replace the vendored driver (M) — buildable today
+### M10 — Replace the vendored driver (M) ✅ — 10.6 waits on the board
 
 Everything above `render/` is typed, tested, and has a paragraph somewhere
 explaining why it is the way it is. The two files underneath it are a 2022
@@ -356,19 +359,19 @@ which is what the code means and not what it does.
 
 #### Slices
 
-- **10.1** The transcript harness. A fake `epdconfig` in `tests/` — the seven
+- **10.1** ✅ The transcript harness. A fake `epdconfig` in `tests/` — the seven
   methods the driver calls, the pin constants, and a scripted BUSY pin so
   `ReadBusy()` terminates — injected into `sys.modules` before the driver is
   imported. Capture `init()`, `display()`, `Clear()` and `sleep()` against a
   known frame; commit the transcripts. Nothing in `src/` moves, and the import
   stays inside a fixture so `test_hardware_boundary.py` still passes.
-- **10.2** `src/render/panel/transport.py` — GPIO and SPI behind a small typed
+- **10.2** ✅ `src/render/panel/transport.py` — GPIO and SPI behind a small typed
   surface, with `gpiozero` and `spidev` imported **inside the constructor**. The
   module then becomes importable in the tools container and only *constructing*
   it claims the pins, which is the distinction the vendored file collapses. An
   explicit `close()` releases them, which `module_exit(cleanup=False)` never
   does.
-- **10.3** `src/render/panel/driver.py` — the full-refresh path only:
+- **10.3** ✅ `src/render/panel/driver.py` — the full-refresh path only:
   `init()`, the `getbuffer()` equivalent returning immutable `bytes`,
   `display()`, `clear()`, `sleep()`. Same commands, same order, same data,
   asserted against 10.1's transcripts. Every deliberate difference is named in
@@ -376,11 +379,11 @@ which is what the code means and not what it does.
   inversions, no mutation of the caller's buffer, a wrong-sized image that
   raises instead of returning a blank one, and a `ReadBusy` that sleeps between
   polls and gives up.
-- **10.4** Wire it in. `open_panel()` builds the new driver and that is the
+- **10.4** ✅ Wire it in. `open_panel()` builds the new driver and that is the
   whole blast radius — the rewrite lives behind one function because that is
   what the function was for. `DRIVER` changes, so the `target=epd:…` string in
   the log changes and the tests pinning it change with it.
-- **10.5** The vendored files stay, imported by nothing but 10.1. They are the
+- **10.5** ✅ The vendored files stay, imported by nothing but 10.1. They are the
   reference the transcripts were recorded from and the only way to re-record.
   `test_hardware_boundary.py`'s gateway moves to `render/panel/`;
   `test_source_boundary.py`'s `LEGACY` keeps both files for the reason its
@@ -389,7 +392,9 @@ which is what the code means and not what it does.
 - **10.6** One frame on the glass, and one `Clear()`. A transcript proves the
   same bytes in the same order; it cannot prove `spidev`'s chunking of a
   48 000-byte `writebytes2`, `gpiozero`'s timing, or that a deadline never fires
-  early on a cold panel.
+  early on a cold panel. **Open.** `tools/panel_check.py` is the command and
+  `deploy/README.md` §4.1 is the runbook; it prints wall and CPU seconds, so
+  the same run that watches the glass also measures the 29,9 s claim.
 
 **Two numbers the slices have to choose and defend.** The poll interval: the
 vendor's own `delay_ms(200)` after the loop is the scale, so **10 ms** adds at
@@ -482,6 +487,97 @@ Anything touching rendering also gets its BMP looked at before it is called
 done.
 
 ## Log
+
+**M10** — `src/render/panel/`, `tools/panel_check.py`, and a recorder in
+`tests/`. +108 tests, **1099 in the suite**. The code closest to the hardware
+was the only code here that nothing tested; it is now the code with the most
+literal specification in the repository.
+
+**The trick worked, and it worked on the first run.** A fake `epdconfig` in
+`sys.modules` before the import runs the whole vendored driver in the tools
+container. Four operations — `init`, `display`, `Clear`, `sleep` — recorded as
+108 lines of pin writes, SPI bytes and delays, committed under
+`tests/fixtures/transcripts/`, and the replacement matches all four **byte for
+byte**. Not approximately: the same commands in the same order with the same
+digests, plus a test that compares the two implementations directly in case
+the committed files ever go stale for both.
+
+**The transcript records effects, not calls, and that decision is what made
+the equality exact.** `send_command()` toggles CS around every byte, and
+`RaspberryPi.digital_write()` has its CS branch commented out — so those
+toggles have never reached a pin, because `spidev` drives CE0 itself. A
+recorder that logged the *call* would have forced the replacement to toggle a
+pin that does not exist; one that logs the *effect* lets it drop CS entirely
+and still produce an identical recording. Same for `digital_read()` on
+anything but BUSY: the recorder raises the `AttributeError` the vendored code
+would, rather than inventing a reading for three dead branches.
+
+**Bulk writes are a length and a SHA-256.** 48 000 bytes of hex would make a
+transcript unreadable and a diff useless; a digest is exact, and a plane that
+changed by one pixel still fails. The `display` transcript then pins the double
+inversion from the far end: what reaches `0x10` is the plane PIL produced and
+what reaches `0x13` is its negative, asserted against the images rather than
+against the driver's own arithmetic.
+
+**Six deliberate differences, each a defect, each a named assertion.** The
+deadline is the one that justifies the milestone: without it a panel that never
+releases BUSY holds the process forever, `Restart=always` cannot help because
+the unit is still running, and the wall keeps yesterday's frame while the
+journal says nothing. **40 s** — past a 26 s refresh, inside the unit's
+`TimeoutStopSec=45s` — and `PanelError` already had exactly the right
+semantics, so a hung panel now costs one skipped cycle instead of a silent
+dashboard. The poll delay is **10 ms**: at most 10 ms added to a 26 000 ms
+refresh, and ~2 600 polls instead of ~430 000. The other four: immutable
+`bytes` and `bytes.translate()` so the caller's buffer is never mutated and the
+flip costs 0,326 ms rather than 29,3 ms; a wrong-sized image that raises rather
+than reaching the wall as a blank screen; no CS; and a `close()` that gives the
+pins back, which `module_exit(cleanup=False)` never does.
+
+**Nothing partial was ported, deliberately.** `init_part()`,
+`display_Partial()` and `display_Base_color()` do not exist in the new driver,
+and a test asserts their absence rather than leaving it to be noticed. M9 has
+not decided to build a partial path, and the window arithmetic it would rest on
+truncates rather than rounds. Porting a defect to keep a shape would be the
+worst of both.
+
+**The claim on the hardware moved from an import to a constructor.** That is
+the whole of 10.2 and it is worth stating plainly: `gpiozero` and `spidev` are
+imported inside `SpiTransport.__init__`, so `render/panel/` is importable on a
+machine with no GPIO and *building* a transport is what takes a pin. The
+boundary test's gateway moved with it, and it now asserts something stronger
+than it used to — **the vendored driver is named by nothing in `src/` at
+all.** `tests/panel_harness.py` is its only importer, inside a fixture that
+puts `sys.modules` back afterwards.
+
+**10.5's open question, answered: the vendored files stay in `src/`.** They are
+not application code any more, which is an argument for moving them — but they
+are imported by module name from the path the application already puts on
+`sys.path`, and moving them would add a `sys.path` entry whose only purpose is
+to make a test work. The `VENDORED` exemption that keeps them out of the
+boundary scans already exists and already names them individually. M11 can
+revisit it with the widget layer.
+
+**What this did not buy, stated as honestly as when it was proposed.** Not
+speed: 88 ms of byte-flipping against a 26 s refresh is 0,3 %, and the panel
+sets the pace either way. The CPU figure is real and unmeasured — 10.6 prints
+it — and nothing is starved today regardless. What it bought is that a panel
+which stops answering now raises instead of hanging, that M9 cannot build on
+arithmetic that is wrong, and that the code nearest the hardware the vendor
+says can be damaged beyond repair is no longer the code nothing executes.
+
+**And a documentation defect, found the same way the M4 one was.** Every file
+in this repository said the vendored constructor claims *five* GPIO pins. It
+claims four: RST, DC and PWR as outputs, BUSY as an input, with the `GPIO_CS_PIN`
+line commented out — CS, MOSI and SCLK belong to the kernel's SPI driver from
+`SPI.open(0, 0)` onwards. `HARDWARE.md` §5 now says so and §4.1 is new: the six
+divergences in one table, so the vendored API section stays a true description
+of the vendored file and stops being a description of what runs.
+
+**Nothing new was rendered, and the frame was looked at anyway.** M10 touches
+no view module and no `render/bmp.py` line; `git diff` over `view/`,
+`domain/`, `sources/`, `render/bmp.py`, `render/fonts.py`, `house.yml` and
+`assets/` since M8 is empty. The fixture render was run at a pinned timestamp
+and inspected regardless, per `AGENTS.md`: it is the frame M5 inspected.
 
 **M8** — `src/render/epd.py`, `src/refresh/store.py`, `deploy/`. +184 tests,
 **991 in the suite**. Three of the four slices are code and are green; the
@@ -998,6 +1094,21 @@ imposing decimal rounding would buy nothing but a dependency.
 
 ## The next commit
 
+**Nothing left here is code.** M10 closed the last milestone that could be
+built from a `git checkout -b`. What remains is three things a person has to
+do: two answers from the family, and one bench run in front of the panel.
+
+1. *The viewing distance, or the room count.* The last thing before the panel
+   is hung, and it costs nothing to decide and a layout change to discover.
+2. *The comfort bands (slice 2.3).* The last thing between the screen and
+   truthful red.
+3. *M10.6.* Two commands on the board, spaced 180 s apart, and a look at the
+   glass. It also prints the CPU number that says whether M10 did what it said.
+
+Then M9 is a decision, and M11 is deletions.
+
+---
+
 **M8.3 happened on 2026-09-20, and the runbook survived contact.**
 [`deploy/README.md`](deploy/README.md) was followed as written — fresh clone
 beside the dirty on-device checkout, venv with `--system-site-packages` against
@@ -1048,16 +1159,23 @@ the glass is readable from a hallway, because it was photographed on a desk.
 It costs nothing to move a decision that is about a hallway; it costs a layout
 change to discover it from the hallway.
 
-**And one milestone that waits on nobody: M10.** The first day under the systemd
-unit was also the first time anyone read the vendored driver closely, and it
-does not survive the reading — no timeout on the busy wait, a partial window
-calculation that truncates rather than rounds, a `display()` that inverts its
-own argument, and three byte loops that cost 90× what `bytes.translate()` costs
-on this board. The section above has the full list with line numbers. The reason
-it is buildable today rather than a bench task is that the driver's only contact
-with the world is one `epdconfig` object, so a recorder in `sys.modules` puts
-the whole thing under test in the tools container and the rewrite is proven by
-diffing transcripts against the vendored file.
+**M10 is done, and it left one bench step.** The replacement driver is on the
+wire in every test in the suite and on nobody's wall yet. 10.6 is two commands
+and a look:
+
+```bash
+.venv/bin/python tools/panel_check.py frame
+# wait 180 s
+.venv/bin/python tools/panel_check.py clear
+```
+
+The frame should look exactly like the one photographed on 2026-09-20 — that is
+the assertion, and a transcript is why it is expected rather than hoped. What
+the run adds is the number no transcript can produce: it prints wall and CPU
+seconds, and **the CPU figure is M10's one measurable claim.** 29,9 s in a 32 s
+cycle under the vendored busy loop; it should now be a fraction of a second
+against the same 26 s of wall clock. If it is not, the poll delay is not doing
+its job and `HARDWARE.md` §4 should say so.
 
 **Then M9, and it should be decided before it is built.** The region count from
 M5 stands: 53 partial-eligible against 28 full-only, and the full-only 28 are
