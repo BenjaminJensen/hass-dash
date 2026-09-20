@@ -54,12 +54,12 @@ the eleven rooms render red. See the M2.2 log entry.
 ## Milestones
 
 **Progress:** M0 (`24927d4`), M1 (`a542a03`), M2, M3, M4, M5, M6 and M7 are
-done, on branch `rewrite/intent-architecture`. **M8 is built and unverified:**
-8.1, 8.2 and 8.4 are code and are green in CI; 8.3 is the bench step, and until
-someone stands in front of the panel this milestone is written, not proven. Two
-things still wait on a human - slice 2.3's comfort bands, and the viewing
-distance M4 measured - and both are now the shortest path to a wall that tells
-the truth.
+done, on branch `rewrite/intent-architecture`. **M8 is complete and proven on
+the panel:** 8.1, 8.2 and 8.4 are green in CI, and 8.3 was photographed on
+2026-09-20 — the frame reached the glass, the red plane is red, and nothing is
+inverted. Two things still wait on a human - slice 2.3's comfort bands, and the
+viewing distance M4 measured - and with the panel now lit, both are the only
+things between here and a wall that tells the truth.
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ the truth.
 | M5 ✅ | Complete the screen | L | M4 | Every region of §3 rendered |
 | M6 ✅ | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
 | M7 ✅ | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
-| M8 ◐ | Hardware, full refresh | M | M7 | On the wall |
+| M8 ✅ | Hardware, full refresh | M | M7 | On the wall |
 | M9 | Partial refresh | M | M8 | Decided with numbers in hand |
 | M10 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
 
@@ -232,7 +232,7 @@ blank the screen.
 the container, and the loop obeys M6 under a fast-forwarded clock. ✅ — see the
 log.
 
-### M8 — Hardware, full refresh (M) ◐
+### M8 — Hardware, full refresh (M) ✅
 
 - **8.1** ✅ `EPDRenderer` — wake, `init()`, `display(black, red)`, `sleep()`, as
   one indivisible unit of work, every cycle without exception. Both planes go
@@ -240,9 +240,9 @@ log.
   `HARDWARE.md` §4 is respected, never reimplemented.
 - **8.2** ✅ `epdconfig` is imported lazily inside the renderer, and a test asserts
   nothing under `tests/` can pull it in at module scope.
-- **8.3** ⬜ Pi bring-up: a **fresh** venv, one render, photograph it, compare
-  against the BMP. **The only slice left, and the only one this repository
-  cannot do to itself.** The runbook is `deploy/README.md`.
+- **8.3** ✅ Pi bring-up: a **fresh** venv, one render, photograph it, compare
+  against the BMP. Done on 2026-09-20 against the live house; the runbook is
+  `deploy/README.md` and the result is in the log below.
 - **8.4** ✅ systemd unit with a restart policy, and the last-refresh timestamp
   persisted to disk so a restart loop cannot violate the 180 s floor or lose the
   24 h keep-alive. The floor is measured against a **monotonic** clock: the
@@ -365,10 +365,13 @@ init → display → sleep, every time, with sleep in a `finally`; both planes g
 through the driver's own `getbuffer()`; a full-only cadence produces the same
 **38 full refreshes a day** M6 and M7 counted, and zero partials; a restart
 inherits the floor and the keep-alive, and a reboot does not inherit the
-monotonic clock. Not proven by anything: that the red plane is red, that
-nothing is inverted, that the wiring in `HARDWARE.md` §5 is the wiring on the
-desk. Those are 8.3, and per `AGENTS.md` this is the report that the rendering
-change could not be verified visually on hardware.
+monotonic clock. **Proven on the glass on 2026-09-20 (8.3):** the red plane is
+red and the black plane is black, so the two registers are not swapped; nothing
+is inverted, which the white-on-black `Ude` row would have exposed first; and
+the wiring in `HARDWARE.md` §5 is the wiring on the desk. The photograph was
+taken a minute after a file render of the same house and differs from it
+exactly where live data moved — `17.33` against `17.32`, `Stort bad` 24,4°
+against 24,6° — so it is a fetch, not a replay.
 
 **Five decisions worth remembering.**
 
@@ -867,25 +870,31 @@ imposing decimal rounding would buy nothing but a dependency.
 
 ## The next commit
 
-**M8.3 — the bench step, and the only thing between here and the wall.** The
-runbook is [`deploy/README.md`](deploy/README.md): clone fresh beside the dirty
-on-device checkout, build a venv with `--system-site-packages` against
-`deploy/requirements-device.txt` rather than `requirements.txt`, render one
-frame **to a file** before any electricity so that a bad frame and a bad panel
-cannot be confused for each other, then one frame to the panel, photograph it,
-and compare. Two credential traps are waiting and both fail quietly: the
-long-lived token in the Pi's `.env` was revoked on 2026-09-20, and `HASS_URL`
-must lose its `/api` suffix — though that second one is now refused at startup
-with the corrected URL in the message, so it fails loudly instead.
+**M8.3 happened on 2026-09-20, and the runbook survived contact.**
+[`deploy/README.md`](deploy/README.md) was followed as written — fresh clone
+beside the dirty on-device checkout, venv with `--system-site-packages` against
+`deploy/requirements-device.txt`, one frame to a file before any electricity,
+then one frame to the panel. Both credential traps were real and both were
+handled: the revoked token was reminted, and `HASS_URL` is now refused at
+startup with the corrected URL in the message rather than 404-ing as a broken
+instance. The only friction worth fixing is a path disagreement the runbook
+anticipates but does not resolve: §1 clones to `~/hass-dash-new` and
+`deploy/hass-dash.service` hardcodes `/home/ben/hass-dash`, so installing the
+unit needs one `sed` first.
 
-What the photograph is actually being asked: is red red and black black (two
-separate registers, one line apart), is anything inverted (`getbuffer()`
-inverts and `display()` inverts back), and is the type legible from where
-people stand. That last one is the M4 question, and it is why 8.3 should happen
-before the unit is enabled rather than after.
+The photograph answered three of its four questions and confirmed the fourth
+was never about the panel. Red is red and black is black, so the `0x10`/`0x13`
+registers are not swapped. Nothing is inverted — the white-on-black `Ude` row
+is the tell, and it reads correctly, so the double inversion stayed where it
+belongs. And the five red rooms are the placeholder comfort bands, exactly as
+predicted from the file render, not the house being uncomfortable.
 
-**Two answers from you. The first no longer blocks anything technical; both
-block the screen being true:**
+The fourth question — legibility from where people stand — cannot be answered
+by a photograph taken at desk distance. It is still the M4 question and it is
+now the last thing before the panel is hung.
+
+**Two answers from you. Both block the screen being true, and one now blocks
+the wall:**
 
 *The comfort bands (slice 2.3).* Real numbers from the family, per room. This
 is now the last thing between the screen and truthful red, and M5 has made the
@@ -898,11 +907,12 @@ for "act".
 *The viewing distance, or the room count.* See the M4 log. Eleven rooms are
 comfortable at ~1,5 m and unreadable at 3 m, and no amount of typography changes
 that on a 7,5" panel. Either the stated distance moves or the table sheds rows.
-Nothing is blocked by it until M8 puts the panel on a wall.
 
-*The viewing distance is now the more urgent of the two*, because 8.3 hangs the
-panel and the answer changes where. It costs nothing to move a decision that is
-about a hallway; it costs a layout change to discover it from the hallway.
+*This is now the more urgent of the two, and it is the only thing left before
+the panel is hung.* 8.3 proved the frame reaches the glass; it could not prove
+the glass is readable from a hallway, because it was photographed on a desk.
+It costs nothing to move a decision that is about a hallway; it costs a layout
+change to discover it from the hallway.
 
 **Then M9, and it should be decided before it is built.** The region count from
 M5 stands: 53 partial-eligible against 28 full-only, and the full-only 28 are

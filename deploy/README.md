@@ -106,7 +106,13 @@ decided.
 
 Then install the unit:
 
+The unit hardcodes `/home/ben/hass-dash`, and §1 above told you to clone to
+`~/hass-dash-new` so as not to land on the dirty pre-rewrite checkout. Reconcile
+the two before installing — either rename the old checkout out of the way, or:
+
 ```bash
+sed -i 's#/home/ben/hass-dash#/home/ben/hass-dash-new#g' deploy/hass-dash.service
+
 sudo cp deploy/hass-dash.service /etc/systemd/system/
 sudoedit /etc/systemd/system/hass-dash.service   # check User= and the paths
 sudo systemctl daemon-reload

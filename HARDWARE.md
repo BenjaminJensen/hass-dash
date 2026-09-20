@@ -219,8 +219,20 @@ documented assumption, and needs no revisiting.
 **Still unverified:** everything about *partial* refresh, including the `0x13`
 question raised in §4. `Clear()` and `display()` exercise the full path only.
 
-**Also still unverified: this project's own renderer against this panel.**
-`EPDRenderer` (PLAN.md M8.1) has never driven it. What was run on the board in
-September was the pre-rewrite code. The bench step is PLAN.md M8.3 and the
-runbook is `deploy/README.md`; until a photograph exists, "the driver works
-here" is a statement about the vendor's code, not about ours.
+**2026-09-20 — this project's own renderer drives this panel.** `EPDRenderer`
+(PLAN.md M8.1) rendered the live house through `--target epd --once` and the
+result was photographed (PLAN.md M8.3). That settles three things the tools
+container cannot reach:
+
+- **The planes are not swapped.** `0x10` carried black and `0x13` carried red on
+  the glass, as §4 reads them.
+- **The double inversion is intact.** `getbuffer()` inverts and `display()`
+  inverts the black plane back; the layout's one white-on-black row renders as
+  white on black, which is what a reimplemented inversion would have broken
+  first.
+- **The §5 wiring is the wiring on the desk**, now through this project's own
+  lazy `importlib` path rather than the pre-rewrite code's module-scope import.
+
+**Still unverified:** everything about *partial* refresh, per the paragraph
+above — and legibility at the real viewing distance, which a photograph taken
+at a desk cannot answer.
