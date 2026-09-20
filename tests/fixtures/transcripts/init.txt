@@ -1,0 +1,63 @@
+pin PWR 1
+spi open bus=0 device=0 hz=4000000 mode=0
+pin RST 1
+delay 200
+pin RST 0
+delay 4
+pin RST 1
+delay 200
+pin DC 0
+write 01
+pin DC 1
+write 07
+pin DC 1
+write 07
+pin DC 1
+write 3f
+pin DC 1
+write 3f
+pin DC 0
+write 06
+pin DC 1
+write 17
+pin DC 1
+write 17
+pin DC 1
+write 28
+pin DC 1
+write 17
+pin DC 0
+write 04
+delay 100
+pin DC 0
+write 71
+read BUSY 1
+delay 200
+pin DC 0
+write 00
+pin DC 1
+write 0f
+pin DC 0
+write 61
+pin DC 1
+write 03
+pin DC 1
+write 20
+pin DC 1
+write 01
+pin DC 1
+write e0
+pin DC 0
+write 15
+pin DC 1
+write 00
+pin DC 0
+write 50
+pin DC 1
+write 11
+pin DC 1
+write 07
+pin DC 0
+write 60
+pin DC 1
+write 22

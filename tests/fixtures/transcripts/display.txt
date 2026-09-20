@@ -1,0 +1,15 @@
+pin DC 0
+write 10
+pin DC 1
+write2 48000 sha256=25ecf50e35dbd8dc7d631e32f86a31890c0c4e4443a85a799489848950b27b5d
+pin DC 0
+write 13
+pin DC 1
+write2 48000 sha256=0b17705e4f0574cbe348c6f89bc84bb0670016318a6930ba00943b31681fa0a0
+pin DC 0
+write 12
+delay 100
+pin DC 0
+write 71
+read BUSY 1
+delay 200

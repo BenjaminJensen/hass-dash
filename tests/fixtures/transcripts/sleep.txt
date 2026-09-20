@@ -1,0 +1,15 @@
+pin DC 0
+write 02
+pin DC 0
+write 71
+read BUSY 1
+delay 200
+pin DC 0
+write 07
+pin DC 1
+write a5
+delay 2000
+spi close
+pin RST 0
+pin DC 0
+pin PWR 0
