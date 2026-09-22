@@ -7,7 +7,7 @@ testable without a display, a source or a Home Assistant instance.
 
 from __future__ import annotations
 
-from math import exp
+from math import ceil, exp, floor
 from statistics import mean, median
 
 from domain.models import (
@@ -225,3 +225,58 @@ def temperature_bounds(points: tuple[HourlyPoint, ...]) -> tuple[float | None, f
     if not values:
         return (None, None)
     return (min(values), max(values))
+
+
+#: The degree steps a temperature gridline is allowed to fall on, coarsest
+#: last. Nothing finer than a whole degree: a gridline labelled "14,5°" is a
+#: number nobody reads at three metres (INTENT.md section 2). The coarse end is
+#: further out than any Danish day needs, so that the grid stays inside its
+#: line budget rather than falling off the end of this tuple.
+TICK_STEPS = (1, 2, 5, 10, 20, 50)
+
+#: At most four gridlines, because the plot band is under 60 px tall and a
+#: label needs 14 of them. Three intervals is the densest grid that can still
+#: be read rather than merely seen.
+MAX_TICK_INTERVALS = 3
+
+
+def temperature_scale(
+    points: tuple[HourlyPoint, ...],
+    steps: tuple[int, ...] = TICK_STEPS,
+    maximum: int = MAX_TICK_INTERVALS,
+) -> tuple[float | None, float | None, tuple[int, ...]]:
+    """The band the curve is drawn against, and the gridlines across it.
+
+    The band is the forecast's own range rounded outward to whole steps, and
+    the gridlines are those steps. Rounding outward is what buys round numbers
+    on the axis, and it costs the height between the extreme and its gridline -
+    the line no longer touches the top and bottom of the band, as it did when
+    the band *was* the range and a "9°-18°" readout in the title was the only
+    thing saying what the shape was worth. The gridlines say it better.
+
+    The step is the finest that keeps the grid to `maximum` intervals, so a day
+    that moves three degrees is drawn against a three-degree grid rather than
+    being flattened onto a ten-degree one.
+    """
+    low, high = temperature_bounds(points)
+    if low is None or high is None:
+        return (None, None, ())
+
+    bands = [_band(low, high, step) for step in steps]
+    step, bottom, top = next(
+        (band for band in bands if (band[2] - band[1]) // band[0] <= maximum),
+        bands[-1],
+    )
+
+    return (float(bottom), float(top), tuple(range(bottom, top + 1, step)))
+
+
+def _band(low: float, high: float, step: int) -> tuple[int, int, int]:
+    """One candidate scale: the step, and the range rounded outward onto it.
+
+    A forecast that never moves would round to a band of no height, which has
+    no top and no bottom to draw. It gets one step of room instead.
+    """
+    bottom = floor(low / step) * step
+    top = ceil(high / step) * step
+    return (step, bottom, top + step if top == bottom else top)

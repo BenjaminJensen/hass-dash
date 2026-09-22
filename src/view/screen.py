@@ -58,7 +58,7 @@ def screen(snapshot: Snapshot, boxes: ScreenBoxes | None = None) -> tuple[DrawIt
     items.extend(seams(left))
     items.extend(hero(snapshot.weather, snapshot.sun, left.hero))
     items.extend(strip(snapshot.weather, snapshot.sun, left.strip))
-    items.extend(curve(snapshot.hourly, left.curve))
+    items.extend(curve(snapshot.hourly, snapshot.weather.temperature, left.curve))
     items.extend(days(snapshot.daily, left.days))
     items.extend(room_table(snapshot.rooms, room_table_boxes(boxes.right, len(snapshot.rooms))))
 

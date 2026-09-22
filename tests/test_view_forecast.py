@@ -13,17 +13,20 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from domain.derive import temperature_scale
 from domain.format_da import PLACEHOLDER
 from domain.models import DailyPoint, HourlyPoint
-from view.boxes import CURVE_POINTS, curve_boxes, screen_boxes
+from view.boxes import CURVE_AXIS_EVERY, CURVE_HOURS, CURVE_POINTS, curve_boxes, screen_boxes
 from view.drawlist import (
+    Align,
     Colour,
+    Edge,
     Primitive,
     UpdateClass,
     inconsistent_regions,
     violations,
 )
-from view.forecast import curve, days
+from view.forecast import LABEL_WIDTH, TICK_HEIGHT, curve, days
 
 UTC = timezone.utc
 BOXES = screen_boxes().left
@@ -40,11 +43,14 @@ def hours(temperatures, precipitation=None, start=START):
 
 
 #: A day that warms from 9 to 18 and cools back, which is what a curve is for.
-NOMINAL = hours([9 + min(index, 24 - index) * 0.75 for index in range(24)])
+NOMINAL = hours([9 + min(index, 24 - index) * 0.75 for index in range(CURVE_POINTS)])
+
+#: What the outdoor sensor says right now, which is not the forecast's problem.
+NOW = 17.0
 
 
-def draw_curve(hourly=NOMINAL):
-    return curve(hourly, BOXES.curve)
+def draw_curve(hourly=NOMINAL, now=NOW):
+    return curve(hourly, now, BOXES.curve)
 
 
 def draw_days(daily):
@@ -64,13 +70,27 @@ def text_of(items, region):
 class TestTheCurveTitle:
     def test_it_says_how_far_forward_it_looks(self):
         """Not "today": the payload starts at the current hour. PLAN.md slice 2.2."""
-        assert f"NÆSTE {CURVE_POINTS} TIMER" in text_of(draw_curve(), "curve.title")
+        assert f"TEMPERATUR NÆSTE {CURVE_HOURS} TIMER" in text_of(draw_curve(), "curve.title")
 
-    def test_it_states_the_range_the_plot_is_scaled_to(self):
-        assert "9°–18°" in text_of(draw_curve(), "curve.title")
+    def test_it_reads_out_the_hour_the_line_starts_on(self):
+        assert "NU 17°" in text_of(draw_curve(), "curve.title")
 
-    def test_an_empty_forecast_states_a_range_of_placeholders(self):
-        assert f"{PLACEHOLDER}–{PLACEHOLDER}" in text_of(draw_curve(()), "curve.title")
+    def test_the_reading_is_the_sensor_rather_than_the_forecast(self):
+        """The hero's number, repeated. The forecast's first hour is a forecast."""
+        assert "NU 11°" in text_of(draw_curve(NOMINAL, 11.4), "curve.title")
+
+    def test_a_missing_reading_is_a_placeholder_and_not_a_blank(self):
+        assert f"NU {PLACEHOLDER}" in text_of(draw_curve(now=None), "curve.title")
+
+    def test_a_placeholder_is_not_a_marker_and_spends_no_red(self):
+        items = draw_curve(hourly=(), now=None)
+
+        assert Colour.RED not in {item.colour for item in items}
+
+    def test_the_reading_is_the_curves_one_red_thing_outside_the_rain(self):
+        title = [item for item in draw_curve() if item.region == "curve.title"]
+
+        assert [item.colour for item in title] == [Colour.BLACK, Colour.RED]
 
 
 class TestTheCurveLine:
@@ -89,23 +109,32 @@ class TestTheCurveLine:
 
         assert points[1][1] < points[0][1]
 
-    def test_the_extremes_touch_the_edges_of_the_plot_band(self):
+    def test_the_extremes_sit_inside_the_band_its_gridlines_bound(self):
+        """The band rounds out to whole degrees now, so the line no longer
+        touches its edges - it touches the gridlines that say why."""
         band = curve_boxes(BOXES.curve).line
         ys = [y for _, y in self.lines(draw_curve())[0].points]
 
-        assert min(ys) == band.y
-        assert max(ys) == band.bottom - 1
+        assert band.y <= min(ys) < max(ys) < band.bottom
 
     def test_a_flat_forecast_does_not_divide_by_zero(self):
         points = self.lines(draw_curve(hours([12.0] * 6)))[0].points
 
         assert len({y for _, y in points}) == 1
 
+    def test_the_line_spans_the_plot_from_edge_to_edge(self):
+        plot = curve_boxes(BOXES.curve).plot
+        xs = [x for x, _ in self.lines(draw_curve())[0].points]
+
+        assert min(xs) == plot.x
+        assert max(xs) == plot.right - 1
+
     def test_the_hours_are_evenly_spaced_left_to_right(self):
+        """To the pixel the rounding leaves over, which nobody can see."""
         xs = [x for x, _ in self.lines(draw_curve())[0].points]
         steps = {later - earlier for earlier, later in zip(xs, xs[1:])}
 
-        assert len(steps) == 1
+        assert max(steps) - min(steps) <= 1
 
     def test_a_missing_hour_breaks_the_line_instead_of_being_drawn_through(self):
         """The forecast did not say what happens at 20.00. Nor does the screen."""
@@ -126,6 +155,7 @@ class TestTheCurveLine:
         assert self.lines(draw_curve(hours([None, None]))) == []
 
     def test_an_empty_forecast_is_a_legal_frame_with_a_title_and_nothing_else(self):
+        """The grid is geometry and survives; the scale and the hours do not."""
         items = draw_curve(())
 
         assert violations(items) == ()
@@ -181,18 +211,126 @@ class TestPrecipitationBars:
 
 
 class TestTheAxis:
-    def test_it_labels_every_sixth_hour(self):
-        assert len(text_of(draw_curve(), "curve.axis")) == CURVE_POINTS // 6
+    def labels(self, items):
+        return [item for item in items if item.region == "curve.axis"]
+
+    def test_it_labels_every_third_hour_from_now_to_the_same_hour_tomorrow(self):
+        assert len(text_of(draw_curve(), "curve.axis")) == CURVE_HOURS // CURVE_AXIS_EVERY + 1
 
     def test_the_labels_are_local_hours(self):
         """The forecast starts at 18.00 UTC, which is 20.00 in Copenhagen."""
-        assert text_of(draw_curve(), "curve.axis") == ["20", "02", "08", "14"]
+        assert text_of(draw_curve(), "curve.axis") == [
+            "20",
+            "23",
+            "02",
+            "05",
+            "08",
+            "11",
+            "14",
+            "17",
+            "20",
+        ]
 
-    def test_the_labels_are_partial_eligible_and_therefore_byte_aligned(self):
-        labels = [item for item in draw_curve() if item.region == "curve.axis"]
+    def test_a_short_forecast_labels_only_the_hours_it_reached(self):
+        """The gridlines above them are geometry; the labels are data."""
+        assert text_of(draw_curve(hours([12.0] * 7)), "curve.axis") == ["20", "23", "02"]
+
+    def test_a_label_is_centred_on_its_own_gridline(self):
+        plot = curve_boxes(BOXES.curve).plot
+        first, *_ = self.labels(draw_curve())
+
+        assert first.align is Align.CENTER
+        assert abs((first.box.x + first.box.right) // 2 - plot.x) <= 1
+
+    def test_the_last_label_is_trimmed_rather_than_left_over_the_column_rule(self):
+        column = BOXES.curve
+        last = self.labels(draw_curve())[-1]
+
+        assert last.box.right == column.right
+        assert last.box.width < LABEL_WIDTH
+
+    def test_the_labels_are_full_because_three_hourly_cannot_be_byte_aligned(self):
+        """See view/boxes.py: 8 divides neither the pitch nor its half."""
+        assert all(item.update is UpdateClass.FULL for item in self.labels(draw_curve()))
+
+
+class TestTheGrid:
+    def grid(self, items):
+        return [item for item in items if item.primitive is Primitive.RULE and item.dash]
+
+    def solid(self, items):
+        return [item for item in items if item.primitive is Primitive.RULE and not item.dash]
+
+    def test_the_plot_is_framed_left_and_below_and_nowhere_else(self):
+        """An axis on two sides; a box would fence the data in."""
+        assert {item.edge for item in self.solid(draw_curve())} == {Edge.LEFT, Edge.BOTTOM}
+
+    def test_every_labelled_hour_but_the_first_carries_a_dotted_vertical(self):
+        """The first is the plot's own left edge, and it is already solid."""
+        verticals = [item for item in self.grid(draw_curve()) if item.edge is Edge.LEFT]
+
+        assert len(verticals) == CURVE_HOURS // CURVE_AXIS_EVERY
+
+    def test_the_verticals_are_drawn_whatever_the_forecast_said(self):
+        assert len(self.grid(draw_curve(()))) == CURVE_HOURS // CURVE_AXIS_EVERY
+
+    def test_each_gridline_of_the_scale_is_a_dotted_horizontal(self):
+        _, _, ticks = temperature_scale(NOMINAL)
+        horizontals = [item for item in self.grid(draw_curve()) if item.edge is Edge.TOP]
+
+        assert len(horizontals) == len(ticks)
+
+    def test_a_horizontal_spans_the_plot_and_a_vertical_stands_on_the_baseline(self):
+        plot = curve_boxes(BOXES.curve).plot
+        grid = self.grid(draw_curve())
+
+        for item in grid:
+            if item.edge is Edge.TOP:
+                assert item.box.x == plot.x and item.box.right == plot.right
+            else:
+                assert item.box.y == plot.y and item.box.bottom == plot.bottom
+
+    def test_the_grid_is_black_and_under_the_data(self):
+        items = draw_curve(hours([12.0] * 4, precipitation=[1.0] * 4))
+        grid = self.grid(items)
+
+        assert {item.colour for item in grid} == {Colour.BLACK}
+        assert items.index(grid[-1]) < min(
+            index for index, item in enumerate(items) if item.primitive is Primitive.LINE
+        )
+
+
+class TestTheTickGutter:
+    def test_it_labels_every_gridline_of_the_scale(self):
+        _, _, ticks = temperature_scale(NOMINAL)
+
+        assert text_of(draw_curve(), "curve.ticks") == [f"{tick}°" for tick in ticks]
+
+    def test_the_labels_stay_in_the_gutter_beside_the_plot(self):
+        gutter = curve_boxes(BOXES.curve).ticks
+        labels = [item for item in draw_curve() if item.region == "curve.ticks"]
+
+        assert all(item.box.x == gutter.x and item.box.right == gutter.right for item in labels)
+        assert all(item.box.y >= gutter.y and item.box.bottom <= gutter.bottom for item in labels)
+
+    def test_a_label_sits_on_the_line_it_names(self):
+        boxes = curve_boxes(BOXES.curve)
+        low, high, ticks = temperature_scale(NOMINAL)
+        middle = boxes.line.bottom - 1 - (ticks[1] - low) / (high - low) * (boxes.line.height - 1)
+        label = [item for item in draw_curve() if item.region == "curve.ticks"][1]
+
+        assert abs((label.box.y + label.box.bottom) // 2 - middle) <= TICK_HEIGHT // 2
+
+    def test_a_forecast_with_no_temperatures_has_no_scale_to_label(self):
+        assert text_of(draw_curve(hours([None, None])), "curve.ticks") == []
+
+    def test_the_gutter_keeps_the_partial_class_the_rest_of_the_curve_spent(self):
+        """Black, and the one box here still aligned to 8."""
+        labels = [item for item in draw_curve() if item.region == "curve.ticks"]
 
         assert all(item.update is UpdateClass.PARTIAL for item in labels)
         assert all(item.box.is_byte_aligned for item in labels)
+        assert {item.colour for item in labels} == {Colour.BLACK}
 
 
 class TestTheDayStrip:
@@ -268,13 +406,15 @@ class TestTheRefreshContract:
     def test_no_region_changes_its_update_class_with_the_forecast(self):
         assert inconsistent_regions([draw_curve(hourly) for hourly in self.INPUTS]) == ()
 
-    def test_the_plot_is_full_only_because_the_bars_share_its_window(self):
-        """One region, one update class - and red has no partial path."""
+    def test_only_the_tick_gutter_is_still_partial_eligible(self):
+        """The plot holds red bars, the title holds a red reading, and the hour
+        labels are no longer byte-aligned. One region, one update class."""
         classes = {item.region: item.update for item in draw_curve()}
 
         assert classes["curve.plot"] is UpdateClass.FULL
-        assert classes["curve.title"] is UpdateClass.PARTIAL
-        assert classes["curve.axis"] is UpdateClass.PARTIAL
+        assert classes["curve.title"] is UpdateClass.FULL
+        assert classes["curve.axis"] is UpdateClass.FULL
+        assert classes["curve.ticks"] is UpdateClass.PARTIAL
 
     def test_nothing_the_curve_draws_leaves_the_plot(self):
         wet = hours([9.0 + index for index in range(CURVE_POINTS)], [2.0] * CURVE_POINTS)

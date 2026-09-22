@@ -95,17 +95,25 @@ against a bitmap.
 largest size on the screen, condition text, apparent temperature, today's
 high/low. Below it a six-slot strip: sunrise, sunset, wind, outdoor humidity,
 pressure, precipitation. Below that the temperature curve for the next 24
-hours, with precipitation as bars along the baseline and the hour labelled
-every six. Below that six days: weekday, icon, high, low.
+hours, drawn on a grid: whole-degree gridlines labelled in a gutter down its
+left, the hour labelled every three along the bottom, and precipitation as bars
+along the baseline. Below that six days: weekday, icon, high, low.
+
+The grid is the point of that region rather than decoration on it. A line
+between two unlabelled edges says only that the day has a shape; the gridlines
+say what the shape is worth, which is the difference between "it gets colder
+tonight" and "it drops to nine".
 
 Two of those are what the provider gives rather than what was first asked for,
 and the difference is recorded because it is not a detail. The hourly forecast
 **starts at the current hour** and runs forward, so the curve cannot be "today
 from 00 to 24" without pulling history out of the recorder API for hours nobody
 is dressing for — and since the curve starts at now, the now-marker that was
-sketched on it would sit on its left edge, where it would be decoration. The
-daily forecast returns **six days, not seven**. Both were settled by the capture
-in PLAN.md slice 2.2.
+sketched on it would sit on its left edge, where a dashed line and a dot would
+be decoration. What is left of the marker is the reading in the curve's title:
+`NU 17°`, red, naming the temperature the left-hand end of the line stands on.
+The daily forecast returns **six days, not seven**. Both were settled by the
+capture in PLAN.md slice 2.2.
 
 The apparent temperature is **computed**, not fetched: this instance publishes
 no `apparent_temperature`, but it publishes the temperature, humidity and wind
@@ -119,8 +127,10 @@ Beneath, a summary block: room count, mean temperature, mean humidity, and the
 min / max / spread that reveal whether the house is evenly heated.
 
 **Where red is allowed.** Condition text when precipitation is occurring; the
-precipitation value and the bars on the curve; the alert arrow and value on a
-room outside its comfort band; a humidity badge on a room above its threshold.
+precipitation value and the bars on the curve; the curve's `NU` reading, which
+is what became of the "you are here" marker and which reverts to black when
+there is no reading to mark; the alert arrow and value on a room outside its
+comfort band; a humidity badge on a room above its threshold.
 Nowhere else — and in particular not on the largest number on the screen, which
 reports the weather rather than asking anyone to act on it.
 

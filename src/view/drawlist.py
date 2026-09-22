@@ -64,7 +64,9 @@ class Primitive(Enum):
 
     `RULE` draws a thin line along one edge of its box rather than being given
     the thin geometry directly, so that the box stays a legal refresh window -
-    a 2-pixel-wide box could never satisfy the byte alignment rule.
+    a 2-pixel-wide box could never satisfy the byte alignment rule. A rule with
+    a `dash` is the same line broken into segments, which is how the curve's
+    gridlines stay behind the data instead of competing with it.
 
     `LINE` is the one primitive that carries geometry of its own, because a
     temperature curve is not expressible as a rectangle. Its points are still
@@ -216,6 +218,8 @@ class DrawItem:
     icon: str = ""
     icon_size: int = 50
     points: tuple[tuple[int, int], ...] = ()
+    dash: int = 0
+    gap: int = 0
 
 
 def draw_fill(region: str, box: Box, colour: Colour, update: UpdateClass) -> DrawItem:
@@ -248,8 +252,16 @@ def draw_rule(
     update: UpdateClass,
     colour: Colour = Colour.BLACK,
     thickness: int = 1,
+    dash: int = 0,
+    gap: int = 0,
 ) -> DrawItem:
-    """A separator along one edge of a box. The box stays the refresh window."""
+    """A separator along one edge of a box. The box stays the refresh window.
+
+    `dash` and `gap` break the line into segments of that many pixels. A dash
+    of zero is a solid rule, which is what a separator wants; a gridline wants
+    the broken one, so that the plot is read as data on a grid rather than as a
+    grid with data somewhere in it.
+    """
     return DrawItem(
         region=region,
         primitive=Primitive.RULE,
@@ -258,6 +270,8 @@ def draw_rule(
         update=update,
         thickness=thickness,
         edge=edge,
+        dash=dash,
+        gap=gap,
     )
 
 
@@ -362,6 +376,9 @@ def violations(items: tuple[DrawItem, ...] | list[DrawItem]) -> tuple[str, ...]:
             found.append(
                 f"{where}: partial box x={item.box.x}..{item.box.right} is not a multiple of 8"
             )
+
+        if item.dash and (item.gap <= 0 or item.primitive is not Primitive.RULE):
+            found.append(f"{where}: a dash only means anything on a rule, and only with a gap")
 
         if item.primitive is Primitive.TEXT and not item.text:
             found.append(f"{where}: text item with nothing to draw")

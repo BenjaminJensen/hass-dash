@@ -153,13 +153,23 @@ class BMPRenderer:
         elif item.primitive is Primitive.OUTLINE:
             draw.rectangle(_corners(item.box), outline=fill, width=item.thickness)
         elif item.primitive is Primitive.RULE:
-            draw.rectangle(_corners(_rule_box(item.box, item.edge, item.thickness)), fill=fill)
+            self._draw_rule(item, draw, fill)
         elif item.primitive is Primitive.TEXT:
             self._draw_text(item, draw, fill)
         elif item.primitive is Primitive.ICON:
             self._draw_icon(item, surface, fill)
         elif item.primitive is Primitive.LINE:
             draw.line(list(item.points), fill=fill, width=item.thickness, joint="curve")
+
+    def _draw_rule(self, item: DrawItem, draw: Any, fill: int) -> None:
+        """The thin strip along one edge, whole or broken into dashes."""
+        strip = _rule_box(item.box, item.edge, item.thickness)
+        if not item.dash:
+            draw.rectangle(_corners(strip), fill=fill)
+            return
+
+        for segment in _dashes(strip, item.dash, item.gap):
+            draw.rectangle(_corners(segment), fill=fill)
 
     def _draw_text(self, item: DrawItem, draw: Any, fill: int) -> None:
         """Place a string inside its box by alignment, from the ascender line.
@@ -227,6 +237,28 @@ class BMPRenderer:
 def _corners(box: Box) -> tuple[int, int, int, int]:
     """PIL's rectangle takes an inclusive bottom-right corner."""
     return (box.x, box.y, box.right - 1, box.bottom - 1)
+
+
+def _dashes(strip: Box, dash: int, gap: int) -> list[Box]:
+    """A rule strip cut into dashes along whichever way it runs.
+
+    The first dash starts at the strip's own beginning and the last is clipped
+    rather than dropped, so a gridline always meets both edges of the plot it
+    crosses - a dotted line that stops short reads as a shorter line.
+    """
+    horizontal = strip.width >= strip.height
+    length = strip.width if horizontal else strip.height
+
+    segments = []
+    for offset in range(0, length, dash + gap):
+        run = min(dash, length - offset)
+        segments.append(
+            Box(strip.x + offset, strip.y, run, strip.height)
+            if horizontal
+            else Box(strip.x, strip.y + offset, strip.width, run)
+        )
+
+    return segments
 
 
 def _rule_box(box: Box, edge: Edge, thickness: int) -> Box:

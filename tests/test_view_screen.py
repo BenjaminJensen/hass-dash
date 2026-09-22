@@ -22,10 +22,16 @@ FIXTURES = Path(__file__).parent / "fixtures"
 HOUSE = Path(__file__).parent.parent / "house.yml"
 FROZEN = datetime(2026, 9, 19, 12, 32, tzinfo=timezone.utc)
 
-#: The three regions outside the room table where INTENT.md section 3 permits
-#: red. `curve.plot` holds the precipitation bars; its temperature line is
-#: black and shares the window, which is why the whole plot is full-only.
-RED_ELSEWHERE = frozenset({"weather.condition", "strip.precipitation", "curve.plot"})
+#: The regions outside the room table where INTENT.md section 3 permits red.
+#: `curve.plot` holds the precipitation bars; its temperature line is black and
+#: shares the window, which is why the whole plot is full-only. `curve.title`
+#: holds the "you are here" reading section 2 grants red to by name.
+RED_ELSEWHERE = frozenset({"weather.condition", "strip.precipitation", "curve.plot", "curve.title"})
+
+#: The one region that is full-only for a reason other than red: three-hourly
+#: labels sit on a 43-pixel pitch, and a partial window has to start and end on
+#: a multiple of 8. See `view/boxes.py`.
+FULL_WITHOUT_RED = frozenset({"curve.axis"})
 
 
 def permitted_red(config):
@@ -138,13 +144,13 @@ class TestTheRefreshContract:
         assert violations(items) == ()
         assert Colour.RED not in {item.colour for item in items}
 
-    def test_the_full_only_regions_are_exactly_the_ones_that_could_be_red(self, items, config):
+    def test_the_full_only_regions_are_the_ones_that_could_be_red_and_one_more(self, items, config):
         """The count PLAN.md M9 has to be decided on, pinned so it cannot drift.
 
-        Every full-only region on this screen is one INTENT.md section 3 allows
-        red in, and every one of them is full-only because it *could* be red,
-        not because it is red today. Nothing else has to wait for the
-        26-second cycle.
+        Every full-only region on this screen is either one INTENT.md section 3
+        allows red in - full because it *could* be red, not because it is red
+        today - or the curve's hour labels, which are full because they cannot
+        be byte-aligned. Nothing else has to wait for the 26-second cycle.
 
         If this ever swings far toward partial, partial refresh has become worth
         building. Today it carries the whole weather column bar three regions,
@@ -155,10 +161,12 @@ class TestTheRefreshContract:
         full = {region for region, update in classes.items() if update is UpdateClass.FULL}
         alerting = {region for region in full if region.endswith(".marker")}
 
-        assert full <= permitted_red(config)
+        assert full <= permitted_red(config) | FULL_WITHOUT_RED
 
         indoor = 10
-        assert len(full) == indoor * 2 + len(alerting) + len(RED_ELSEWHERE)
+        assert len(full) == (
+            indoor * 2 + len(alerting) + len(RED_ELSEWHERE) + len(FULL_WITHOUT_RED)
+        )
 
         header_and_divider = 3 + 1
         seams = 3  # between the left column's four regions
@@ -169,7 +177,7 @@ class TestTheRefreshContract:
         summary = 4  # rule, headline, and one statistics line per axis
         hero = 4  # icon, temperature, apparent, high/low - never red
         strip_slots = 5  # everything but precipitation
-        curve = 2  # the title and the hour labels; the plot holds the bars
+        curve = 1  # the tick gutter; the title, the plot and the axis are full
         days = 6  # this provider returns six, not seven
 
         assert len(classes) - len(full) == (

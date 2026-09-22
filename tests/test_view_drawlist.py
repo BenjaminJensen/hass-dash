@@ -201,6 +201,24 @@ class TestViolations:
 
         assert violations([draw_line("l", ALIGNED, points, UpdateClass.FULL)]) == ()
 
+    def test_a_dash_with_no_gap_is_a_solid_line_pretending(self):
+        item = draw_rule("g", ALIGNED, Edge.TOP, UpdateClass.FULL, dash=2)
+
+        assert any("only with a gap" in line for line in violations([item]))
+
+    def test_a_dash_on_anything_but_a_rule_would_be_ink_the_renderer_ignores(self):
+        from dataclasses import replace
+
+        line = draw_line("l", ALIGNED, ((8, 0), (8, 5)), UpdateClass.FULL)
+        item = replace(line, dash=1, gap=4)
+
+        assert any("only means anything on a rule" in entry for entry in violations([item]))
+
+    def test_a_dashed_rule_with_a_gap_is_fine(self):
+        item = draw_rule("g", ALIGNED, Edge.TOP, UpdateClass.FULL, dash=1, gap=4)
+
+        assert violations([item]) == ()
+
     def test_every_problem_is_reported_not_just_the_first(self):
         items = [
             label(region="a", colour=Colour.RED, update=UpdateClass.PARTIAL),

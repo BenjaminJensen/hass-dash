@@ -17,8 +17,10 @@ import pytest
 from view.boxes import (
     COLUMN_HEAD_HEIGHT,
     CURVE_AXIS_EVERY,
-    CURVE_POINT_STEP,
+    CURVE_HEADROOM,
+    CURVE_HOURS,
     CURVE_POINTS,
+    CURVE_TICK_WIDTH,
     DAY_COUNT,
     DAY_WIDTH,
     HEADER_HEIGHT,
@@ -80,7 +82,7 @@ def every_box() -> list:
         found.extend([slot.box, slot.label, slot.value])
 
     curve = curve_boxes(boxes.left.curve)
-    found.extend([curve.title, curve.plot, curve.bars, curve.line, curve.axis])
+    found.extend([curve.title, curve.ticks, curve.plot, curve.bars, curve.line, curve.axis])
 
     for day in day_boxes(boxes.left.days):
         found.extend([day.box, day.name, day.icon, day.values])
@@ -193,6 +195,21 @@ class TestTheLeftColumn:
         assert curve.plot.bottom <= curve.axis.y
         assert curve.axis.bottom == curve.box.bottom
 
+    def test_the_tick_gutter_sits_between_the_margin_and_the_plot(self):
+        curve = curve_boxes(screen_boxes().left.curve)
+
+        assert curve.ticks.x == LEFT_MARGIN
+        assert curve.ticks.width == CURVE_TICK_WIDTH
+        assert curve.ticks.right == curve.plot.x
+
+    def test_the_tick_gutter_claims_the_headroom_above_the_plot(self):
+        """So that the topmost gridline's label is centred like the others."""
+        curve = curve_boxes(screen_boxes().left.curve)
+
+        assert curve.ticks.y == curve.title.bottom
+        assert curve.plot.y - curve.ticks.y == CURVE_HEADROOM
+        assert curve.ticks.bottom == curve.plot.bottom
+
     def test_the_bar_band_is_the_bottom_of_the_plot_and_the_line_the_rest(self):
         curve = curve_boxes(screen_boxes().left.curve)
 
@@ -200,18 +217,17 @@ class TestTheLeftColumn:
         assert curve.line.bottom == curve.bars.y
         assert curve.bars.bottom == curve.plot.bottom
 
-    def test_every_plotted_hour_lands_on_a_byte_boundary(self):
-        """Which is what lets the axis labels hanging off them be partial windows."""
-        curve = curve_boxes(screen_boxes().left.curve)
-        labelled = range(0, CURVE_POINTS, CURVE_AXIS_EVERY)
+    def test_the_plot_takes_what_the_tick_gutter_leaves_of_the_column(self):
+        """The hours are spread across it, so its width is the curve's scale."""
+        left = screen_boxes().left
+        curve = curve_boxes(left.curve)
 
-        assert all((curve.plot.x + index * CURVE_POINT_STEP) % 8 == 0 for index in labelled)
+        assert curve.plot.right == left.content.right
 
-    def test_the_last_plotted_hour_stays_inside_the_plot(self):
-        curve = curve_boxes(screen_boxes().left.curve)
-        last = curve.plot.x + (CURVE_POINTS - 1) * CURVE_POINT_STEP
-
-        assert last < curve.plot.right
+    def test_the_labelled_hours_divide_the_plot_evenly(self):
+        """Nine labels, eight gaps - which is what three-hourly means here."""
+        assert CURVE_POINTS == CURVE_HOURS + 1
+        assert CURVE_HOURS % CURVE_AXIS_EVERY == 0
 
     def test_the_day_strip_is_six_equal_columns(self):
         columns = day_boxes(screen_boxes().left.days)

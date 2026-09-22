@@ -130,6 +130,31 @@ class TestPrimitives:
         assert planes.black.getpixel(inked) == INK
         assert planes.black.getpixel(blank) == BLANK
 
+    def test_a_dashed_rule_inks_the_dash_and_leaves_the_gap(self, renderer):
+        """One pixel in every five, which is what a gridline is made of."""
+        box = Box(0, 0, 20, 4)
+        planes = renderer.planes([draw_rule("r", box, Edge.TOP, UpdateClass.FULL, dash=1, gap=4)])
+
+        assert {x for x, _ in ink_pixels(planes.black)} == {0, 5, 10, 15}
+
+    def test_a_dashed_rule_runs_the_other_way_too(self, renderer):
+        box = Box(0, 0, 4, 20)
+        planes = renderer.planes([draw_rule("r", box, Edge.LEFT, UpdateClass.FULL, dash=2, gap=3)])
+
+        assert {y for _, y in ink_pixels(planes.black)} == {0, 1, 5, 6, 10, 11, 15, 16}
+
+    def test_the_last_dash_is_clipped_rather_than_dropped(self, renderer):
+        """A gridline that stops short of its axis reads as a shorter gridline."""
+        box = Box(0, 0, 7, 4)
+        planes = renderer.planes([draw_rule("r", box, Edge.TOP, UpdateClass.FULL, dash=3, gap=3)])
+
+        assert {x for x, _ in ink_pixels(planes.black)} == {0, 1, 2, 6}
+
+    def test_a_rule_with_no_dash_is_still_solid(self, renderer):
+        planes = renderer.planes([draw_rule("r", Box(0, 0, 8, 4), Edge.TOP, UpdateClass.FULL)])
+
+        assert {x for x, _ in ink_pixels(planes.black)} == set(range(8))
+
     def test_text_lands_inside_its_box(self, renderer):
         box = Box(0, 0, 64, 32)
         planes = renderer.planes([draw_text("t", box, "8", TextStyle.ROOM_VALUE, UpdateClass.FULL)])

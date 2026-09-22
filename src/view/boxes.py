@@ -78,23 +78,42 @@ HERO_LINE_HEIGHT = 34
 STRIP_COLUMNS = (120, 128, 128)
 STRIP_LABEL_HEIGHT = 16
 
-#: The curve: a title line, the plot, and the hour labels under it.
+#: The curve: a title line, the plot, and the hour labels under it. The title
+#: splits late because "TEMPERATUR NÆSTE 24 TIMER" measures 234 px at
+#: `CURVE_TITLE`, and what follows it is six characters wide.
 CURVE_TITLE_HEIGHT = 26
-CURVE_AXIS_HEIGHT = 24
-CURVE_TITLE_SPLIT = 192
+CURVE_AXIS_HEIGHT = 20
+CURVE_TITLE_SPLIT = 256
 
-#: 24 hours plotted at a fixed 16 px step rather than at `width // 23`. The
-#: step is what makes every sixth point land on a multiple of 8, and the axis
-#: labels hang off those points - so an arbitrary step would put the hour
-#: labels in boxes that cannot be partial windows. 8 + 23 x 16 = 376, which is
-#: inside the 8..384 content column with a pixel to spare for the line's width.
-CURVE_POINTS = 24
-CURVE_POINT_STEP = 16
-CURVE_AXIS_EVERY = 6
+#: White between the title and the top of the plot, which is what lets the
+#: topmost gridline carry a label centred on it rather than one shoved down
+#: into the plot to keep it off the title.
+CURVE_HEADROOM = 8
+
+#: The gutter to the left of the plot, where the temperature gridlines are
+#: labelled. 32 rather than the 24 the widest label needs, because the plot's
+#: left edge has to stay on a multiple of 8 and the column starts at 8.
+CURVE_TICK_WIDTH = 32
+
+#: 24 hours, plotted as 25 points: the hour it is now and the 24 after it, so
+#: that both ends of the span carry a label and the axis reads 13 to 13 rather
+#: than 13 to 12.
+#:
+#: The hours are spread across whatever the tick gutter leaves of the content
+#: column, rather than stepped by a constant as they were when the constant was
+#: 16 px. That step existed to land every labelled hour on a multiple of 8, and
+#: three-hourly labels on a 344 px plot cannot do that whatever the step is -
+#: so the plot fills its box instead, and the axis labels give up the partial
+#: class they were never refreshed in anyway.
+CURVE_HOURS = 24
+CURVE_POINTS = CURVE_HOURS + 1
+CURVE_AXIS_EVERY = 3
 
 #: The bottom of the plot is reserved for precipitation bars, so the
-#: temperature line never runs through them.
-CURVE_BAR_HEIGHT = 26
+#: temperature line never runs through them. Narrower than it was, because the
+#: band is also the gap between the lowest gridline and the baseline, and a
+#: deep one reads as a plot with nothing at the bottom of it.
+CURVE_BAR_HEIGHT = 14
 
 #: The days strip: six 64 px columns starting at the column's left edge, which
 #: leaves the same 8 px gutter as everything above it. A weekday, a 50 px icon
@@ -142,15 +161,22 @@ class SlotBox:
 
 @dataclass(frozen=True)
 class CurveBoxes:
-    """The temperature curve: a title, the plot area, and the hour labels.
+    """The temperature curve: a title, the plot area, and the labels around it.
 
     `bars` is the bottom band of the plot, where precipitation is drawn. It
     overlaps `plot` deliberately - they are one refresh window, because the
     bars are red and the line beside them cannot be refreshed without them.
+
+    `ticks` is the gutter to the plot's left, holding one temperature label per
+    gridline. It is outside the plot and black-only, which is the whole reason
+    it is a box of its own rather than part of it. It reaches higher than the
+    plot does, by exactly the headroom, so that the label on the topmost
+    gridline can be centred on it like every other.
     """
 
     box: Box
     title: Box
+    ticks: Box
     plot: Box
     bars: Box
     line: Box
@@ -310,19 +336,26 @@ def _slot(box: Box) -> SlotBox:
 
 
 def curve_boxes(box: Box) -> CurveBoxes:
-    """A title line, the plot, and the axis - with the plot inside the margins.
+    """A title line, the tick gutter, the plot, and the axis under it.
 
     The title and the axis span the whole column because they are text with
-    their own padding; only the plot has to align with the data it draws.
+    their own padding; the plot takes everything the gutter leaves, and the
+    hours are laid out inside it so that the first and the last sit on its two
+    edges. Both remain multiples of 8, which is what keeps every box in this
+    model a legal refresh window even though nothing inside this one is.
     """
     title = box.top(CURVE_TITLE_HEIGHT)
     axis = box.bottom_slice(CURVE_AXIS_HEIGHT)
-    middle = Box(box.x, title.bottom, box.width, axis.y - title.bottom)
-    plot = _content(middle)
+    top = title.bottom + CURVE_HEADROOM
+    middle = _content(Box(box.x, top, box.width, axis.y - top))
+
+    _, plot = middle.columns(CURVE_TICK_WIDTH, middle.width - CURVE_TICK_WIDTH)
+    ticks = Box(middle.x, title.bottom, CURVE_TICK_WIDTH, plot.bottom - title.bottom)
 
     return CurveBoxes(
         box=box,
         title=title,
+        ticks=ticks,
         plot=plot,
         bars=plot.bottom_slice(CURVE_BAR_HEIGHT),
         line=plot.top(plot.height - CURVE_BAR_HEIGHT),

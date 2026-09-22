@@ -23,6 +23,7 @@ from domain.derive import (
     room_alert,
     temperature_alert,
     temperature_bounds,
+    temperature_scale,
 )
 from domain.models import (
     Climate,
@@ -396,3 +397,49 @@ class TestTemperatureBounds:
         """Not (0, 0) - a flat line at zero is a claim, and an empty plot is not."""
         assert temperature_bounds(()) == (None, None)
         assert temperature_bounds((HourlyPoint(), HourlyPoint())) == (None, None)
+
+
+class TestTemperatureScale:
+    def scale(self, *temperatures):
+        return temperature_scale(tuple(HourlyPoint(temperature=t) for t in temperatures))
+
+    def test_the_band_rounds_the_forecast_outward_onto_whole_degrees(self):
+        assert self.scale(13.1, 17.8) == (12.0, 18.0, (12, 14, 16, 18))
+
+    def test_the_gridlines_are_the_band_in_steps(self):
+        low, high, ticks = self.scale(9.0, 18.0)
+
+        assert (ticks[0], ticks[-1]) == (low, high)
+        assert len(set(later - earlier for earlier, later in zip(ticks, ticks[1:]))) == 1
+
+    def test_the_forecast_is_inside_the_band_it_is_drawn_against(self):
+        low, high, _ = self.scale(9.4, 17.6)
+
+        assert low <= 9.4 and 17.6 <= high
+
+    def test_a_narrow_day_gets_a_narrow_grid_rather_than_a_flattened_one(self):
+        """A degree and a half drawn against a ten-degree grid is a flat line."""
+        _, _, ticks = self.scale(14.2, 15.7)
+
+        assert ticks == (14, 15, 16)
+
+    def test_a_wide_day_coarsens_the_step_rather_than_growing_the_grid(self):
+        _, _, ticks = self.scale(-2.0, 19.0)
+
+        assert ticks == (-10, 0, 10, 20)
+
+    def test_the_grid_never_exceeds_four_lines(self):
+        for spread in range(1, 40):
+            _, _, ticks = self.scale(0.5, 0.5 + spread)
+
+            assert len(ticks) <= 4
+
+    def test_a_forecast_that_never_moves_still_has_a_top_and_a_bottom(self):
+        """A band of no height has nothing to map a temperature into."""
+        low, high, ticks = self.scale(12.0, 12.0)
+
+        assert low < high
+        assert ticks == (12, 13)
+
+    def test_nothing_to_measure_is_no_scale_and_no_gridlines(self):
+        assert temperature_scale(()) == (None, None, ())
