@@ -22,7 +22,7 @@ import pytest
 
 from domain.derive import house_summary
 from domain.format_da import PLACEHOLDER
-from domain.models import Climate, ComfortBand, HouseSummary, Room
+from domain.models import Climate, HouseSummary, Room
 from view.boxes import room_table as table_boxes, screen_boxes
 from view.drawlist import (
     Colour,
@@ -38,22 +38,32 @@ from view.rooms import (
     summary_block,
 )
 
-BAND = ComfortBand(min_temperature=19.0, max_temperature=24.0, max_humidity=60.0)
 
-
-def make_room(key="stue", temperature=21.0, humidity=45.0, comfort=BAND, **kwargs):
+def make_room(key="stue", temperature=21.0, humidity=45.0, **kwargs):
     return Room(
         key=key,
         name=kwargs.pop("name", key.title()),
         climate=Climate(temperature=temperature, humidity=humidity),
-        comfort=comfort,
         **kwargs,
     )
+
+
+def calm(count=4):
+    """Rooms all at 21 degrees and 45 %. A room is red when it differs from the
+    house, so the subject of a test needs a house to differ from - and enough of
+    one that the subject drags the mean less than the tolerance, or its calm
+    neighbours would turn red as well."""
+    return [make_room(f"r{i}", name=f"R{i}", order=i + 1) for i in range(count)]
 
 
 def draw(rooms):
     boxes = screen_boxes()
     return room_table(tuple(rooms), table_boxes(boxes.right, len(rooms)))
+
+
+def draw_in_house(**subject):
+    """The subject room, first, among four calm ones."""
+    return draw([make_room(**subject), *calm()])
 
 
 def region(items, name):
@@ -92,7 +102,7 @@ class TestContent:
 
     def test_the_outdoor_row_is_drawn_last_whatever_its_order(self):
         rooms = [
-            make_room("ude", order=0, is_outdoor=True, comfort=ComfortBand()),
+            make_room("ude", order=0, is_outdoor=True),
             make_room("stue", order=5),
         ]
         items = draw(rooms)
@@ -109,36 +119,44 @@ class TestContent:
 
 
 class TestColour:
-    def test_a_comfortable_room_is_entirely_black(self):
-        items = draw([make_room(temperature=21.0, humidity=45.0)])
+    def test_a_room_like_the_house_is_entirely_black(self):
+        items = draw_in_house(temperature=21.0, humidity=45.0)
 
         assert {item.colour for item in items} == {Colour.BLACK}
 
     def test_too_hot_draws_an_upward_marker_and_a_red_temperature(self):
-        items = draw([make_room(temperature=26.0)])
+        items = draw_in_house(temperature=26.0)
 
         assert texts(region(items, "room.stue.marker")) == [MARKER_TOO_HOT]
         assert region(items, "room.stue.marker")[0].colour is Colour.RED
         assert region(items, "room.stue.temperature")[0].colour is Colour.RED
 
     def test_too_cold_draws_a_downward_marker(self):
-        items = draw([make_room(temperature=14.0)])
+        items = draw_in_house(temperature=14.0)
 
         assert texts(region(items, "room.stue.marker")) == [MARKER_TOO_COLD]
 
-    def test_a_comfortable_room_has_no_marker_at_all(self):
+    def test_a_room_like_the_house_has_no_marker_at_all(self):
         """An arrow that is always there is decoration, and decoration spends red."""
-        assert region(draw([make_room()]), "room.stue.marker") == []
+        assert region(draw_in_house(), "room.stue.marker") == []
 
     def test_too_humid_draws_a_red_badge_around_a_red_value(self):
-        items = region(draw([make_room(humidity=72.0)]), "room.stue.humidity")
+        items = region(draw_in_house(humidity=72.0), "room.stue.humidity")
 
         assert {item.colour for item in items} == {Colour.RED}
         assert Primitive.OUTLINE in {item.primitive for item in items}
 
-    def test_a_room_with_no_comfort_band_is_never_red(self):
-        """Unjudged is not the same as fine, and neither of them is red."""
-        items = draw([make_room(temperature=40.0, humidity=99.0, comfort=ComfortBand())])
+    def test_too_dry_is_red_as_well(self):
+        items = region(draw_in_house(humidity=20.0), "room.stue.humidity")
+
+        assert {item.colour for item in items} == {Colour.RED}
+
+    def test_a_room_one_degree_off_the_house_is_not_red(self):
+        assert {item.colour for item in draw_in_house(temperature=22.0)} == {Colour.BLACK}
+
+    def test_a_room_alone_is_never_red(self):
+        """There is no house to differ from. Unjudged is not red."""
+        items = draw([make_room(temperature=40.0, humidity=99.0)])
 
         assert {item.colour for item in items} == {Colour.BLACK}
 
@@ -157,6 +175,7 @@ class TestColour:
             "room.hot.humidity",
             "room.cold.marker",
             "room.cold.temperature",
+            "room.cold.humidity",
         }
 
 
@@ -164,7 +183,7 @@ class TestTheOutdoorRow:
     """Inverted, and therefore reported rather than judged."""
 
     def test_it_is_filled_black_and_written_in_white(self):
-        items = draw([make_room("ude", is_outdoor=True, comfort=ComfortBand())])
+        items = draw([make_room("ude", is_outdoor=True)])
         fill = region(items, "room.ude.row")
 
         row = [item for item in items if item.region.startswith("room.ude.")]
@@ -241,11 +260,12 @@ class TestTheRefreshContract:
     """INTENT.md section 4, checked over inputs rather than asserted once."""
 
     MATRIX = (
-        ("comfortable", 21.0, 45.0),
-        ("too hot", 30.0, 45.0),
-        ("too cold", 5.0, 45.0),
-        ("too humid", 21.0, 80.0),
-        ("both", 30.0, 80.0),
+        ("like the house", 21.0, 45.0),
+        ("too hot", 26.0, 45.0),
+        ("too cold", 16.0, 45.0),
+        ("too humid", 21.0, 65.0),
+        ("too dry", 21.0, 25.0),
+        ("both", 26.0, 65.0),
         ("missing", None, None),
     )
 
@@ -255,6 +275,7 @@ class TestTheRefreshContract:
                 [
                     make_room("stue", temperature=t, humidity=h),
                     make_room("ude", temperature=t, humidity=h, is_outdoor=True),
+                    *calm(),
                 ]
             )
             for _, t, h in self.MATRIX
@@ -270,7 +291,7 @@ class TestTheRefreshContract:
         assert violations(draw(rooms)) == ()
 
     @pytest.mark.parametrize("cell", ["temperature", "humidity"])
-    def test_a_value_cell_is_full_only_even_while_comfortable(self, cell):
+    def test_a_value_cell_is_full_only_even_while_calm(self, cell):
         """The whole point: today's reading does not decide tomorrow's window."""
         items = region(draw([make_room(temperature=21.0, humidity=45.0)]), f"room.stue.{cell}")
 

@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 import pytest
 
 from config.house import DeviceConfig, EntityRef, HouseConfig, RoomConfig
-from domain.models import ComfortBand, HeatingAction, PowerState
+from domain.models import HeatingAction, PowerState
 from sources.mapping import (
     Problems,
     as_datetime,
@@ -226,7 +226,6 @@ class TestRoomReadings:
                 name="Ude",
                 is_outdoor=True,
                 temperature=EntityRef(entity_id="weather.home", attribute="temperature"),
-                comfort=ComfortBand(),
             )
         )
         states = {"weather.home": state("weather.home", "rainy", temperature=17.0)}
@@ -238,13 +237,6 @@ class TestRoomReadings:
         built = build_snapshot(config, {}).rooms[0]
 
         assert (built.key, built.name, built.icon, built.order) == ("garage", "Garage", "garage", 9)
-
-    def test_carries_the_comfort_band_from_the_configuration(self):
-        """The band decides the red, so it must survive the trip through a source."""
-        band = ComfortBand(min_temperature=17.0, max_temperature=22.0, max_humidity=60.0)
-        config = house(room("sune", comfort=band))
-
-        assert build_snapshot(config, {}).rooms[0].comfort == band
 
     def test_keeps_rooms_in_configuration_order(self):
         config = house(room("stue"), room("kokken"), room("gang"))

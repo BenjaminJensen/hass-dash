@@ -15,19 +15,16 @@ from domain.derive import (
     curve_hours,
     forecast_days,
     house_summary,
-    humidity_alert,
     indoor_rooms,
     is_night,
     is_precipitating,
     ordered_rooms,
     room_alert,
-    temperature_alert,
     temperature_bounds,
     temperature_scale,
 )
 from domain.models import (
     Climate,
-    ComfortBand,
     DailyPoint,
     HourlyPoint,
     HumidityAlert,
@@ -40,13 +37,12 @@ from domain.models import (
 UTC = timezone.utc
 
 
-def room(key="stue", temperature=None, humidity=None, comfort=None, **kwargs):
+def room(key="stue", temperature=None, humidity=None, **kwargs):
     """Build a room with just the fields a test cares about."""
     return Room(
         key=key,
         name=kwargs.pop("name", key.title()),
         climate=Climate(temperature=temperature, humidity=humidity),
-        comfort=comfort or ComfortBand(),
         **kwargs,
     )
 
@@ -111,78 +107,134 @@ class TestIsNight:
         assert is_night(sun) is None
 
 
+def pair(temperature=None, humidity=None, other_temperature=20.0, other_humidity=50.0):
+    """A subject and one other room. With two rooms the mean is their midpoint,
+    so the subject sits exactly half the gap from it - the arithmetic in the
+    boundary tests below is exact in floating point."""
+    subject = room("subject", temperature=temperature, humidity=humidity)
+    other = room("other", temperature=other_temperature, humidity=other_humidity)
+    return subject, (subject, other)
+
+
 class TestTemperatureAlert:
-    """Red means act, so an unjudged room must never be classified OK."""
+    """Red means act, so an unjudged room must never be classified OK. The
+    judge is the house: 1,5 degrees either side of the indoor mean."""
 
-    def test_below_the_band_is_too_cold(self):
-        band = ComfortBand(min_temperature=19.0, max_temperature=24.0)
-        assert temperature_alert(room(temperature=17.5, comfort=band)) is TemperatureAlert.TOO_COLD
+    def alert(self, **kwargs):
+        subject, rooms = pair(**kwargs)
+        return room_alert(subject, rooms).temperature
 
-    def test_above_the_band_is_too_hot(self):
-        band = ComfortBand(min_temperature=19.0, max_temperature=24.0)
-        assert temperature_alert(room(temperature=25.1, comfort=band)) is TemperatureAlert.TOO_HOT
+    def test_far_below_the_house_is_too_cold(self):
+        assert self.alert(temperature=15.0) is TemperatureAlert.TOO_COLD
 
-    def test_inside_the_band_is_ok(self):
-        band = ComfortBand(min_temperature=19.0, max_temperature=24.0)
-        assert temperature_alert(room(temperature=21.0, comfort=band)) is TemperatureAlert.OK
+    def test_far_above_the_house_is_too_hot(self):
+        assert self.alert(temperature=25.0) is TemperatureAlert.TOO_HOT
 
-    @pytest.mark.parametrize("value", [19.0, 24.0])
-    def test_exactly_on_a_bound_is_ok(self, value):
-        band = ComfortBand(min_temperature=19.0, max_temperature=24.0)
-        assert temperature_alert(room(temperature=value, comfort=band)) is TemperatureAlert.OK
+    def test_close_to_the_house_is_ok(self):
+        assert self.alert(temperature=21.0) is TemperatureAlert.OK
 
-    def test_a_single_bound_only_checks_that_end(self):
-        cold_only = ComfortBand(min_temperature=19.0)
-        assert temperature_alert(room(temperature=30.0, comfort=cold_only)) is TemperatureAlert.OK
-        assert (
-            temperature_alert(room(temperature=5.0, comfort=cold_only)) is TemperatureAlert.TOO_COLD
-        )
+    @pytest.mark.parametrize("value", [17.0, 23.0])
+    def test_exactly_on_the_tolerance_is_ok(self, value):
+        # mean 18,5 and 21,5: the subject is exactly 1,5 away.
+        assert self.alert(temperature=value) is TemperatureAlert.OK
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [(16.9, TemperatureAlert.TOO_COLD), (23.1, TemperatureAlert.TOO_HOT)],
+    )
+    def test_just_past_the_tolerance_alerts(self, value, expected):
+        assert self.alert(temperature=value) is expected
 
     def test_missing_reading_is_unknown(self):
-        band = ComfortBand(min_temperature=19.0, max_temperature=24.0)
-        assert temperature_alert(room(temperature=None, comfort=band)) is TemperatureAlert.UNKNOWN
+        assert self.alert(temperature=None) is TemperatureAlert.UNKNOWN
 
-    def test_missing_band_is_unknown_not_ok(self):
-        assert temperature_alert(room(temperature=35.0)) is TemperatureAlert.UNKNOWN
+    def test_a_room_alone_in_the_house_is_never_far_from_it(self):
+        only = room("only", temperature=35.0)
+
+        assert room_alert(only, (only,)).temperature is TemperatureAlert.OK
+
+    def test_with_nobody_reporting_there_is_no_mean_and_so_no_verdict(self):
+        subject = room("subject", temperature=None)
+
+        assert room_alert(subject, (subject,)).temperature is TemperatureAlert.UNKNOWN
+
+    def test_the_outdoors_is_reported_not_judged(self):
+        ude = room("ude", temperature=-5.0, is_outdoor=True)
+        inside = room("stue", temperature=21.0)
+
+        assert room_alert(ude, (inside, ude)).temperature is TemperatureAlert.UNKNOWN
+
+    def test_the_outdoors_does_not_move_the_mean_it_is_judged_against(self):
+        inside = room("stue", temperature=21.0)
+        ude = room("ude", temperature=-5.0, is_outdoor=True)
+        other = room("other", temperature=21.0)
+
+        assert room_alert(inside, (inside, other, ude)).temperature is TemperatureAlert.OK
 
 
 class TestHumidityAlert:
-    def test_above_the_ceiling_is_too_humid(self):
-        band = ComfortBand(max_humidity=65.0)
-        assert humidity_alert(room(humidity=68.0, comfort=band)) is HumidityAlert.TOO_HUMID
+    """Five points of relative humidity either side of the indoor mean."""
 
-    def test_exactly_at_the_ceiling_is_ok(self):
-        band = ComfortBand(max_humidity=65.0)
-        assert humidity_alert(room(humidity=65.0, comfort=band)) is HumidityAlert.OK
+    def alert(self, **kwargs):
+        subject, rooms = pair(**kwargs)
+        return room_alert(subject, rooms).humidity
 
-    def test_missing_ceiling_is_unknown(self):
-        assert humidity_alert(room(humidity=90.0)) is HumidityAlert.UNKNOWN
+    def test_far_above_the_house_is_too_humid(self):
+        assert self.alert(humidity=75.0) is HumidityAlert.TOO_HUMID
+
+    def test_far_below_the_house_is_too_dry(self):
+        assert self.alert(humidity=30.0) is HumidityAlert.TOO_DRY
+
+    def test_close_to_the_house_is_ok(self):
+        assert self.alert(humidity=53.0) is HumidityAlert.OK
+
+    @pytest.mark.parametrize("value", [40.0, 60.0])
+    def test_exactly_on_the_tolerance_is_ok(self, value):
+        # mean 45 and 55: the subject is exactly 5 points away.
+        assert self.alert(humidity=value) is HumidityAlert.OK
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [(39.9, HumidityAlert.TOO_DRY), (60.1, HumidityAlert.TOO_HUMID)],
+    )
+    def test_just_past_the_tolerance_alerts(self, value, expected):
+        assert self.alert(humidity=value) is expected
 
     def test_missing_reading_is_unknown(self):
-        band = ComfortBand(max_humidity=65.0)
-        assert humidity_alert(room(humidity=None, comfort=band)) is HumidityAlert.UNKNOWN
+        assert self.alert(humidity=None) is HumidityAlert.UNKNOWN
+
+    def test_the_outdoors_is_reported_not_judged(self):
+        ude = room("ude", humidity=100.0, is_outdoor=True)
+        inside = room("stue", humidity=50.0)
+
+        assert room_alert(ude, (inside, ude)).humidity is HumidityAlert.UNKNOWN
 
 
 class TestRoomAlert:
     def test_reports_both_axes(self):
-        band = ComfortBand(min_temperature=19.0, max_temperature=24.0, max_humidity=60.0)
-        alert = room_alert(room(temperature=26.0, humidity=70.0, comfort=band))
+        subject, rooms = pair(temperature=26.0, humidity=70.0)
+        alert = room_alert(subject, rooms)
 
         assert alert.temperature is TemperatureAlert.TOO_HOT
         assert alert.humidity is HumidityAlert.TOO_HUMID
         assert alert.is_alerting is True
 
     def test_unknown_does_not_count_as_alerting(self):
-        alert = room_alert(room(temperature=None, humidity=None))
+        subject, rooms = pair()
 
-        assert alert.is_alerting is False
+        assert room_alert(subject, rooms).is_alerting is False
 
     def test_either_axis_alone_is_enough_to_alert(self):
-        humid = ComfortBand(max_humidity=60.0)
-        alert = room_alert(room(temperature=None, humidity=70.0, comfort=humid))
+        subject, rooms = pair(temperature=None, humidity=70.0)
+        alert = room_alert(subject, rooms)
 
         assert alert.temperature is TemperatureAlert.UNKNOWN
         assert alert.is_alerting is True
+
+    def test_too_dry_alerts_as_well(self):
+        subject, rooms = pair(humidity=30.0)
+
+        assert room_alert(subject, rooms).is_alerting is True
 
 
 class TestRoomOrdering:

@@ -37,6 +37,13 @@ PRECIPITATION_CONDITIONS = frozenset(
     }
 )
 
+#: How far from the house average a room may be before it turns red: degrees
+#: Celsius, and percentage points of relative humidity. One rule for every room
+#: - a global one, because nobody could say what a bedroom or a bathroom "should"
+#: be, and a room that differs from its neighbours is what the screen is for.
+TEMPERATURE_TOLERANCE = 1.5
+HUMIDITY_TOLERANCE = 5.0
+
 
 def is_night(sun: SunTimes) -> bool | None:
     """True when the sun is currently below the horizon.
@@ -58,47 +65,54 @@ def is_night(sun: SunTimes) -> bool | None:
     return sun.next_rising < sun.next_setting
 
 
-def temperature_alert(room: Room) -> TemperatureAlert:
-    """Classify a room's temperature against its comfort band.
+def temperature_alert(room: Room, summary: HouseSummary) -> TemperatureAlert:
+    """Classify a room's temperature against the house average.
 
-    The band is inclusive: a room sitting exactly on a bound is in comfort, not
-    alerting. An unset bound is not checked, and a room with neither bound set
-    is UNKNOWN rather than OK - we have not judged it, so red must not follow.
+    A room is alerting when it is more than `TEMPERATURE_TOLERANCE` degrees from
+    the mean of the indoor rooms; exactly on the tolerance is not yet an alert.
+    The outdoors is reported, not judged, and so is any room when there is no
+    mean to judge against - UNKNOWN, not OK, so red cannot follow.
     """
     temperature = room.climate.temperature
-    if temperature is None:
+    if room.is_outdoor or temperature is None or summary.temperature_mean is None:
         return TemperatureAlert.UNKNOWN
 
-    low = room.comfort.min_temperature
-    high = room.comfort.max_temperature
-    if low is None and high is None:
-        return TemperatureAlert.UNKNOWN
-
-    if low is not None and temperature < low:
+    deviation = temperature - summary.temperature_mean
+    if deviation < -TEMPERATURE_TOLERANCE:
         return TemperatureAlert.TOO_COLD
-    if high is not None and temperature > high:
+    if deviation > TEMPERATURE_TOLERANCE:
         return TemperatureAlert.TOO_HOT
 
     return TemperatureAlert.OK
 
 
-def humidity_alert(room: Room) -> HumidityAlert:
-    """Classify a room's humidity against its ceiling.
+def humidity_alert(room: Room, summary: HouseSummary) -> HumidityAlert:
+    """Classify a room's humidity against the house average.
 
-    The ceiling is inclusive in the same sense: exactly at the ceiling is not
-    yet an alert.
+    Symmetric, like the temperature: more than `HUMIDITY_TOLERANCE` percentage
+    points either side of the mean. The tolerance is in points of relative
+    humidity, not a percentage of the mean.
     """
     humidity = room.climate.humidity
-    ceiling = room.comfort.max_humidity
-    if humidity is None or ceiling is None:
+    if room.is_outdoor or humidity is None or summary.humidity_mean is None:
         return HumidityAlert.UNKNOWN
 
-    return HumidityAlert.TOO_HUMID if humidity > ceiling else HumidityAlert.OK
+    deviation = humidity - summary.humidity_mean
+    if deviation > HUMIDITY_TOLERANCE:
+        return HumidityAlert.TOO_HUMID
+    if deviation < -HUMIDITY_TOLERANCE:
+        return HumidityAlert.TOO_DRY
+
+    return HumidityAlert.OK
 
 
-def room_alert(room: Room) -> RoomAlert:
-    """Both alert axes for one room."""
-    return RoomAlert(temperature=temperature_alert(room), humidity=humidity_alert(room))
+def room_alert(room: Room, rooms: tuple[Room, ...]) -> RoomAlert:
+    """Both alert axes for one room, judged against the house `rooms` make up."""
+    summary = house_summary(rooms)
+    return RoomAlert(
+        temperature=temperature_alert(room, summary),
+        humidity=humidity_alert(room, summary),
+    )
 
 
 def indoor_rooms(rooms: tuple[Room, ...]) -> tuple[Room, ...]:

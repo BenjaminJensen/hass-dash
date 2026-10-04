@@ -1,18 +1,14 @@
 # The house.
 #
-# One file: which rooms exist, what they are called, which entities back them,
-# and what counts as comfortable in each. Replaces rooms.widget.yml, which
-# mixed this up with pixel coordinates.
+# One file: which rooms exist, what they are called, and which entities back
+# them. Replaces rooms.widget.yml, which mixed this up with pixel coordinates.
 #
 # Rooms appear on screen in the order they appear here. There is no `order`
 # key and no `position` key; layout is computed from a box model.
 #
-# TODO(comfort): every band below is a placeholder chosen by the developer, not
-# a number from the family. Red means "act", so until these are real, the red on
-# this screen is guesswork - and the 2026-09-19 capture showed it is worse than
-# guesswork: against these numbers EIGHT of the eleven rooms draw red, because
-# the house sits at 64-75 % RH and 23-25 degrees. Red everywhere is red nowhere
-# (INTENT.md section 2). See PLAN.md slice 2.3.
+# There are no comfort bands. A room turns red when it is more than 1,5 degrees
+# or 5 points of humidity from the average of the indoor rooms - one global rule
+# in domain/derive.py, not per-room configuration.
 #
 # Entity ids confirmed against the live instance on 2026-09-19 by
 # `tools/capture_snapshot.py`: all 24 resolve. Re-run it after renaming
@@ -24,12 +20,6 @@ weather:
 
 sun:
   entity_id: sun.sun
-
-defaults:
-  comfort:
-    min_temperature: 19.0
-    max_temperature: 24.0
-    max_humidity: 60.0
 
 rooms:
   - key: stue
@@ -46,41 +36,22 @@ rooms:
     name: Soveværelse
     climate: climate.0x5cc7c1fffede1ef5_1
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_1
-    # A bedroom is meant to be cooler than a living room.
-    comfort:
-      min_temperature: 17.0
-      max_temperature: 22.0
-      max_humidity: 60.0
 
   - key: stort_bad
     name: Stort bad
     climate: climate.0x5cc7c1fffede1ef5_5
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_5
-    # A bathroom is damp after a shower and that is not an alert. The ceiling
-    # is here to catch air that never dries out.
-    comfort:
-      min_temperature: 20.0
-      max_temperature: 26.0
-      max_humidity: 70.0
 
   - key: lille_bad
     name: Lille bad
     climate: climate.0x5cc7c1fffede1ef5_7
     # Confirmed: "Lille Bad Danfoss". The old _humidity_8 was the wrong room.
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_7
-    comfort:
-      min_temperature: 20.0
-      max_temperature: 26.0
-      max_humidity: 70.0
 
   - key: sune
     name: Sune
     climate: climate.0x5cc7c1fffede1ef5_4
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_4
-    comfort:
-      min_temperature: 17.0
-      max_temperature: 22.0
-      max_humidity: 60.0
 
   - key: sophie
     name: Sophie
@@ -88,19 +59,11 @@ rooms:
     # Confirmed: _humidity_8 pairs with climate _8. The old _humidity_9 was
     # gang's sensor - this is the section 11 bug, now fixed.
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_8
-    comfort:
-      min_temperature: 17.0
-      max_temperature: 22.0
-      max_humidity: 60.0
 
   - key: marius
     name: Marius
     climate: climate.0x5cc7c1fffede1ef5_3
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_3
-    comfort:
-      min_temperature: 17.0
-      max_temperature: 22.0
-      max_humidity: 60.0
 
   - key: gang
     name: Gang
@@ -112,10 +75,6 @@ rooms:
     name: Garage
     climate: climate.0x5cc7c1fffede1ef5_10
     humidity: sensor.0x5cc7c1fffede1ef5_humidity_10
-    # Cold is normal in a garage; freezing is not.
-    comfort:
-      min_temperature: 5.0
-      max_humidity: 80.0
 
   - key: ude
     name: Ude
@@ -123,12 +82,11 @@ rooms:
     # Reads the weather provider on purpose. A physical outdoor sensor does
     # exist - sensor.ude_sensor_ude_* - and it is broken: 23,2 degrees against
     # the forecast's 17,7, and a humidity pinned at exactly 100,0 since
-    # 2026-09-09. Point these at it if it is ever repaired.
+    # 2026-09-09. Point these at it if it is ever repaired. The outdoors is
+    # reported, not judged: is_outdoor rooms never alert.
     temperature:
       entity_id: weather.home
       attribute: temperature
     humidity:
       entity_id: weather.home
       attribute: humidity
-    # The outdoors has no comfort band. It is reported, not judged.
-    comfort: {}

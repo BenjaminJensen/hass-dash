@@ -10,7 +10,6 @@ import pytest
 
 from domain.models import (
     Climate,
-    ComfortBand,
     DailyPoint,
     DeviceState,
     HeatingAction,
@@ -26,7 +25,7 @@ from domain.models import (
     Weather,
 )
 
-NULLABLE_MODELS = [Climate, ComfortBand, Weather, HourlyPoint, DailyPoint, SunTimes]
+NULLABLE_MODELS = [Climate, Weather, HourlyPoint, DailyPoint, SunTimes]
 
 
 class TestNullability:
@@ -43,7 +42,6 @@ class TestNullability:
         room = Room(key="stue", name="Stue")
 
         assert room.climate == Climate()
-        assert room.comfort == ComfortBand()
         assert room.devices == ()
         assert room.icon is None
         assert room.is_outdoor is False

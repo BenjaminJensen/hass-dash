@@ -12,7 +12,6 @@ import yaml
 
 from config.house import EntityRef
 from config.loader import DEFAULT_HOUSE_PATH, ConfigError, load_house, parse_house
-from domain.models import ComfortBand
 
 MINIMAL = """
 weather:
@@ -133,97 +132,34 @@ class TestAGoodConfig:
             parse(MINIMAL).room("badekar")
 
 
-class TestComfortBands:
-    def test_defaults_apply_to_a_room_that_states_nothing(self):
-        config = parse("""
+class TestComfortBandsAreRetired:
+    """Alerts are relative to the house average now, so a file that still
+    states a band is stale, and says so rather than being quietly ignored."""
+
+    def test_a_per_room_band_is_rejected(self):
+        found = problems(
+            MINIMAL
+            + """
+    comfort:
+      max_humidity: 70
+"""
+        )
+
+        assert any("comfort" in problem and "house average" in problem for problem in found)
+
+    def test_a_defaults_block_is_rejected(self):
+        found = problems("""
         weather: {entity_id: weather.home}
         sun: {entity_id: sun.sun}
         defaults:
-          comfort:
-            min_temperature: 19
-            max_temperature: 24
-            max_humidity: 60
+          comfort: {min_temperature: 19}
         rooms:
           - key: stue
             name: Stue
             climate: climate.living_room
         """)
 
-        assert config.room("stue").comfort == ComfortBand(19.0, 24.0, 60.0)
-
-    def test_a_room_that_states_a_band_replaces_the_defaults_outright(self):
-        # Not a key-by-key merge: one place to read a room's real band.
-        config = parse("""
-        weather: {entity_id: weather.home}
-        sun: {entity_id: sun.sun}
-        defaults:
-          comfort:
-            min_temperature: 19
-            max_temperature: 24
-            max_humidity: 60
-        rooms:
-          - key: bad
-            name: Bad
-            climate: climate.bath
-            comfort:
-              max_humidity: 70
-        """)
-
-        assert config.room("bad").comfort == ComfortBand(None, None, 70.0)
-
-    def test_an_empty_band_is_how_a_room_opts_out_of_alerts(self):
-        config = parse("""
-        weather: {entity_id: weather.home}
-        sun: {entity_id: sun.sun}
-        defaults:
-          comfort: {min_temperature: 19}
-        rooms:
-          - key: ude
-            name: Ude
-            is_outdoor: true
-            temperature: sensor.outdoor
-            comfort: {}
-        """)
-
-        assert config.room("ude").comfort == ComfortBand()
-
-    def test_an_inverted_band_is_rejected(self):
-        assert any(
-            "min_temperature 25.0 is above max_temperature 22.0" in problem
-            for problem in problems(
-                MINIMAL
-                + """
-    comfort:
-      min_temperature: 25
-      max_temperature: 22
-"""
-            )
-        )
-
-    def test_a_humidity_ceiling_outside_zero_to_a_hundred_is_rejected(self):
-        assert any(
-            "not a relative humidity" in problem
-            for problem in problems(
-                MINIMAL
-                + """
-    comfort:
-      max_humidity: 160
-"""
-            )
-        )
-
-    def test_yes_is_not_a_number(self):
-        # YAML turns `yes` into True, and True would otherwise pass as 1.
-        assert any(
-            "must be a number" in problem
-            for problem in problems(
-                MINIMAL
-                + """
-    comfort:
-      max_humidity: yes
-"""
-            )
-        )
+        assert any("defaults" in problem and "house average" in problem for problem in found)
 
 
 class TestTheErrorsThatMatter:
@@ -380,9 +316,3 @@ class TestTheShippedFile:
         outdoor = [room.key for room in load_house(DEFAULT_HOUSE_PATH).rooms if room.is_outdoor]
 
         assert outdoor == ["ude"]
-
-    def test_every_indoor_room_has_a_comfort_band(self):
-        # An unjudged room renders as UNKNOWN, never as OK, so a missing band
-        # would quietly remove a room from the alerting set.
-        for room in load_house(DEFAULT_HOUSE_PATH).indoor_rooms:
-            assert room.comfort != ComfortBand(), room.key

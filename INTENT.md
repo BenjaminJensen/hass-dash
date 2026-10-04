@@ -129,13 +129,17 @@ min / max / spread that reveal whether the house is evenly heated.
 **Where red is allowed.** Condition text when precipitation is occurring; the
 precipitation value and the bars on the curve; the curve's `NU` reading, which
 is what became of the "you are here" marker and which reverts to black when
-there is no reading to mark; the alert arrow and value on a room outside its
-comfort band; a humidity badge on a room above its threshold.
+there is no reading to mark; the alert arrow and value on a room more than
+1,5 degrees from the house average; a humidity badge on a room more than 5
+points of relative humidity from it, either side.
 Nowhere else — and in particular not on the largest number on the screen, which
 reports the weather rather than asking anyone to act on it.
 
-Comfort bands and humidity thresholds are configuration, per room. A bathroom
-and a bedroom do not share a definition of "too humid".
+There are no per-room comfort bands. Red is relative: a room is judged against
+the mean of the indoor rooms, by one global rule (`domain/derive.py`,
+`TEMPERATURE_TOLERANCE` and `HUMIDITY_TOLERANCE`), because nobody could say
+what a bedroom or a bathroom *should* be, and a room that differs from its
+neighbours is what the screen is for. The outdoors is not judged.
 
 ## 4. The refresh contract
 
@@ -213,7 +217,6 @@ devices.
 - identity: key, display name, icon, display order
 - climate: temperature, humidity, setpoint, heating action (heating / idle /
   off), each independently nullable
-- comfort: the temperature band and humidity ceiling that decide alert state
 - devices: an open list of `DeviceState` (lights, computers, appliances) with a
   kind, a name and an on/off/unknown state
 
@@ -340,11 +343,10 @@ These block specific slices, not the architecture.
   instead — see section 9.
 - ~~**The seven-day strip**~~ is a six-day strip. The daily forecast service
   returns six days from this provider.
-- **Comfort bands.** Per-room temperature ranges and humidity ceilings need
-  real numbers from the family, not defaults. **Still open, and now the only
-  thing standing between the screen and truthful red:** with the placeholder
-  bands, eight of eleven rooms alert at once, which is section 2's failure mode
-  exactly.
+- ~~**Comfort bands.**~~ Replaced on 2026-10-04 by one global rule: red when a
+  room is more than 1,5 degrees or 5 points of humidity from the indoor mean.
+  **Open:** the mean is dragged by the unheated garage and the damp bathrooms;
+  on the 2026-09-19 capture nine of ten rooms alert (PLAN.md, slice 2.3).
 - **The viewing distance, or the room count.** Eleven rooms are comfortable at
   ~1,5 m and below the legibility threshold at 3 m, and no typography changes
   that on a 7,5" panel (PLAN.md, M4 log). Either the stated distance moves or

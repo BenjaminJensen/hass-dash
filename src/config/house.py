@@ -2,7 +2,7 @@
 
 This is the only layer below `sources/` that is allowed to know an entity id
 exists, because mapping rooms to entity ids is precisely what configuration is
-for (INTENT.md section 6). The objects here carry identity, comfort and entity
+for (INTENT.md section 6). The objects here carry identity and entity
 references; turning a reference into a reading is the source layer's job, and
 nothing above it ever sees an `EntityRef`.
 
@@ -12,9 +12,7 @@ computed from a box model, never configured.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
-from domain.models import ComfortBand
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -65,7 +63,6 @@ class RoomConfig:
     temperature: EntityRef | None = None
     humidity: EntityRef | None = None
     climate: EntityRef | None = None
-    comfort: ComfortBand = field(default_factory=ComfortBand)
     devices: tuple[DeviceConfig, ...] = ()
 
     @property

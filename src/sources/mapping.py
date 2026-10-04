@@ -292,7 +292,6 @@ def _room(room: RoomConfig, reader: Reader) -> Room:
         order=room.order,
         is_outdoor=room.is_outdoor,
         climate=_climate(room, reader),
-        comfort=room.comfort,
         devices=_devices(room, reader),
     )
 

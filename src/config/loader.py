@@ -20,7 +20,6 @@ from typing import Any
 import yaml
 
 from config.house import DeviceConfig, EntityRef, HouseConfig, RoomConfig
-from domain.models import ComfortBand
 
 #: Repository root / house.yml, resolved from this module's location.
 DEFAULT_HOUSE_PATH = Path(__file__).resolve().parents[2] / "house.yml"
@@ -31,7 +30,7 @@ ENTITY_ID = re.compile(r"^[a-z_][a-z0-9_]*\.[a-z0-9_]+$")
 #: Room keys are used as dictionary keys and in test names, so keep them plain.
 ROOM_KEY = re.compile(r"^[a-z][a-z0-9_]*$")
 
-TOP_LEVEL_KEYS = frozenset({"weather", "sun", "defaults", "rooms"})
+TOP_LEVEL_KEYS = frozenset({"weather", "sun", "rooms"})
 ROOM_KEYS = frozenset(
     {
         "key",
@@ -41,12 +40,10 @@ ROOM_KEYS = frozenset(
         "temperature",
         "humidity",
         "climate",
-        "comfort",
         "devices",
     }
 )
 DEVICE_KEYS = frozenset({"key", "name", "kind", "entity_id"})
-COMFORT_KEYS = frozenset({"min_temperature", "max_temperature", "max_humidity"})
 REF_KEYS = frozenset({"entity_id", "attribute"})
 
 #: Keys that used to mean something and now mean a stale file.
@@ -55,6 +52,8 @@ RETIRED_KEYS = {
     "x": "layout is computed from a box model; coordinates are no longer configuration",
     "y": "layout is computed from a box model; coordinates are no longer configuration",
     "order": "rooms are shown in the order they appear in this file",
+    "comfort": "a room is red when far from the house average; there are no per-room bands",
+    "defaults": "a room is red when far from the house average; there are no per-room bands",
 }
 
 
@@ -100,8 +99,7 @@ def parse_house(data: Any, source: str = "house.yml") -> HouseConfig:
 
     weather = _required_ref(data.get("weather"), "weather", errors)
     sun = _required_ref(data.get("sun"), "sun", errors)
-    defaults = _defaults(data.get("defaults"), errors)
-    rooms = _rooms(data.get("rooms"), defaults, errors)
+    rooms = _rooms(data.get("rooms"), errors)
 
     if errors:
         raise ConfigError(source, errors)
@@ -153,51 +151,6 @@ def _required_ref(value: Any, path: str, errors: list[str]) -> EntityRef:
     return ref if ref is not None else EntityRef(entity_id="")
 
 
-def _number(value: Any, path: str, errors: list[str]) -> float | None:
-    # bool is an int in Python and "max_humidity: yes" is a mistake, not a 1.
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        errors.append(f"{path}: must be a number")
-        return None
-    return float(value)
-
-
-def _comfort(value: Any, path: str, errors: list[str]) -> ComfortBand | None:
-    """A comfort band. Absent means "inherit the defaults"; empty means "no band"."""
-    if value is None:
-        return None
-    if not isinstance(value, dict):
-        errors.append(f"{path}: must be a mapping")
-        return None
-
-    _reject_unknown(value, COMFORT_KEYS, path, errors)
-
-    bounds: dict[str, float | None] = {}
-    for key in ("min_temperature", "max_temperature", "max_humidity"):
-        raw = value.get(key)
-        bounds[key] = None if raw is None else _number(raw, f"{path}.{key}", errors)
-
-    low, high = bounds["min_temperature"], bounds["max_temperature"]
-    if low is not None and high is not None and low > high:
-        errors.append(f"{path}: min_temperature {low} is above max_temperature {high}")
-
-    ceiling = bounds["max_humidity"]
-    if ceiling is not None and not 0 <= ceiling <= 100:
-        errors.append(f"{path}.max_humidity: {ceiling} is not a relative humidity (0-100)")
-
-    return ComfortBand(min_temperature=low, max_temperature=high, max_humidity=ceiling)
-
-
-def _defaults(value: Any, errors: list[str]) -> ComfortBand:
-    if value is None:
-        return ComfortBand()
-    if not isinstance(value, dict):
-        errors.append("defaults: must be a mapping")
-        return ComfortBand()
-
-    _reject_unknown(value, frozenset({"comfort"}), "defaults", errors)
-    return _comfort(value.get("comfort"), "defaults.comfort", errors) or ComfortBand()
-
-
 def _devices(value: Any, path: str, errors: list[str]) -> tuple[DeviceConfig, ...]:
     if value is None:
         return ()
@@ -231,7 +184,7 @@ def _text(value: Any, path: str, errors: list[str]) -> str | None:
     return value
 
 
-def _room(raw: Any, index: int, defaults: ComfortBand, errors: list[str]) -> RoomConfig | None:
+def _room(raw: Any, index: int, errors: list[str]) -> RoomConfig | None:
     path = f"rooms[{index}]"
     if not isinstance(raw, dict):
         errors.append(f"{path}: must be a mapping")
@@ -264,12 +217,6 @@ def _room(raw: Any, index: int, defaults: ComfortBand, errors: list[str]) -> Roo
     if not any(refs.values()):
         errors.append(f"{path}: needs at least one of temperature, humidity or climate")
 
-    comfort = _comfort(raw.get("comfort"), f"{path}.comfort", errors)
-    # A room that states a band replaces the defaults outright rather than
-    # merging key by key, so `comfort: {}` is how a room opts out of alerts.
-    if "comfort" not in raw:
-        comfort = defaults
-
     devices = _devices(raw.get("devices"), f"{path}.devices", errors)
 
     if key is None or name is None:
@@ -284,19 +231,18 @@ def _room(raw: Any, index: int, defaults: ComfortBand, errors: list[str]) -> Roo
         temperature=refs["temperature"],
         humidity=refs["humidity"],
         climate=refs["climate"],
-        comfort=comfort or ComfortBand(),
         devices=devices,
     )
 
 
-def _rooms(value: Any, defaults: ComfortBand, errors: list[str]) -> tuple[RoomConfig, ...]:
+def _rooms(value: Any, errors: list[str]) -> tuple[RoomConfig, ...]:
     if not isinstance(value, list) or not value:
         errors.append("rooms: required, and must be a non-empty list")
         return ()
 
     rooms: list[RoomConfig] = []
     for index, raw in enumerate(value):
-        room = _room(raw, index, defaults, errors)
+        room = _room(raw, index, errors)
         if room is not None:
             rooms.append(room)
 

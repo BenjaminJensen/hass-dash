@@ -16,7 +16,7 @@ import pytest
 
 from config.loader import load_house
 from domain.derive import house_summary, is_night, room_alert
-from domain.models import HeatingAction, Snapshot
+from domain.models import HeatingAction, HumidityAlert, Snapshot, TemperatureAlert
 from sources.fixture import FixtureSource
 from sources.port import SnapshotSource, SourceUnavailable
 
@@ -101,11 +101,17 @@ class TestNominalSet:
         assert summary.reporting_count == 10
         assert summary.temperature_mean is not None
 
-    def test_it_produces_the_alerts_the_bands_imply(self, snapshot):
-        """Marius at 16.2 is below its 17.0 floor; the summary is not a guess."""
-        alerts = {r.key: room_alert(r) for r in snapshot.rooms}
-        assert alerts["marius"].is_alerting is True
-        assert alerts["stue"].is_alerting is False
+    def test_it_produces_the_alerts_the_house_average_implies(self, snapshot):
+        """Pinned as measured on the 2026-09-19 capture, not as desired: the
+        unheated garage (11,4 degrees) and the two damp bathrooms drag the
+        indoor mean, so rooms that are fine by any human standard sit more than
+        the tolerance from it. Sophie is the only room that is not red. See
+        PLAN.md, slice 2.3."""
+        alerts = {r.key: room_alert(r, snapshot.rooms) for r in snapshot.rooms}
+
+        assert [key for key, alert in alerts.items() if not alert.is_alerting] == ["sophie", "ude"]
+        assert alerts["marius"].temperature is TemperatureAlert.TOO_COLD
+        assert alerts["stort_bad"].humidity is HumidityAlert.TOO_HUMID
 
     def test_heating_action_survives_the_trip(self, snapshot):
         by_key = {r.key: r.climate.action for r in snapshot.rooms}
@@ -197,7 +203,7 @@ class TestHostileSet:
         The two rooms that *do* report are both inside their bands, so nothing
         in this set alerts - a screen of placeholders, not a screen of alarm.
         """
-        assert [r.key for r in snapshot.rooms if room_alert(r).is_alerting] == []
+        assert [r.key for r in snapshot.rooms if room_alert(r, snapshot.rooms).is_alerting] == []
 
 
 class TestRecordedCapture:

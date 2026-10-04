@@ -34,10 +34,10 @@ class HeatingAction(Enum):
 
 
 class TemperatureAlert(Enum):
-    """A room's temperature relative to its comfort band.
+    """A room's temperature relative to the house average.
 
-    UNKNOWN covers both "no reading" and "no band configured". Neither is a
-    reason to draw red.
+    UNKNOWN covers both "no reading" and "not judged" (the outdoors). Neither is
+    a reason to draw red.
     """
 
     OK = "ok"
@@ -47,24 +47,12 @@ class TemperatureAlert(Enum):
 
 
 class HumidityAlert(Enum):
-    """A room's humidity relative to its ceiling."""
+    """A room's humidity relative to the house average."""
 
     OK = "ok"
     TOO_HUMID = "too_humid"
+    TOO_DRY = "too_dry"
     UNKNOWN = "unknown"
-
-
-@dataclass(frozen=True)
-class ComfortBand:
-    """The temperature range and humidity ceiling that decide a room's alerts.
-
-    A bathroom and a bedroom do not share a definition of "too humid", so this
-    is configured per room. An unset bound is simply not checked.
-    """
-
-    min_temperature: float | None = None
-    max_temperature: float | None = None
-    max_humidity: float | None = None
 
 
 @dataclass(frozen=True)
@@ -106,7 +94,6 @@ class Room:
     order: int = 0
     is_outdoor: bool = False
     climate: Climate = field(default_factory=Climate)
-    comfort: ComfortBand = field(default_factory=ComfortBand)
     devices: tuple[DeviceState, ...] = ()
 
 
@@ -120,10 +107,10 @@ class RoomAlert:
     @property
     def is_alerting(self) -> bool:
         """True when something about this room should be drawn in red."""
-        return (
-            self.temperature in (TemperatureAlert.TOO_COLD, TemperatureAlert.TOO_HOT)
-            or self.humidity is HumidityAlert.TOO_HUMID
-        )
+        return self.temperature in (
+            TemperatureAlert.TOO_COLD,
+            TemperatureAlert.TOO_HOT,
+        ) or self.humidity in (HumidityAlert.TOO_HUMID, HumidityAlert.TOO_DRY)
 
 
 @dataclass(frozen=True)

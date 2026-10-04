@@ -13,9 +13,9 @@ summary block are provably red-free and stay partial-eligible.
 **The inverted row is reported, never judged.** White text on a black row has
 nowhere to put red, so this function does not colour the outdoor row's cells by
 alert state - which is also why they can be partial-eligible. That matches the
-configuration, where the outdoor row opts out of having a comfort band at all;
-if a band were ever set on an inverted row it would be computed and ignored,
-and this is the line that decides so.
+derivation, where an outdoor room is never judged against the house; if it
+ever were, the verdict would be computed and ignored, and this is the line that
+decides so.
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ def room_table(rooms: tuple[Room, ...], boxes: RoomTableBoxes) -> tuple[DrawItem
 
     drawn = list(zip(ordered_rooms(rooms), boxes.rows))
     for index, (room, box) in enumerate(drawn):
-        items.extend(room_row(room, box, last=index == len(drawn) - 1))
+        items.extend(room_row(room, box, rooms, last=index == len(drawn) - 1))
 
     items.extend(summary_block(house_summary(rooms), boxes.summary))
     return tuple(items)
@@ -120,10 +120,12 @@ def column_head(box: Box) -> tuple[DrawItem, ...]:
     )
 
 
-def room_row(room: Room, box: Box, last: bool = False) -> tuple[DrawItem, ...]:
+def room_row(
+    room: Room, box: Box, rooms: tuple[Room, ...], last: bool = False
+) -> tuple[DrawItem, ...]:
     """One room: marker, name, temperature, humidity."""
     cells = row_cells(box)
-    alert = room_alert(room)
+    alert = room_alert(room, rooms)
     inverted = room.is_outdoor
 
     items: list[DrawItem] = []
@@ -187,7 +189,10 @@ def room_row(room: Room, box: Box, last: bool = False) -> tuple[DrawItem, ...]:
         )
     )
 
-    humidity_red = not inverted and alert.humidity is HumidityAlert.TOO_HUMID
+    humidity_red = not inverted and alert.humidity in (
+        HumidityAlert.TOO_HUMID,
+        HumidityAlert.TOO_DRY,
+    )
     region = f"room.{room.key}.humidity"
     if humidity_red:
         items.append(
