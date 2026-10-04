@@ -57,14 +57,12 @@ the eleven rooms render red. See the M2.2 log entry.
 done, on branch `rewrite/intent-architecture`. **M8 is complete and proven on
 the panel:** 8.1, 8.2 and 8.4 are green in CI, and 8.3 was photographed on
 2026-09-20 — the frame reached the glass, the red plane is red, and nothing is
-inverted. **M10 is complete in code:** 10.1 to 10.5 are green, the vendored
-driver is the reference rather than the thing that runs, and only 10.6 — one
-frame and one clear, watched — waits on the board.
-
-Everything that is left waits on a human. Slice 2.3's comfort bands and the
-viewing distance M4 measured wait on the family; M9 waits on a decision; 10.6
-waits on somebody standing in front of the panel. **There is nothing left that
-waits only on code.**
+inverted. **M10 is complete and proven on the panel:** 10.1 to 10.5 are green, the
+vendored driver is the reference rather than the thing that runs, and 10.6 was
+closed on 2026-10-04 by the unit itself — 414 full refreshes on the new driver
+over 12 days, no warning in the journal. Slice 2.3 is replaced by one global red
+rule (see the slice), and the viewing distance is accepted for now. **M9 waits
+on a decision, and M11 is code only.**
 
 | # | Milestone | Size | Depends on | Ends with |
 | --- | --- | --- | --- | --- |
@@ -78,7 +76,7 @@ waits only on code.**
 | M7 ✅ | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
 | M8 ✅ | Hardware, full refresh | M | M7 | On the wall |
 | M9 | Partial refresh | M | M8 | Decided with numbers in hand |
-| M10 ✅ | Replace the vendored driver (10.6 open) | M | M8 | The panel driven by tested code |
+| M10 ✅ | Replace the vendored driver | M | M8 | The panel driven by tested code |
 | M11 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
 
 M3 and M4/M5 are independent after M2 and can be worked in either order — the
@@ -320,7 +318,7 @@ rounding it up, and its guard condition is a chained comparison that reduces to
 transport that is already under test and a transcript harness that can record
 whatever is written. A "no" still costs nothing.
 
-### M10 — Replace the vendored driver (M) ✅ — 10.6 waits on the board
+### M10 — Replace the vendored driver (M) ✅
 
 Everything above `render/` is typed, tested, and has a paragraph somewhere
 explaining why it is the way it is. The two files underneath it are a 2022
@@ -394,12 +392,12 @@ which is what the code means and not what it does.
   `test_source_boundary.py`'s `LEGACY` keeps both files for the reason its
   comment already gives. Whether they belong in `src/` once nothing in `src/`
   imports them is a question for the slice, not for this paragraph.
-- **10.6** One frame on the glass, and one `Clear()`. A transcript proves the
-  same bytes in the same order; it cannot prove `spidev`'s chunking of a
-  48 000-byte `writebytes2`, `gpiozero`'s timing, or that a deadline never fires
-  early on a cold panel. **Open.** `tools/panel_check.py` is the command and
-  `deploy/README.md` §4.1 is the runbook; it prints wall and CPU seconds, so
-  the same run that watches the glass also measures the 29,9 s claim.
+- **10.6** ✅ One frame on the glass. A transcript proves the same bytes in the
+  same order; it cannot prove `spidev`'s chunking of a 48 000-byte
+  `writebytes2`, `gpiozero`'s timing, or that a deadline never fires early on a
+  cold panel. Closed by the running unit rather than by `tools/panel_check.py`:
+  see the log. **Not exercised on hardware:** `Clear()`, which the app never
+  calls, and the 40 s deadline, because the panel never hung.
 
 **Two numbers the slices have to choose and defend.** The poll interval: the
 vendor's own `delay_ms(200)` after the loop is the scale, so **10 ms** adds at
@@ -492,6 +490,22 @@ Anything touching rendering also gets its BMP looked at before it is called
 done.
 
 ## Log
+
+**M10.6, closed 2026-10-04 — and the glass found what the transcript could not.**
+The unit had been running the new driver since 2026-09-22: 414 full refreshes
+against 74 on the vendored one, 29,9–32,9 s each, nothing in the journal at
+warning level. That is the evidence 10.6 asked for. It also measured the CPU
+claim, and the claim was half wrong. The unit had used **15 h 47 min of CPU in
+12 days — about 5 % of a core, with the loop idle**, and 15 h of it sat in one
+thread that was not the main one. `ReadBusy` no longer spun, as designed; a
+`gpiozero.Button` on BUSY did instead. `Button` subscribes to both edges, which
+starts a callback thread that runs for the life of the process, and `ReadBusy`
+only ever needed a level. `SpiTransport` now builds BUSY as a plain
+`InputDevice` (`2ee882e`), a test pins it, and after the restart the process
+used **3 s of CPU in 36 minutes including a full refresh, 8 ticks in an idle
+minute against 326, and one thread fewer**. The refresh itself is unchanged at
+about 30 s. The lesson is the one M10 was written around, from the other side:
+a transcript proves bytes and order, and cannot see a thread.
 
 **M10** — `src/render/panel/`, `tools/panel_check.py`, and a recorder in
 `tests/`. +108 tests, **1099 in the suite**. The code closest to the hardware
