@@ -102,14 +102,17 @@ class TestNominalSet:
         assert summary.temperature_mean is not None
 
     def test_it_produces_the_alerts_the_house_average_implies(self, snapshot):
-        """Pinned as measured on the 2026-09-19 capture, not as desired: the
-        unheated garage (11,4 degrees) and the two damp bathrooms drag the
-        indoor mean, so rooms that are fine by any human standard sit more than
-        the tolerance from it. Sophie is the only room that is not red. See
-        PLAN.md, slice 2.3."""
+        """Pinned as measured on the 2026-09-19 capture. The unheated garage
+        (11,4 degrees) and the damp bathrooms drag the indoor mean down and up,
+        which is why Stue, at 23,1, is called too hot. See PLAN.md, slice 2.3."""
         alerts = {r.key: room_alert(r, snapshot.rooms) for r in snapshot.rooms}
 
-        assert [key for key, alert in alerts.items() if not alert.is_alerting] == ["sophie", "ude"]
+        assert [key for key, alert in alerts.items() if alert.is_alerting] == [
+            "stue",
+            "stort_bad",
+            "marius",
+            "garage",
+        ]
         assert alerts["marius"].temperature is TemperatureAlert.TOO_COLD
         assert alerts["stort_bad"].humidity is HumidityAlert.TOO_HUMID
 

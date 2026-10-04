@@ -118,29 +118,29 @@ def pair(temperature=None, humidity=None, other_temperature=20.0, other_humidity
 
 class TestTemperatureAlert:
     """Red means act, so an unjudged room must never be classified OK. The
-    judge is the house: 1,5 degrees either side of the indoor mean."""
+    judge is the house: 2,5 degrees either side of the indoor mean."""
 
     def alert(self, **kwargs):
         subject, rooms = pair(**kwargs)
         return room_alert(subject, rooms).temperature
 
     def test_far_below_the_house_is_too_cold(self):
-        assert self.alert(temperature=15.0) is TemperatureAlert.TOO_COLD
+        assert self.alert(temperature=10.0) is TemperatureAlert.TOO_COLD
 
     def test_far_above_the_house_is_too_hot(self):
-        assert self.alert(temperature=25.0) is TemperatureAlert.TOO_HOT
+        assert self.alert(temperature=30.0) is TemperatureAlert.TOO_HOT
 
     def test_close_to_the_house_is_ok(self):
         assert self.alert(temperature=21.0) is TemperatureAlert.OK
 
-    @pytest.mark.parametrize("value", [17.0, 23.0])
+    @pytest.mark.parametrize("value", [15.0, 25.0])
     def test_exactly_on_the_tolerance_is_ok(self, value):
-        # mean 18,5 and 21,5: the subject is exactly 1,5 away.
+        # mean 17,5 and 22,5: the subject is exactly 2,5 away.
         assert self.alert(temperature=value) is TemperatureAlert.OK
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [(16.9, TemperatureAlert.TOO_COLD), (23.1, TemperatureAlert.TOO_HOT)],
+        [(14.9, TemperatureAlert.TOO_COLD), (25.1, TemperatureAlert.TOO_HOT)],
     )
     def test_just_past_the_tolerance_alerts(self, value, expected):
         assert self.alert(temperature=value) is expected
@@ -173,29 +173,29 @@ class TestTemperatureAlert:
 
 
 class TestHumidityAlert:
-    """Five points of relative humidity either side of the indoor mean."""
+    """Ten points of relative humidity either side of the indoor mean."""
 
     def alert(self, **kwargs):
         subject, rooms = pair(**kwargs)
         return room_alert(subject, rooms).humidity
 
     def test_far_above_the_house_is_too_humid(self):
-        assert self.alert(humidity=75.0) is HumidityAlert.TOO_HUMID
+        assert self.alert(humidity=90.0) is HumidityAlert.TOO_HUMID
 
     def test_far_below_the_house_is_too_dry(self):
-        assert self.alert(humidity=30.0) is HumidityAlert.TOO_DRY
+        assert self.alert(humidity=10.0) is HumidityAlert.TOO_DRY
 
     def test_close_to_the_house_is_ok(self):
-        assert self.alert(humidity=53.0) is HumidityAlert.OK
+        assert self.alert(humidity=58.0) is HumidityAlert.OK
 
-    @pytest.mark.parametrize("value", [40.0, 60.0])
+    @pytest.mark.parametrize("value", [30.0, 70.0])
     def test_exactly_on_the_tolerance_is_ok(self, value):
-        # mean 45 and 55: the subject is exactly 5 points away.
+        # mean 40 and 60: the subject is exactly 10 points away.
         assert self.alert(humidity=value) is HumidityAlert.OK
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [(39.9, HumidityAlert.TOO_DRY), (60.1, HumidityAlert.TOO_HUMID)],
+        [(29.9, HumidityAlert.TOO_DRY), (70.1, HumidityAlert.TOO_HUMID)],
     )
     def test_just_past_the_tolerance_alerts(self, value, expected):
         assert self.alert(humidity=value) is expected
@@ -212,7 +212,7 @@ class TestHumidityAlert:
 
 class TestRoomAlert:
     def test_reports_both_axes(self):
-        subject, rooms = pair(temperature=26.0, humidity=70.0)
+        subject, rooms = pair(temperature=30.0, humidity=90.0)
         alert = room_alert(subject, rooms)
 
         assert alert.temperature is TemperatureAlert.TOO_HOT
@@ -225,14 +225,14 @@ class TestRoomAlert:
         assert room_alert(subject, rooms).is_alerting is False
 
     def test_either_axis_alone_is_enough_to_alert(self):
-        subject, rooms = pair(temperature=None, humidity=70.0)
+        subject, rooms = pair(temperature=None, humidity=90.0)
         alert = room_alert(subject, rooms)
 
         assert alert.temperature is TemperatureAlert.UNKNOWN
         assert alert.is_alerting is True
 
     def test_too_dry_alerts_as_well(self):
-        subject, rooms = pair(humidity=30.0)
+        subject, rooms = pair(humidity=10.0)
 
         assert room_alert(subject, rooms).is_alerting is True
 

@@ -147,12 +147,13 @@ inverted, and every model field has a `None` case.
   precipitation exist as attributes, and what the daily forecast service
   actually returns. Answer them from the wire, not from guesswork.
 - **2.3** ~~Comfort bands per room~~ — **replaced on 2026-10-04** by one global
-  rule: a room is red when more than 1,5 degrees, or 5 points of relative
+  rule: a room is red when more than 2,5 degrees, or 10 points of relative
   humidity, from the mean of the indoor rooms (outdoors not judged). No per-room
-  configuration, so nothing waits on the family. **Open:** the unheated garage
-  and the damp bathrooms drag the mean, and on the 2026-09-19 capture nine of
-  ten rooms alert. A median, or a mean over the heated rooms only, is the
-  candidate fix; `tests/test_sources_fixture.py` pins the current behaviour.
+  configuration, so nothing waits on the family. Started at 1,5 and 5, which
+  turned nine of ten rooms red on the 2026-09-19 capture; at 2,5 and 10 it is
+  four. **Open:** the unheated garage and the damp bathrooms still drag the
+  mean (Stue at 23,1 is "too hot"). A median is the candidate fix;
+  `tests/test_sources_fixture.py` pins the current behaviour.
 
 **Done when:** loader tests cover a good config and several bad ones, and the
 fixtures are committed.

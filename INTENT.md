@@ -130,7 +130,7 @@ min / max / spread that reveal whether the house is evenly heated.
 precipitation value and the bars on the curve; the curve's `NU` reading, which
 is what became of the "you are here" marker and which reverts to black when
 there is no reading to mark; the alert arrow and value on a room more than
-1,5 degrees from the house average; a humidity badge on a room more than 5
+2,5 degrees from the house average; a humidity badge on a room more than 10
 points of relative humidity from it, either side.
 Nowhere else — and in particular not on the largest number on the screen, which
 reports the weather rather than asking anyone to act on it.
@@ -344,9 +344,10 @@ These block specific slices, not the architecture.
 - ~~**The seven-day strip**~~ is a six-day strip. The daily forecast service
   returns six days from this provider.
 - ~~**Comfort bands.**~~ Replaced on 2026-10-04 by one global rule: red when a
-  room is more than 1,5 degrees or 5 points of humidity from the indoor mean.
+  room is more than 2,5 degrees or 10 points of humidity from the indoor mean.
   **Open:** the mean is dragged by the unheated garage and the damp bathrooms;
-  on the 2026-09-19 capture nine of ten rooms alert (PLAN.md, slice 2.3).
+  on the 2026-09-19 capture four of ten rooms alert, Stue among them at 23,1
+  (PLAN.md, slice 2.3).
 - **The viewing distance, or the room count.** Eleven rooms are comfortable at
   ~1,5 m and below the legibility threshold at 3 m, and no typography changes
   that on a 7,5" panel (PLAN.md, M4 log). Either the stated distance moves or

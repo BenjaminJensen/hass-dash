@@ -6,8 +6,8 @@
 # Rooms appear on screen in the order they appear here. There is no `order`
 # key and no `position` key; layout is computed from a box model.
 #
-# There are no comfort bands. A room turns red when it is more than 1,5 degrees
-# or 5 points of humidity from the average of the indoor rooms - one global rule
+# There are no comfort bands. A room turns red when it is more than 2,5 degrees
+# or 10 points of humidity from the average of the indoor rooms - one global rule
 # in domain/derive.py, not per-room configuration.
 #
 # Entity ids confirmed against the live instance on 2026-09-19 by

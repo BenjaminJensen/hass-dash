@@ -41,8 +41,8 @@ PRECIPITATION_CONDITIONS = frozenset(
 #: Celsius, and percentage points of relative humidity. One rule for every room
 #: - a global one, because nobody could say what a bedroom or a bathroom "should"
 #: be, and a room that differs from its neighbours is what the screen is for.
-TEMPERATURE_TOLERANCE = 1.5
-HUMIDITY_TOLERANCE = 5.0
+TEMPERATURE_TOLERANCE = 2.5
+HUMIDITY_TOLERANCE = 10.0
 
 
 def is_night(sun: SunTimes) -> bool | None:
