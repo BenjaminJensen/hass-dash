@@ -127,8 +127,9 @@ coverage.xml
 # Rendered dashboard output is transient; asset bitmaps are not.
 *.bmp
 !assets/**/*.bmp
-# Personal Claude Code permission rules. Deliberately not tracked: a tracked
-# settings.local.json is treated as repository-supplied, and its rules are
-# withheld until the folder is trusted. settings.json is the shared one.
-.claude/settings.local.json
+# Claude Code's per-machine folder: permission rules and local settings. Not
+# tracked - a tracked settings file is treated as repository-supplied and its
+# rules are withheld until the folder is trusted. Project instructions for it
+# live in CLAUDE.md, which is tracked.
+.claude/
 # End of file
