@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import inspect
 import sys
+import types
 
 import pytest
 
@@ -61,6 +62,31 @@ class TestTheSeam:
 
         assert "import gpiozero" in source
         assert "import spidev" in source
+
+
+class TestBusyIsReadNotWatched:
+    def test_busy_is_a_plain_input_with_no_edge_events(self, monkeypatch):
+        """`gpiozero.Button` subscribes to both edges, which starts a callback
+        thread that burned ~5 % of a core for the life of the process on the
+        board. BUSY is polled, so it must be a device that does not subscribe."""
+        made = {}
+
+        class Device:
+            def __init__(self, *args, **kwargs):
+                made[type(self).__name__] = (args, kwargs)
+
+        fake = types.ModuleType("gpiozero")
+        for name in ("LED", "InputDevice"):
+            setattr(fake, name, type(name, (Device,), {}))
+        spi = types.ModuleType("spidev")
+        spi.SpiDev = lambda: object()
+        monkeypatch.setitem(sys.modules, "gpiozero", fake)
+        monkeypatch.setitem(sys.modules, "spidev", spi)
+
+        SpiTransport()
+
+        assert made["InputDevice"] == ((BUSY_BCM,), {"pull_up": False})
+        assert not hasattr(fake, "Button")
 
 
 class TestTheNumbersMatchTheWiring:

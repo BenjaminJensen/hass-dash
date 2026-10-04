@@ -116,7 +116,11 @@ class SpiTransport:
 
         self._spi = spidev.SpiDev()
         self._pins = {pin: gpiozero.LED(number) for pin, number in BCM.items()}
-        self._busy = gpiozero.Button(BUSY_BCM, pull_up=False)
+        # `InputDevice`, not `Button`: a Button subscribes to both edges, which
+        # starts a callback thread that measured ~5 % of a core for the life of
+        # the process (2026-10-04, on the board). `ReadBusy` polls; it needs a
+        # level, not events.
+        self._busy = gpiozero.InputDevice(BUSY_BCM, pull_up=False)
         self._opened = False
 
     def open(self) -> None:
