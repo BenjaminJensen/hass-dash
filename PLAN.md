@@ -75,7 +75,7 @@ on a decision, and M11 is code only.**
 | M6 ✅ | Refresh policy | M | M1 | §4 contract as a pure, clock-injected function |
 | M7 ✅ | App and composition root | S | M3, M5, M6 | `--source fixture --target bmp` runs the loop |
 | M8 ✅ | Hardware, full refresh | M | M7 | On the wall |
-| M9 | Partial refresh | M | M8 | Decided with numbers in hand |
+| M9 ❌ | Partial refresh — decided against, 2026-10-04 | M | M8 | Pure full-refresh cadence, as shipped |
 | M10 ✅ | Replace the vendored driver | M | M8 | The panel driven by tested code |
 | M11 | Retire the old, align the docs | S | M8 | One architecture, described accurately |
 
@@ -287,7 +287,16 @@ milestone:
   `/api/api/states`. The old code wanted the suffix and the new code does not,
   which makes this a silent 404 on first run rather than a config error.
 
-### M9 — Partial refresh (M) — decide, then build
+### M9 — Partial refresh (M) — decided against on 2026-10-04
+
+**Decision: no.** Partial refresh can carry the clock, the labels, the summary
+and the forecast, and none of the room readings the hallway actually looks at,
+and it has no path to red. That does not justify a second init sequence, window
+snapping and a diff, on a panel the vendor says can be damaged. The panel stays
+on a pure full-refresh cadence, which is what `app.policy_for()` already
+produces; the update-class metadata stays in the draw list. If fresher readings
+are wanted later, the cheaper lever is the full-refresh interval. The analysis
+below is kept as the reasoning.
 
 **Do not build this before counting.** After M5, count the boxes that are
 provably red-free for all inputs. Room temperature and humidity cells can go red
